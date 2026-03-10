@@ -6,7 +6,10 @@ import { Container, Typography, Paper, Button, Box,
     TableContainer, TableHead, TableRow, IconButton,
     Snackbar, Alert, InputBase } from '@mui/material';
 import Grid from '@mui/material/Grid'; 
-import { Add as AddIcon, Description as DescriptionIcon, Delete as DeleteIcon, Save as SaveIcon, CloudUpload as CloudUploadIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Add as AddIcon, Description as DescriptionIcon,
+    Delete as DeleteIcon, Save as SaveIcon,
+    CloudUpload as CloudUploadIcon,
+    Search as SearchIcon } from '@mui/icons-material';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { AddressSuggestions } from 'react-dadata';
 import { DataGrid } from '@mui/x-data-grid';
@@ -74,7 +77,13 @@ export default function ClientsList({ auth, clients }) {
     const handleCreateSubmit = (e) => {
         e.preventDefault();
         post(route('admin.clients.store'), {
-            onSuccess: () => { setCreateOpen(false); showToast('Потребитель создан'); }
+            onSuccess: () => {
+                setCreateOpen(false);
+                showToast('Потребитель создан');
+            },
+            onError: () => {
+                showToast('Ошибка при создании', 'error');
+            }
         });
     };
 
@@ -102,20 +111,23 @@ export default function ClientsList({ auth, clients }) {
     const promptDeleteClient = (id) => {
         setConfirmMeta({
             open: true,
-            onClick: true,
             title: 'Удаление профиля',
-            content: 'Вы действительно хотите удалить этого потребителя? Все его данные будут стерты.',
+            content: `Вы действительно хотите удалить клиента №${id}?`,
             onConfirm: () => {
-                router.delete(route('admin.clients.destroy', id), {
-                    onSuccess: () => {
-                        setConfirmMeta(prev => ({ ...prev, open: false }));
-                        setEditOpen(false);
-                        showToast('Потребитель удален', 'warning');
+                router.post(
+                    `/admin/clients/${data.id}`,
+                    {
+                        _method:'DELETE',
+                    } ,{
+                        onSuccess: () => {
+                            setConfirmMeta(prev => ({ ...prev, open: false }));
+                            setEditOpen(false);
+                        }
                     }
-                });
+                );
             }
         });
-    };
+    }
 
     const promptDeleteDocument = (docId) => {
         setConfirmMeta({
@@ -137,7 +149,7 @@ export default function ClientsList({ auth, clients }) {
     };
 
     return (
-        <AdminLayout user={auth.user}>
+        <AdminLayout>
             <Head title="Потребители" />
             <Box sx={{ bgcolor: '#f4f7fe', minHeight: '90vh', py: 4 }}>
                 <Container maxWidth="xl">
@@ -181,12 +193,12 @@ export default function ClientsList({ auth, clients }) {
                                             customInput={DadataInput} 
                                         />
                                     </Grid>
-                                    <Grid item xs={4}><TextField fullWidth label="Л/С" variant="standard" value={data.account_number} onChange={e => setData('account_number', e.target.value)} error={!!errors.account_number} helperText={errors.account_number} /></Grid>
-                                    <Grid item xs={4}><TextField fullWidth label="Фамилия" variant="standard" value={data.last_name} onChange={e => setData('last_name', e.target.value)} /></Grid>
-                                    <Grid item xs={4}><TextField fullWidth label="Имя" variant="standard" value={data.first_name} onChange={e => setData('first_name', e.target.value)} /></Grid>
-                                    <Grid item xs={4}><TextField fullWidth label="Отчество" variant="standard" value={data.middle_name} onChange={e => setData('middle_name', e.target.value)} /></Grid>
-                                    <Grid item xs={4}><TextField fullWidth label="Телефон" variant="standard" value={data.phone} onChange={e => setData('phone', e.target.value)} /></Grid>
-                                    <Grid item xs={4}><TextField fullWidth label="Email" variant="standard" value={data.email} onChange={e => setData('email', e.target.value)} /></Grid>
+                                    <Grid item xs={4}><TextField fullWidth label="Л/С" variant="standard" value={data.account_number || ''} onChange={e => setData('account_number', e.target.value)} error={!!errors.account_number} helperText={errors.account_number} /></Grid>
+                                    <Grid item xs={4}><TextField fullWidth label="Фамилия" variant="standard" value={data.last_name || ''} onChange={e => setData('last_name', e.target.value)} /></Grid>
+                                    <Grid item xs={4}><TextField fullWidth label="Имя" variant="standard" value={data.first_name || ''} onChange={e => setData('first_name', e.target.value)} /></Grid>
+                                    <Grid item xs={4}><TextField fullWidth label="Отчество" variant="standard" value={data.middle_name || ''} onChange={e => setData('middle_name', e.target.value)} /></Grid>
+                                    <Grid item xs={4}><TextField fullWidth label="Телефон" variant="standard" value={data.phone || ''} onChange={e => setData('phone', e.target.value)} /></Grid>
+                                    <Grid item xs={4}><TextField fullWidth label="Email" variant="standard" value={data.email || ''} onChange={e => setData('email', e.target.value)} /></Grid>
                                 </Grid>
                             </DialogContent>
                             <DialogActions sx={{ p: 3, bgcolor: '#fafbfd' }}>

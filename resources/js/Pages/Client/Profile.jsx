@@ -29,7 +29,7 @@ export default function Profile({ auth, client }) {
                                 <Grid item xs={12}><TextField fullWidth label="Email" variant="filled" value={client.email} inputProps={{ readOnly: true }} /></Grid>
                             </Grid>
                             <Alert severity="info" sx={{ mt: 3, borderRadius: '12px' }}>
-                                Для изменения данных, пожалуйста, создайте обращение в службу поддержки.
+                                Для изменения данных, пожалуйста, создайте обращение в <a href={ route('client.tickets.index')} style={{textDecoration:'underline', fontWeight:'bold'}}>службу поддержки</a>.
                             </Alert>
                         </Paper>
                     </Grid>

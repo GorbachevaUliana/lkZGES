@@ -1,14 +1,18 @@
 <?php
 
+use App\Models\User;
+use App\Models\Ticket;
+use App\Models\Client;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\ClientController as AdminClientController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\StaffController;
-use App\Http\Controllers\Client\DashboardController as DashboardController;
+use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\TicketController as ClientTicketController;
+use App\Http\Controllers\ApplicationController;
 // Подключить здесь будущий контроллер для показаний
-// use App\Http\Controllers\ReadingController; 
+// use App\Http\Controllers\ReadingController;
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -22,6 +26,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/account/link', [AccountController::class, 'link'])->name('account.link');
 });
 
+Route::get('/new-application/{slug}', [ApplicationController::class, 'show'])->name('application.show');
+Route::post('/new-application/{slug}', [ApplicationController::class, 'store'])
+    ->name('application.store');
+
 // 3. АДМИН-ПАНЕЛЬ (Только для сотрудников с CheckAdmin)
 Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
     ->prefix('admin')
@@ -29,35 +37,56 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
     ->group(function () {
     
     // Главная админки
-    // Route::get('/dashboard', function () {
-    //     return Inertia::render('Admin/Dashboard');
-    // })->name('dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        $stats = [];
 
-    // Потребители (Клиенты)
-    Route::get('/clients', [AdminClientController::class, 'index'])->name('clients.index');
-    Route::post('/clients', [AdminClientController::class, 'store'])->name('clients.store');
-    Route::put('/clients/{id}', [AdminClientController::class, 'update'])->name('clients.update');
-    Route::delete('/clients/{client}', [AdminClientController::class, 'destroy'])->name('clients.destroy');
+        if ($user->role === 'admin' || collect($user->permissions)->contains('clients')) {
+            $stats['clients_count'] = Client::count();
+        }
+
+        if ($user->role === 'admin') {
+            $stats['tickets_count'] = Ticket::where('status', 'open')->count();
+        } else {
+            $stats['tickets_count'] = Ticket::where('staff_id', $user->id)
+                ->where('status', 'open')
+                ->count();
+        }
+
+        return Inertia::render('Admin/Dashboard', ['stats' => $stats]);
+    })->name('dashboard');
+
+    Route::prefix('clients')->name('clients.')->group(function () {
+        Route::get('/', [AdminClientController::class, 'index'])->name('index');
+        Route::post('/', [AdminClientController::class, 'store'])->name('store');
+        Route::put('/{id}', [AdminClientController::class, 'update'])->name('update');
+        Route::delete('/{client}', [AdminClientController::class, 'destroy'])->name('destroy');
+        // Загрузка документов перенесена сюда для логики: admin/clients/{id}/upload
+        Route::post('/{id}/upload', [AdminClientController::class, 'upload'])->name('upload');
+    });
     
-    // Документы
-    Route::post('/documents/{id}', [AdminClientController::class, 'upload'])->name('documents.upload');
+    // Документы (удаление конкретного файла)
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     // Обращения (Админ видит все тикеты)
-    Route::get('/tickets', [AdminTicketController::class, 'index'])->name('tickets.index');
+    Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::get('/', [AdminTicketController::class, 'index'])->name('index');
+        Route::put('/{id}', [AdminTicketController::class, 'update'])->name('update');
+    });
 
     // Сотрудники
-    Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
-    Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
-    Route::put('/staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
+    Route::prefix('staff')->name('staff.')->group(function () {
+        Route::get('/', [StaffController::class, 'index'])->name('index');
+        Route::post('/', [StaffController::class, 'store'])->name('store');
+        Route::put('/{staff}', [StaffController::class, 'update'])->name('update');
+        Route::delete('/{staff}', [StaffController::class,'destroy'])->name('destroy');
+    });
 
-    // БЛОК ПОКАЗАНИЯ (АДМИН) - запланировано на 18.02.2026
+    // БЛОК ПОКАЗАНИЯ (АДМИН)
     // Route::get('/readings', [AdminReadingController::class, 'index'])->name('readings.index');
 });
 
 // 4. ЛИЧНЫЙ КАБИНЕТ (Только для потребителей)
-// Рекомендуется добавить middleware 'isClient', чтобы админ случайно не зашел сюда
 Route::middleware(['auth', 'verified'])
     ->prefix('client') 
     ->name('client.')
@@ -74,7 +103,6 @@ Route::middleware(['auth', 'verified'])
     Route::get('/tickets', [ClientTicketController::class, 'ticketsIndex'])->name('tickets.index');
     Route::post('/tickets', [ClientTicketController::class, 'storeTicket'])->name('tickets.store');
 
-    // БЛОК ПОКАЗАНИЯ (КЛИЕНТ) - запланировано на 18.02.2026
     // Route::get('/readings', [ClientReadingController::class, 'index'])->name('readings.index');
     // Route::post('/readings', [ClientReadingController::class, 'store'])->name('readings.store');
 });

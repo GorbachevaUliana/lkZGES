@@ -26,7 +26,7 @@ class StaffController extends Controller
             'email' => 'required|string|email|unique:users',
             'password' => 'required|min:8',
             'role' => 'required',
-            'permissions' => 'nullable|array'
+            'permissions' => 'nullable|array',
         ]);
 
         User::create([
@@ -51,15 +51,27 @@ class StaffController extends Controller
             'email' => 'required|email|unique:users,email,' . $staff->id,
             'role' => 'required|in:admin,staff',
             'permissions' => 'nullable|array',
+            'password' => 'nullable|confirmed|min:8', 
         ]);
 
-        $staff->update([
+        $updateData = [
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
-            'permissions' => $request->permissions,
-        ]);
+            'permissions' => $request->permissions ?? [],
+        ];
+
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $staff->update($updateData);
         
         return back();
     }
+    public function destroy(User $staff)
+        {
+            $staff->delete();
+            return back();
+        }
 }

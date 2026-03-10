@@ -29,6 +29,22 @@ export default function Dashboard({ auth, client }) {
                     </Paper>
                 </Grid>
             </Grid>
+            {myApplications.map((app) => (
+                <Paper key={app.id} sx={{ p: 2, mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                            {app.template.title}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                            От {new Date(app.created_at).toLocaleDateString()}
+                        </Typography>
+                    </Box>
+                    <Chip
+                        label={app.status === 'new' ? 'Ожидает' : app.status}
+                        color={app.status === 'approved' ? 'success' : 'primary'}
+                    />
+                </Paper>
+            ))}
         </ClientLayout>
     );
 }

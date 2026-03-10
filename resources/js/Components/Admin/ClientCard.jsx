@@ -31,11 +31,16 @@ export default function ClientCard({
     showToast 
 }) {
     const [tabValue, setTabValue] = useState(0);
-
-    // 1. Обновление данных клиента
     const handleUpdateSubmit = () => {
-        router.put(route('admin.clients.update', data.id), data, {
-            onSuccess: () => showToast('Данные успешно обновлены'),
+        router.post(`/admin/clients/${data.id}`, {
+            ...data,
+            _method: 'PUT',
+        }, {
+            onSuccess: () => {
+                showToast('Данные успешно обновлены');
+                console.log(data);
+            },
+            forceFormData: true
         });
     };
 
@@ -44,7 +49,7 @@ export default function ClientCard({
         const file = e.target.files[0];
         if (!file) return;
 
-        router.post(route('admin.documents.upload', data.id), { file }, {
+        router.post(route('admin.clients.upload', data.id), { file }, {
             forceFormData: true,
             onSuccess: (page) => {
 
@@ -84,19 +89,42 @@ export default function ClientCard({
                 <TabPanel value={tabValue} index={0}>
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
-                            <TextField 
-                                fullWidth 
-                                label="Адрес регистрации" 
-                                variant="standard" 
-                                value={data.address || ''} 
-                                onChange={e => setData('address', e.target.value)} 
+                        <Grid item xs={12}>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
+                                Адрес регистрации
+                            </Typography>
+                            <AddressSuggestions
+                                token="cd4b88f14527df99bbafecb1c09789391eb6f2ff"
+                                value={data.address ? { value: data.address } : null}
+                                onChange={(suggestion) => {
+                                    setData('address', suggestion.value);
+                                }}
+                                containerClassName="dadata-input-container"
+                                inputProps={{
+                                    placeholder: "Введите адрес или выберите из списка",
+                                    name: "address", 
+                                    onChange: (e) => setData('address', e.target.value),
+                                    style: {
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        border: '1px solid #E0E5F2',
+                                        borderRadius: '12px',
+                                        fontSize: '14px',
+                                        outline: 'none'
+                                    },
+                                    value: data.address || '' 
+                                }}
                             />
+                            {errors.address && (
+                                <Typography color="error" variant="caption">{errors.address}</Typography>
+                            )}
                         </Grid>
-                        <Grid item xs={4}><TextField fullWidth label="Фамилия" variant="standard" value={data.last_name || ''} onChange={e => setData('last_name', e.target.value)} /></Grid>
-                        <Grid item xs={4}><TextField fullWidth label="Имя" variant="standard" value={data.first_name || ''} onChange={e => setData('first_name', e.target.value)} /></Grid>
-                        <Grid item xs={4}><TextField fullWidth label="Отчество" variant="standard" value={data.middle_name || ''} onChange={e => setData('middle_name', e.target.value)} /></Grid>
-                        <Grid item xs={6}><TextField fullWidth label="Телефон" variant="standard" value={data.phone || ''} onChange={e => setData('phone', e.target.value)} /></Grid>
-                        <Grid item xs={6}><TextField fullWidth label="Email" variant="standard" value={data.email || ''} onChange={e => setData('email', e.target.value)} /></Grid>
+                        </Grid>
+                        <Grid item xs={4}><TextField fullWidth label="Фамилия" variant="standard" value={data.last_name || ''} onInput={e => setData('last_name', e.target.value)} /></Grid>
+                        <Grid item xs={4}><TextField fullWidth label="Имя" variant="standard" value={data.first_name || ''} onInput={e => setData('first_name', e.target.value)} /></Grid>
+                        <Grid item xs={4}><TextField fullWidth label="Отчество" variant="standard" value={data.middle_name || ''} onInput={e => setData('middle_name', e.target.value)} /></Grid>
+                        <Grid item xs={6}><TextField fullWidth label="Телефон" variant="standard" value={data.phone || ''} onInput={e => setData('phone', e.target.value)} /></Grid>
+                        <Grid item xs={6}><TextField fullWidth label="Email" variant="standard" value={data.email || ''} onInput={e => setData('email', e.target.value)} /></Grid>
                     </Grid>
                     <Box display="flex" justifyContent="flex-end" mt={3}>
                         <Button variant="contained" startIcon={<SaveIcon />} onClick={handleUpdateSubmit} sx={{ bgcolor: '#4318FF' }}>

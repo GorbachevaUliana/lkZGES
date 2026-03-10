@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import { Container, Typography, Paper, Button, Box, 
     Dialog, DialogContent, TextField, DialogActions, 
-    IconButton, Snackbar, Alert, InputBase, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+    IconButton, Snackbar, Alert, InputBase, MenuItem,
+    Select, FormControl, InputLabel } from '@mui/material';
 import Grid from '@mui/material/Grid'; 
 import { Add as AddIcon, Delete as DeleteIcon, Search as SearchIcon } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -23,7 +24,7 @@ export default function StaffList({ auth, staff }) {
     const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
     const [confirmMeta, setConfirmMeta] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
     const { data, setData, post, reset, processing, errors } = useForm({
-        id: '', name: '', email: '', role: 'staff', password: ''
+        id: '', name: '', email: '', role: 'staff', permissions: [], password: '', password_confirmation: ''
     });
 
     const showToast = (message, severity = 'success') => setToast({ open: true, message, severity });
@@ -39,7 +40,9 @@ export default function StaffList({ auth, staff }) {
             name: params.row.name || '',
             email: params.row.email || '',
             role: params.row.role || 'staff',
-            password: ''
+            permissions: params.row.permissions || [],
+            password: '',
+            password_confirmation: ''
         });
         setEditOpen(true);
     };
@@ -54,6 +57,27 @@ export default function StaffList({ auth, staff }) {
             }
         });
     };
+
+    const promptDeleteStaff = (id) => {
+        setConfirmMeta({
+            open: true,
+            title: 'Удаление профиля',
+            content: `Вы действительно хотите удалить сотрудника №${id}?`,
+            onConfirm: () => {
+                router.post(
+                    `/admin/staff/${data.id}`,
+                    {
+                        _method:'DELETE',
+                    } ,{
+                        onSuccess: () => {
+                            setConfirmMeta(prev => ({ ...prev, open: false }));
+                            setEditOpen(false);
+                        }
+                    }
+                );
+            }
+        });
+    }
 
     const filteredStaff = useMemo(() => {
         const query = searchQuery.toLowerCase();
@@ -71,10 +95,9 @@ export default function StaffList({ auth, staff }) {
             headerName: 'Роль', 
             width: 150,
             renderCell: (params) => (
-                <Box sx={{ 
+                <Box sx={{
                     color: params.value === 'admin' ? '#4318FF' : '#A3AED0',
-                    fontWeight: 'bold'
-                }}>
+                    fontWeight: 'bold'}}>
                     {params.value === 'admin' ? 'Администратор' : 'Оператор'}
                 </Box>
             )
@@ -98,6 +121,7 @@ export default function StaffList({ auth, staff }) {
                                     sx={{ ml: 1 }}
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
+                                    inputProps = {{autoComplete: 'off', name: 'search-staff-unique'}}
                                 />
                             </Paper>
                             <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ borderRadius: '16px', bgcolor: '#4318FF', px: 3 }}>
@@ -159,6 +183,11 @@ export default function StaffList({ auth, staff }) {
                         setData={setData} 
                         authUser={auth.user}
                         showToast={showToast}
+                        onDeleteStaff={promptDeleteStaff}
+                    />
+                    <ConfirmDialog 
+                        open={confirmMeta.open} title={confirmMeta.title} content={confirmMeta.content} 
+                        onConfirm={confirmMeta.onConfirm} onClose={() => setConfirmMeta(p => ({ ...p, open: false }))} 
                     />
 
                     <Snackbar open={toast.open} autoHideDuration={3000} onClose={() => setToast(p => ({ ...p, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>

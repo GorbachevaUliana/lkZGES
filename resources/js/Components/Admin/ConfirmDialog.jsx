@@ -13,8 +13,8 @@ export default function ConfirmDialog({ open, title, content, onConfirm, onClose
             <DialogActions sx={{ p: 3 }}>
                 <Button onClick={onClose} sx={{ color: '#A3AED0', fontWeight: 'bold' }}>Отмена</Button>
                 <Button 
-                    onClick={onConfirm} 
-                    variant="contained" 
+                    onClick={() => onConfirm()}
+                    variant="contained"
                     sx={{ bgcolor: '#EE5D50', '&:hover': { bgcolor: '#E31A1A' }, borderRadius: '12px', px: 3 }}
                 >
                     Удалить

@@ -34,6 +34,7 @@ export default function WelcomePage() {
                             <CardContent sx={{ flexGrow: 1, p: 4 }}>
                                 <AssignmentIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
                                 <Typography variant="h5" gutterBottom>Я уже клиент</Typography>
+                                
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                                     У меня есть действующий договор и номер лицевого счета.
                                 </Typography>
@@ -85,7 +86,7 @@ export default function WelcomePage() {
                                     fullWidth 
                                     variant="outlined" 
                                     color="secondary"
-                                    onClick={() => router.get('/new-application')}
+                                    onClick={() => router.get('/new-application/konstruktor')}
                                     sx={{ mt: 'auto' }}
                                 >
                                     Заполнить заявку

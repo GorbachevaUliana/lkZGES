@@ -19,11 +19,11 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role',
-        'client_id'
+    'name', 'email', 'password', 'role', 'permissions',
+];
+
+    protected $casts = [
+        'permissions' => 'array',
     ];
 
     /**
@@ -58,5 +58,10 @@ class User extends Authenticatable
     public function tickets()
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
     }
 }

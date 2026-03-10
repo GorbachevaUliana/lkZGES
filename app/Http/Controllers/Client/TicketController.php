@@ -41,9 +41,16 @@ class TicketController extends Controller
     public function ticketsIndex()
     {
         $tickets = auth()->user()->tickets()
-            ->with('attachments')
+            ->with(['attachments'])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($ticket) {
+                $ticket->attachments->map(function ($attachment) {
+                    $attachment->url = asset('storage/' . $attachment->file_path);
+                    return $attachment;
+                });
+                return $ticket;
+            });
 
         return Inertia::render('Client/Tickets', [
             'tickets' => $tickets

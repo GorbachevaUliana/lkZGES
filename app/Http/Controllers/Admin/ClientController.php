@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Storage;
 
 class ClientController extends Controller
 {
+
     public function index() {
         $clients = Client::with('documents')->get();
         return Inertia::render('Admin/ClientsList', [
-            'clients' => $clients
+            'clients' => Client::with('documents')->get(), 
         ]);
     }
 
@@ -68,15 +69,14 @@ class ClientController extends Controller
         return back()->with('success', 'Файл загружен');
     }
     public function destroy(Client $client)
-    {
-        foreach ($client->documents as $document) {
-            Storage::disk('public')->delete($document->file_path);
-            $document->delete();
+        {
+            foreach ($client->documents as $document) {
+                if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
+                    Storage::disk('public')->delete($document->file_path);
+                }
+            }  
+            $client->documents()->delete();
+            $client->delete();
+            return back();
         }
-
-        $client->delete();
-
-        return redirect()->route('admin.clients')
-            ->with('message', 'Потребитель успешно удален');
-    }
 }

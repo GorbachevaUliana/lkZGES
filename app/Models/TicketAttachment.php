@@ -9,7 +9,8 @@ class TicketAttachment extends Model
     protected $fillable = [
         'ticket_id',
         'file_path',
-        'file_name'
+        'file_name',
+        'is_admin'
     ];
 
     public function ticket() { return $this->belongsTo(Ticket::class); }

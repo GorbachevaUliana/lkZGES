@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Document;
+use App\Models\Application;
 
 class DashboardController extends Controller
 {
@@ -20,14 +21,13 @@ class DashboardController extends Controller
     //     ]);
     // }
     public function index() {
-        return Inertia::render('Admin/Dashboard', [
+        return Inertia::render('Client/Dashboard', [
             'stats' => [
                 'clients_count' => \App\Models\Client::count(),
                 'tickets_count' => \App\Models\Ticket::where('status', 'new')->count(),
             ]
         ]);
     }
-
     public function profile()
     {
         return Inertia::render('Client/Profile', [
@@ -41,7 +41,16 @@ class DashboardController extends Controller
         $client = Auth::user()->client;
         return Inertia::render('Client/Documents', [
             'documents' => $client ? $client->documents : []
+        ]);   
+    }
+
+    public function application()
+    {
+        return Inertia::render('Dashboard', [
+            'myApplications' => Application::with('template')
+                ->where('user_id', auth()->id())
+                ->latest()
+                ->get()
         ]);
-        
     }
 }
