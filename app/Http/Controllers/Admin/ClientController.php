@@ -4,18 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Tariff;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Models\Document;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ClientController extends Controller
 {
-
-    public function index() {
-        $clients = Client::with('documents')->get();
+    public function index()
+    {
         return Inertia::render('Admin/ClientsList', [
-            'clients' => Client::with('documents')->get(), 
+            'clients' => Client::with(['documents', 'tariff', 'readings'])->get(),
+            'tariffs' => Tariff::all(),
         ]);
     }
 
@@ -23,35 +23,45 @@ class ClientController extends Controller
     {
         $validated = $request->validate([
             'account_number' => 'required|unique:clients',
-            'last_name' => 'required|string',
-            'middle_name' => 'required|string',
-            'first_name' => 'required|string',
+            'client_type' => 'required|in:individual,legal',
+            'last_name' => 'nullable|string',
+            'first_name' => 'nullable|string',
+            'middle_name' => 'nullable|string',
+            'company_name' => 'nullable|string',
             'address' => 'required',
             'phone' => 'nullable',
             'email' => 'nullable|email',
+            'tariff_id' => 'required|exists:tariffs,id',
         ]);
 
         Client::create($validated);
 
-        return back();
+        return back()->with('success', 'Потребитель успешно создан');
     }
 
     public function update(Request $request, $id)
     {
         $client = Client::findOrFail($id);
+
         $validated = $request->validate([
-            'last_name' => 'required|string',
-            'middle_name' => 'required|string',
-            'first_name' => 'required|string',
+            'client_type' => 'required|in:individual,legal',
+            'last_name' => 'nullable|string',
+            'first_name' => 'nullable|string',
+            'middle_name' => 'nullable|string',
+            'company_name' => 'nullable|string',
             'address' => 'required',
             'phone' => 'nullable',
             'email' => 'nullable|email',
+            'tariff_id' => 'required|exists:tariffs,id',
         ]);
 
         $client->update($validated);
-        return back();
+
+        return back()->with('success', 'Данные обновлены');
     }
-    public function upload(Request $request, $id) {
+
+    public function upload(Request $request, $id)
+    {
         $request->validate([
             'file' => 'required|mimes:pdf,jpg,png|max:10240',
         ]);
@@ -68,15 +78,17 @@ class ClientController extends Controller
 
         return back()->with('success', 'Файл загружен');
     }
+
     public function destroy(Client $client)
-        {
-            foreach ($client->documents as $document) {
-                if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
-                    Storage::disk('public')->delete($document->file_path);
-                }
-            }  
-            $client->documents()->delete();
-            $client->delete();
-            return back();
+    {
+        foreach ($client->documents as $document) {
+            if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
+                Storage::disk('public')->delete($document->file_path);
+            }
         }
+        $client->documents()->delete();
+        $client->delete();
+
+        return back();
+    }
 }

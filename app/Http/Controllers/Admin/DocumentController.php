@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Document;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
@@ -34,6 +34,7 @@ class DocumentController extends Controller
             Storage::disk('public')->delete($document->file_path);
         }
         $document->delete();
+
         return back()->with('message', 'Документ удален');
     }
 }

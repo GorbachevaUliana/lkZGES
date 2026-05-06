@@ -6,25 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        if (!Schema::hasColumn('clients', 'middle_name')) {
-            Schema::table('clients', function (Blueprint $table) {
-                $table->string('middle_name')->nullable();
-            });
-        }
+        Schema::table('clients', function (Blueprint $table) {
+            $table->foreignId('tariff_id')->nullable()->constrained('tariffs')->onDelete('set null');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('clients', function (Blueprint $table) {
-            //
+            $table->dropForeign(['tariff_id']);
+            $table->dropColumn(['tariff_id']);
         });
     }
 };

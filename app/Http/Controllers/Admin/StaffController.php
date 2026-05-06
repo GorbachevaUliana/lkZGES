@@ -5,17 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
 
 class StaffController extends Controller
 {
     public function index()
     {
         $staff = User::whereIn('role', ['admin', 'staff'])->get();
-        
+
         return Inertia::render('Admin/Staff/StaffList', [
-            'staff' => $staff
+            'staff' => $staff,
         ]);
     }
 
@@ -34,6 +34,7 @@ class StaffController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'status' => 'active',
             'permissions' => $request->permissions ?? [],
         ]);
 
@@ -48,10 +49,10 @@ class StaffController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $staff->id,
+            'email' => 'required|email|unique:users,email,'.$staff->id,
             'role' => 'required|in:admin,staff',
             'permissions' => 'nullable|array',
-            'password' => 'nullable|confirmed|min:8', 
+            'password' => 'nullable|confirmed|min:8',
         ]);
 
         $updateData = [
@@ -66,12 +67,14 @@ class StaffController extends Controller
         }
 
         $staff->update($updateData);
-        
+
         return back();
     }
+
     public function destroy(User $staff)
-        {
-            $staff->delete();
-            return back();
-        }
+    {
+        $staff->delete();
+
+        return back();
+    }
 }

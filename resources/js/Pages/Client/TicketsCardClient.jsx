@@ -11,21 +11,20 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
     const adminFiles = ticket.attachments?.filter(a => a.is_admin) || [];
 
     const statusMap = {
-        open: { label: 'Новое', color: 'primary' },
+        new: { label: 'Новое', color: 'primary' },
         in_progress: { label: 'В работе', color: 'warning' },
         closed: { label: 'Закрыто', color: 'success' },
     };
 
     return (
         <Dialog 
-            open={open} 
+            open={open}
             onClose={onClose}
             maxWidth="sm"
             fullWidth
             PaperProps={{ 
                 sx: { borderRadius: '24px', p: 1, boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' } 
-            }}
-        >
+            }}>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1B2559' }}>
                     Просмотр обращения №{ticket.id}
@@ -39,11 +38,10 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                 <Box sx={{ mb: 3 }}>
                     <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                         <Chip 
-                            label={statusMap[ticket.status].label} 
-                            color={statusMap[ticket.status].color} 
+                            label={statusMap[ticket.status].label || ticket.status || 'Новое'} 
+                            color={statusMap[ticket.status].color || 'primary'} 
                             size="small" 
-                            sx={{ fontWeight: 'bold', borderRadius: '8px' }}
-                        />
+                            sx={{ fontWeight: 'bold', borderRadius: '8px' }}/>
                         <Typography variant="caption" sx={{ color: '#A3AED0', alignSelf: 'center' }}>
                             Отправлено: {new Date(ticket.created_at).toLocaleString()}
                         </Typography>
@@ -77,8 +75,7 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                                         download={file.file_name}
                                         size="small"
                                         variant="outlined"
-                                        sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '12px' }}
-                                    >
+                                        sx={{ borderRadius: '8px', textTransform: 'none', fontSize: '12px' }}>
                                         📄 {file.file_name}
                                     </Button>
                                 ))}
@@ -111,8 +108,7 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                                                 target="_blank"
                                                 download={file.file_name}
                                                 size="small"
-                                                sx={{ color: '#4318FF', textTransform: 'none', justifyContent: 'flex-start' }}
-                                            >
+                                                sx={{ color: '#4318FF', textTransform: 'none', justifyContent: 'flex-start' }}>
                                                 📎 {file.file_name}
                                             </Button>
                                         ))}

@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Vite;
-use Illuminate\Support\ServiceProvider;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider; // Не забудь импортировать вверху файла
 use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,6 +22,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Определение права "создавать тикеты"
+        Gate::define('create-tickets', function (User $user) {
+            // Проверяем: либо у юзера роль клиента,
+            // либо у него есть хотя бы одна одобренная заявка
+            return $user->role === 'client' ||
+                $user->applications()->where('status', 'approved')->exists();
+        });
+
+        // Твой текущий Inertia Share (оставляем как есть)
         Inertia::share([
             'auth' => function () {
                 return [
@@ -30,5 +40,5 @@ class AppServiceProvider extends ServiceProvider
                 ];
             },
         ]);
-}
+    }
 }

@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class CheckAdmin
 {
@@ -22,7 +21,7 @@ class CheckAdmin
             return $next($request);
         }
 
-        // Если это не сотрудник, просто выкидываем ошибку 403, 
+        // Если это не сотрудник, просто выкидываем ошибку 403,
         // а не редиректим обратно на логин!
         abort(403, 'У вас нет прав доступа к админ-панели.');
     }

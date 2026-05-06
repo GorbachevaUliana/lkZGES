@@ -30,8 +30,8 @@ export default function Tickets({ auth, tickets }) {
     const [searchQuery, setSearchQuery] = useState('');
 
     const statusMap = {
+        // new: { label: 'Новое', color: 'primary' },
         new: { label: 'Новое', color: 'primary' },
-        open: { label: 'Новое', color: 'primary' },
         in_progress: { label: 'В работе', color: 'warning' },
         closed: { label: 'Закрыто', color: 'success' },
     };
@@ -60,7 +60,6 @@ export default function Tickets({ auth, tickets }) {
             headerName: 'Статус', 
             flex: 1,
             renderCell: (params) => {
-                // Берем объект из мапы, если его нет — создаем временный объект
                 const status = statusMap[params.value] || { label: params.value, color: 'default' };
                 
                 return (
@@ -71,7 +70,7 @@ export default function Tickets({ auth, tickets }) {
                         sx={{ 
                             borderRadius: '8px', 
                             fontWeight: '700',
-                            textTransform: 'uppercase', // Можно сделать капсом для стиля
+                            textTransform: 'uppercase',
                             fontSize: '10px'
                         }}
                     />
@@ -136,8 +135,7 @@ export default function Tickets({ auth, tickets }) {
                     variant="contained" 
                     startIcon={showForm ? null : <AddIcon />} 
                     onClick={() => setShowForm(!showForm)}
-                    sx={{ bgcolor: showForm ? '#FF5B5B' : '#4318FF' }}
-                >
+                    sx={{ bgcolor: showForm ? '#FF5B5B' : '#4318FF' }}>
                     {showForm ? 'Отмена' : 'Новое обращение'}
                 </Button>
             </Box>
@@ -150,8 +148,7 @@ export default function Tickets({ auth, tickets }) {
                         fullWidth
                         sx={{ ml: 1, py: 1 }}
                         value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                    />
+                        onChange={e => setSearchQuery(e.target.value)}/>
                 </Paper>
             </Box>
 
@@ -162,8 +159,7 @@ export default function Tickets({ auth, tickets }) {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        style={{ overflow: 'hidden' }}
-                    >
+                        style={{ overflow: 'hidden' }}>
                         <Paper sx={{ p: 4, borderRadius: '24px', mb: 4, boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' }}>
                             <form onSubmit={handleSubmit}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -190,8 +186,7 @@ export default function Tickets({ auth, tickets }) {
                                                     "& .MuiOutlinedInput-notchedOutline": { border: "none" },
                                                     "&:hover .MuiOutlinedInput-notchedOutline": { border: "none" },
                                                     "&.Mui-focused .MuiOutlinedInput-notchedOutline": { border: "none" },
-                                                }}
-                                            >
+                                                }}>
                                                 {PREDEFINED_SUBJECTS.map((s) => (
                                                     <MenuItem key={s} value={s}>{s}</MenuItem>
                                                 ))}
@@ -218,8 +213,7 @@ export default function Tickets({ auth, tickets }) {
                                                         "&:hover fieldset": { border: 'none' },
                                                         "&.Mui-focused fieldset": { border: 'none' },
                                                     }
-                                                }}
-                                            />
+                                                }}/>
                                         </motion.div>
                                     )}
 
@@ -242,8 +236,7 @@ export default function Tickets({ auth, tickets }) {
                                                     "&:hover fieldset": { border: 'none' },
                                                     "&.Mui-focused fieldset": { border: 'none' },
                                                 }
-                                            }} 
-                                        />
+                                            }}/>
                                     </motion.div>
 
                                     {/* 4. Кнопки управления */}
@@ -269,8 +262,7 @@ export default function Tickets({ auth, tickets }) {
                                                 fontWeight: 'bold',
                                                 textTransform: 'none',
                                                 '&:hover': { bgcolor: '#3311CC' }
-                                            }}
-                                        >
+                                            }}>
                                             Отправить запрос
                                         </Button>
                                     </motion.div>
@@ -300,15 +292,13 @@ export default function Tickets({ auth, tickets }) {
                         '& .MuiDataGrid-columnHeaders': { bgcolor: '#F4F7FE', borderBottom: 'none' },
                         '& .MuiDataGrid-cell': { borderBottom: '1px solid #F4F7FE' },
                         cursor: 'pointer'
-                    }}
-                />
+                    }}/>
             </Paper>
 
             <TicketsCardClient 
                 open={Boolean(selectedTicket)} 
                 onClose={() => setSelectedTicket(null)} 
-                ticket={selectedTicket} 
-            />
+                ticket={selectedTicket} />
         </ClientLayout>
     );
 }

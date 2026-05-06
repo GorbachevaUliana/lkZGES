@@ -74,13 +74,13 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
         { 
             field: 'user', 
             headerName: 'Потребитель', 
-            width: 200, 
+            flex: 1, 
             renderCell: (params) => params.row.user?.name || 'Не указан'
         },
         { 
             field: 'subject', 
             headerName: 'Тема заявки', 
-            width: 250 
+            flex: 1
         },
         { 
             field: 'message', 
@@ -108,8 +108,7 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
             width: 150,
             renderCell: (params) => {
                 const statusMap = {
-                    'new' : { label: 'Новое', color: 'primary'},
-                    'open': { label: 'Новое', color: 'primary' },
+                    'new': { label: 'Новое', color: 'primary' },
                     'closed': { label: 'Решено', color: 'success' },
                     'pending': { label: 'В работе', color: 'warning' }
                 };
@@ -169,8 +168,7 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                             fullWidth
                             sx={{ ml: 1, py: 1 }}
                             value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                        />
+                            onChange={e => setSearchQuery(e.target.value)}/>
                     </Paper>
                 </Box>
 
@@ -186,8 +184,7 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                             '& .MuiDataGrid-columnHeaders': { bgcolor: '#F4F7FE', borderBottom: 'none' },
                             '& .MuiDataGrid-cell': { borderBottom: '1px solid #F4F7FE' },
                             cursor: 'pointer'
-                        }}
-                    />
+                        }}/>
                 </Paper>
                 
                 <TicketCard 
@@ -198,8 +195,7 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                     showToast={showToast}
                     staff_members={staff_members}
                     auth={auth}
-                    onOpenClientCard={handleOpenClientCard}
-                />
+                    onOpenClientCard={handleOpenClientCard}/>
             </Box>
             {clientModalOpen && selectedClient && (
                 <ClientCard 
@@ -210,8 +206,7 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                     errors={errors}
                     showToast={showToast}
                     onDeleteClient={promptDeleteClient}
-                    onDeleteDocument={promptDeleteDocument}
-                />
+                    onDeleteDocument={promptDeleteDocument}/>
             )}
         </AdminLayout>
     );

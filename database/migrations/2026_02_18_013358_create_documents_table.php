@@ -14,9 +14,16 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
+            $table->foreignId('application_id')
+                  ->nullable()
+                  ->constrained()
+                  ->onDelete('set null');
+
             $table->string('name');
             $table->string('file_path');
             $table->string('type')->default('pdf');
+            $table->text('description')->nullable();
+            
             $table->timestamps();
         });
     }

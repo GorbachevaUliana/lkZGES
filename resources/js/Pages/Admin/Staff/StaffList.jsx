@@ -50,10 +50,15 @@ export default function StaffList({ auth, staff }) {
     const handleCreateSubmit = (e) => {
         e.preventDefault();
         post(route('admin.staff.store'), {
-            onSuccess: () => { 
-                setCreateOpen(false); 
+            preserveScroll: true, 
+            onSuccess: () => {
+                setCreateOpen(false);
                 showToast('Сотрудник успешно создан');
                 reset();
+            },
+            onError: (errors) => {
+                console.error('Ошибки валидации:', errors);
+                showToast('Ошибка при создании', 'error');
             }
         });
     };
@@ -82,15 +87,21 @@ export default function StaffList({ auth, staff }) {
     const filteredStaff = useMemo(() => {
         const query = searchQuery.toLowerCase();
         const altQuery = fixKeyboardLayout(query);
+        
         return (staff || []).filter(u => {
-            const s = `${u.name} ${u.role} ${u.email}`.toLowerCase();
+            // Защита от null/undefined через опциональную цепочку или пустую строку
+            const name = u.name?.toLowerCase() || '';
+            const role = u.role?.toLowerCase() || '';
+            const email = u.email?.toLowerCase() || '';
+            const s = `${name} ${role} ${email}`;
+            
             return s.includes(query) || s.includes(altQuery);
         });
     }, [searchQuery, staff]);
 
     const columns = [
         { field: 'name', headerName: 'ФИО Сотрудника', flex: 1, minWidth: 250 },
-        { 
+        {
             field: 'role', 
             headerName: 'Роль', 
             width: 150,
@@ -121,8 +132,7 @@ export default function StaffList({ auth, staff }) {
                                     sx={{ ml: 1 }}
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
-                                    inputProps = {{autoComplete: 'off', name: 'search-staff-unique'}}
-                                />
+                                    inputProps = {{autoComplete: 'off', name: 'search-staff-unique'}}/>
                             </Paper>
                             <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ borderRadius: '16px', bgcolor: '#4318FF', px: 3 }}>
                                 Добавить сотрудника
@@ -132,12 +142,11 @@ export default function StaffList({ auth, staff }) {
 
                     <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid 
-                            rows={filteredStaff} 
-                            columns={columns} 
-                            autoHeight 
+                            rows={filteredStaff}
+                            columns={columns}
+                            autoHeight
                             onRowDoubleClick={handleRowClick}
-                            sx={{ border: 'none', '& .MuiDataGrid-columnHeaders': { bgcolor: '#F4F7FE' } }}
-                        />
+                            sx={{ border: 'none', '& .MuiDataGrid-columnHeaders': { bgcolor: '#F4F7FE' } }}/>
                     </Paper>
 
                     {/* ДИАЛОГ СОЗДАНИЯ */}
@@ -176,19 +185,17 @@ export default function StaffList({ auth, staff }) {
                     </Dialog>
 
                     {/* КАРТОЧКА РЕДАКТИРОВАНИЯ */}
-                    <StaffCard 
+                    <StaffCard
                         open={editOpen} 
                         onClose={() => setEditOpen(false)} 
                         data={data} 
                         setData={setData} 
                         authUser={auth.user}
                         showToast={showToast}
-                        onDeleteStaff={promptDeleteStaff}
-                    />
+                        onDeleteStaff={promptDeleteStaff}/>
                     <ConfirmDialog 
                         open={confirmMeta.open} title={confirmMeta.title} content={confirmMeta.content} 
-                        onConfirm={confirmMeta.onConfirm} onClose={() => setConfirmMeta(p => ({ ...p, open: false }))} 
-                    />
+                        onConfirm={confirmMeta.onConfirm} onClose={() => setConfirmMeta(p => ({ ...p, open: false }))} />
 
                     <Snackbar open={toast.open} autoHideDuration={3000} onClose={() => setToast(p => ({ ...p, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
                         <Alert severity={toast.severity} variant="filled">{toast.message}</Alert>

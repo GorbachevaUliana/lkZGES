@@ -3,9 +3,11 @@ import ClientLayout from '@/Layouts/ClientLayout';
 import { Paper, Grid, Typography, Box, Button, TextField, Alert } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 
-export default function Profile({ auth, client }) {
+export default function Profile({ auth, client, application }) {
     return (
-        <ClientLayout user={auth.user} title="Личная информация">
+        <ClientLayout user={auth.user}
+        title="Личная информация"
+        application={application}>
             {!client ? (
                 <Paper sx={{ p: 4, borderRadius: '20px', textAlign: 'center', boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' }}>
                     <AssignmentIcon sx={{ fontSize: 60, color: '#4318FF', mb: 2 }} />

@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TicketController extends Controller
 {
@@ -46,14 +46,16 @@ class TicketController extends Controller
             ->get()
             ->map(function ($ticket) {
                 $ticket->attachments->map(function ($attachment) {
-                    $attachment->url = asset('storage/' . $attachment->file_path);
+                    $attachment->url = asset('storage/'.$attachment->file_path);
+
                     return $attachment;
                 });
+
                 return $ticket;
             });
 
         return Inertia::render('Client/Tickets', [
-            'tickets' => $tickets
+            'tickets' => $tickets,
         ]);
     }
 }

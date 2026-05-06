@@ -17,6 +17,8 @@ const AVAILABLE_PAGES = [
     {id:'clients', name:'Потребители'},
     {id:'tickets', name:'Обращения'},
     {id:'staff', name:'Сотрудники'},
+    {id:'applications', name:'Заявки'},
+    {id:'readings', name:'Показания'},
 ]
 
 export default function StaffCard({ open, onClose, data, setData, authUser, showToast, onDeleteStaff }) {

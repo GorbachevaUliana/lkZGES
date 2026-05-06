@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Client;
 
 class AccountController extends Controller
 {
     public function index()
     {
-        if (auth()->user()->client_id) {
-            return redirect()->route('dashboard');
+        $user = auth()->user();
+        if ($user->role === 'client' || $user->role === 'applicant') {
+            return redirect()->route('client.dashboard');
         }
 
         return Inertia::render('WelcomePage');
     }
+
     public function link(Request $request)
     {
         $request->validate([
@@ -26,7 +28,7 @@ class AccountController extends Controller
             ->where('last_name', 'ILIKE', $request->last_name)
             ->first();
 
-        if (!$client) {
+        if (! $client) {
             return back()->withErrors(['account_number' => 'Клиент с такими данными не найден.']);
         }
         $user = auth()->user();

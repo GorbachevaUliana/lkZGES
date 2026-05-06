@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\User;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class TicketController extends Controller
 {
@@ -17,36 +17,38 @@ class TicketController extends Controller
             'user.client.documents',
             'staff',
             'attachments',
-            'repliedBy'
-        ]); 
-        
+            'repliedBy',
+        ]);
+
         if ($user->role !== 'admin') {
             $query->where('staff_id', $user->id);
         }
 
         $tickets = $query->latest()->get()->map(function ($ticket) {
             $ticket->attachments->map(function ($attachment) {
-                $attachment->url = asset('storage/' . $attachment->file_path);
+                $attachment->url = asset('storage/'.$attachment->file_path);
+
                 return $attachment;
             });
+
             return $ticket;
         });
 
-        return Inertia::render('Admin/Tickets/Index', [
+        return Inertia::render('Admin/Tickets/TicketsIndex', [
             'tickets' => $tickets,
             'staff_members' => User::whereIn('role', ['staff', 'admin'])
-            ->where(function($query) {
-                $query->where('role', 'admin')
-                    ->orWhereJsonContains('permissions', 'tickets');
-            })
-            ->get(['id', 'name']) 
+                ->where(function ($query) {
+                    $query->where('role', 'admin')
+                        ->orWhereJsonContains('permissions', 'tickets');
+                })
+                ->get(['id', 'name']),
         ]);
     }
 
     public function update(Request $request, $id)
     {
         $ticket = Ticket::findOrFail($id);
-        
+
         $request->validate([
             'status' => 'required|string',
             'staff_id' => 'nullable|exists:users,id',
@@ -68,7 +70,7 @@ class TicketController extends Controller
                 $ticket->attachments()->create([
                     'file_path' => $path,
                     'file_name' => $file->getClientOriginalName(),
-                    'is_admin'  => true,
+                    'is_admin' => true,
                 ]);
             }
         }

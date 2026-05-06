@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { 
     Typography, Box, Dialog, DialogContent, TextField, 
     DialogActions, Tabs, Tab, Table, TableBody, TableCell, 
-    TableContainer, TableRow, IconButton, Button, Paper
+    TableContainer, TableRow, IconButton, Button, Paper,
+    FormControl, InputLabel, Select, MenuItem, Grid,
+    Divider, List, ListItem, ListItemIcon, ListItemText,
+    TableHead, Chip
 } from '@mui/material';
-import Grid from '@mui/material/Grid'; 
+import TimelineIcon from '@mui/icons-material/Timeline';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import { 
     Description as DescriptionIcon, 
     Delete as DeleteIcon, 
@@ -20,6 +24,8 @@ function TabPanel({ children, value, index }) {
     return value === index ? <Box sx={{ py: 3 }}>{children}</Box> : null;
 }
 
+const DADATA_API_KEY = "cd4b88f14527df99bbafecb1c09789391eb6f2ff";
+
 export default function ClientCard({ 
     open, 
     onClose, 
@@ -28,23 +34,21 @@ export default function ClientCard({
     errors,
     onDeleteClient,
     onDeleteDocument,
-    showToast 
+    showToast,
+    tariffs,
 }) {
     const [tabValue, setTabValue] = useState(0);
+
     const handleUpdateSubmit = () => {
         router.post(`/admin/clients/${data.id}`, {
             ...data,
             _method: 'PUT',
         }, {
-            onSuccess: () => {
-                showToast('Данные успешно обновлены');
-                console.log(data);
-            },
+            onSuccess: () => showToast('Данные успешно обновлены'),
             forceFormData: true
         });
     };
 
-    // 2. Загрузка файла
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -52,7 +56,6 @@ export default function ClientCard({
         router.post(route('admin.clients.upload', data.id), { file }, {
             forceFormData: true,
             onSuccess: (page) => {
-
                 const updated = page.props.clients.find(c => c.id === data.id);
                 if (updated) setData('documents', updated.documents);
                 showToast('Файл загружен');
@@ -60,17 +63,48 @@ export default function ClientCard({
         });
     };
 
+    const displayName = data.client_type === 'legal' 
+        ? data.company_name 
+        : `${data.last_name || ''} ${data.first_name || ''} ${data.middle_name || ''}`;
+
+    const inputSx = {
+        '& .MuiOutlinedInput-root': {
+            borderRadius: '12px',
+            backgroundColor: '#fff',
+
+            '& input': {
+                padding: '12px 14px',
+            },
+
+            '& fieldset': {
+                borderColor: '#E0E5F2',
+            },
+            '&:hover fieldset': {
+                borderColor: '#B8C1EC',
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: '#4318FF',
+            },
+        },
+    };
+
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: '24px' } }}>
             {/* Шапка карточки */}
             <Box sx={{ bgcolor: '#0B1437', color: 'white', p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <ClientAvatar name={data.last_name} sx={{ width: 56, height: 56 }} />
+                    <ClientAvatar name={data.client_type === 'legal' ? data.company_name : data.last_name} sx={{ width: 56, height: 56 }} />
                     <Box>
                         <Typography variant="h5" fontWeight="bold">
-                            {data.last_name} {data.first_name} {data.middle_name}
+                            {displayName || 'Загрузка...'}
                         </Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.7 }}>Л/С: {data.account_number}</Typography>
+                        <Box display="flex" gap={2} sx={{ opacity: 0.7 }}>
+                            <Typography variant="body2">Л/С: {data.account_number}</Typography>
+                            <Typography variant="body2">•</Typography>
+                            <Typography variant="body2">
+                                {data.client_type === 'legal' ? 'Юр. лицо' : 'Физ. лицо'}
+                            </Typography>
+                        </Box>
                     </Box>
                 </Box>
                 <IconButton onClick={() => onDeleteClient(data.id)} sx={{ color: '#FF5B5B' }}>
@@ -85,49 +119,72 @@ export default function ClientCard({
             </Tabs>
 
             <DialogContent sx={{ minHeight: '400px', bgcolor: '#fafbfd' }}>
-                {/* TAB 0: Профиль */}
                 <TabPanel value={tabValue} index={0}>
-                    <Grid container spacing={3}>
+                    <Grid container spacing={2}>
+                        {/* Тип клиента и Тариф */}
                         <Grid item xs={12}>
+                            <FormControl fullWidth sx={inputSx}>
+                                <InputLabel>Тип клиента</InputLabel>
+                                <Select 
+                                    value={data.client_type || 'individual'} 
+                                    onChange={e => setData('client_type', e.target.value)}>
+                                    <MenuItem value="individual">Физическое лицо</MenuItem>
+                                    <MenuItem value="legal">Юридическое лицо</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
                         <Grid item xs={12}>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
-                                Адрес регистрации
-                            </Typography>
-                            <AddressSuggestions
-                                token="cd4b88f14527df99bbafecb1c09789391eb6f2ff"
-                                value={data.address ? { value: data.address } : null}
-                                onChange={(suggestion) => {
-                                    setData('address', suggestion.value);
-                                }}
-                                containerClassName="dadata-input-container"
-                                inputProps={{
-                                    placeholder: "Введите адрес или выберите из списка",
-                                    name: "address", 
-                                    onChange: (e) => setData('address', e.target.value),
-                                    style: {
-                                        width: '100%',
-                                        padding: '10px 12px',
-                                        border: '1px solid #E0E5F2',
-                                        borderRadius: '12px',
-                                        fontSize: '14px',
-                                        outline: 'none'
-                                    },
-                                    value: data.address || '' 
+                            <FormControl fullWidth sx={inputSx}>
+                                <InputLabel>Тариф</InputLabel>
+                                <Select
+                                    value={data.tariff_id || ''}
+                                    onChange={e => setData('tariff_id', e.target.value)}>
+                                    {tariffs?.map(t => (
+                                        <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Адрес регистрации"
+                                value={data.address || ''}
+                                onChange={(e) => setData('address', e.target.value)}
+                                sx={inputSx}
+                                InputProps={{
+                                    inputComponent: ({ inputRef, ...props }) => (
+                                        <AddressSuggestions
+                                            token={DADATA_API_KEY}
+                                            {...props}
+                                            inputRef={inputRef}
+                                            onChange={(s) => setData('address', s.value)}
+                                        />
+                                    ),
                                 }}
                             />
-                            {errors.address && (
-                                <Typography color="error" variant="caption">{errors.address}</Typography>
-                            )}
                         </Grid>
-                        </Grid>
-                        <Grid item xs={4}><TextField fullWidth label="Фамилия" variant="standard" value={data.last_name || ''} onInput={e => setData('last_name', e.target.value)} /></Grid>
-                        <Grid item xs={4}><TextField fullWidth label="Имя" variant="standard" value={data.first_name || ''} onInput={e => setData('first_name', e.target.value)} /></Grid>
-                        <Grid item xs={4}><TextField fullWidth label="Отчество" variant="standard" value={data.middle_name || ''} onInput={e => setData('middle_name', e.target.value)} /></Grid>
-                        <Grid item xs={6}><TextField fullWidth label="Телефон" variant="standard" value={data.phone || ''} onInput={e => setData('phone', e.target.value)} /></Grid>
-                        <Grid item xs={6}><TextField fullWidth label="Email" variant="standard" value={data.email || ''} onInput={e => setData('email', e.target.value)} /></Grid>
+
+                        {/* Условные поля: Компания или ФИО */}
+                        {data.client_type === 'legal' ? (
+                            <Grid item xs={12}>
+                                <TextField fullWidth label="Название компании" variant="outlined" value={data.company_name || ''} onChange={e => setData('company_name', e.target.value)} sx={inputSx} />
+                            </Grid>
+                        ) : (
+                            <>
+                                <Grid item xs={12}><TextField fullWidth label="Фамилия" variant="outlined" value={data.last_name || ''} onChange={e => setData('last_name', e.target.value)} sx={inputSx} /></Grid>
+                                <Grid item xs={12}><TextField fullWidth label="Имя" variant="outlined" value={data.first_name || ''} onChange={e => setData('first_name', e.target.value)} sx={inputSx} /></Grid>
+                                <Grid item xs={12}><TextField fullWidth label="Отчество" variant="outlined" value={data.middle_name || ''} onChange={e => setData('middle_name', e.target.value)} sx={inputSx} /></Grid>
+                            </>
+                        )}
+
+                        <Grid item xs={12}><TextField fullWidth label="Телефон" variant="outlined" value={data.phone || ''} onChange={e => setData('phone', e.target.value)} sx={inputSx} /></Grid>
+                        <Grid item xs={12}><TextField fullWidth label="Email" variant="outlined" value={data.email || ''} onChange={e => setData('email', e.target.value)} sx={inputSx} /></Grid>
                     </Grid>
+
                     <Box display="flex" justifyContent="flex-end" mt={3}>
-                        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleUpdateSubmit} sx={{ bgcolor: '#4318FF' }}>
+                        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleUpdateSubmit} sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4 }}>
                             Сохранить изменения
                         </Button>
                     </Box>
@@ -166,12 +223,92 @@ export default function ClientCard({
                     </TableContainer>
                 </TabPanel>
                 
-                {/* TAB 2: Показания */}
                 <TabPanel value={tabValue} index={2}>
-                    <Box textAlign="center" py={4} color="text.secondary">
-                        <SpeedIcon sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
-                        <Typography>Блок «ПОКАЗАНИЯ» будет реализован здесь.</Typography>
-                    </Box>
+                    <Grid container spacing={3}>
+                        {/* Мини-статистика сверху */}
+                        <Grid item xs={12} md={4}>
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: '15px', textAlign: 'center', bgcolor: '#F4F7FE' }}>
+                                <Typography variant="caption" color="text.secondary">Текущий баланс</Typography>
+                                <Typography variant="h5" fontWeight="bold" color={data.balance < 0 ? "#FF5B5B" : "#05CD99"}>
+                                    {data.balance || 0} ₽
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: '15px', textAlign: 'center', bgcolor: '#F4F7FE' }}>
+                                <Typography variant="caption" color="text.secondary">Среднее в месяц</Typography>
+                                <Typography variant="h5" fontWeight="bold" color="#2B3674">
+                                    {data.readings?.length > 0 ? (data.readings.reduce((acc, curr) => acc + curr.consumed, 0) / data.readings.length).toFixed(1) : 0} кВт
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: '15px', textAlign: 'center', bgcolor: '#F4F7FE' }}>
+                                <Typography variant="caption" color="text.secondary">Последняя поверка</Typography>
+                                <Typography variant="h5" fontWeight="bold" color="#2B3674">
+                                    {data.verification_date || '—'}
+                                </Typography>
+                            </Paper>
+                        </Grid>
+
+                        {/* График или Таблица истории */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" fontWeight="bold" color="#2B3674" mb={2}>
+                                История потребления
+                            </Typography>
+                            
+                            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: '15px', maxHeight: '300px' }}>
+                                <Table stickyHeader size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={{ bgcolor: '#F4F7FE', fontWeight: 'bold' }}>Период</TableCell>
+                                            <TableCell sx={{ bgcolor: '#F4F7FE', fontWeight: 'bold' }}>Показание</TableCell>
+                                            <TableCell sx={{ bgcolor: '#F4F7FE', fontWeight: 'bold' }}>Расход</TableCell>
+                                            <TableCell sx={{ bgcolor: '#F4F7FE', fontWeight: 'bold' }}>Сумма</TableCell>
+                                            <TableCell sx={{ bgcolor: '#F4F7FE', fontWeight: 'bold' }}>Статус</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {data.readings?.length > 0 ? data.readings.map((reading) => (
+                                            <TableRow key={reading.id}>
+                                                <TableCell>{new Date(reading.reading_date).toLocaleDateString('ru-RU', {month: 'long', year: 'numeric'})}</TableCell>
+                                                <TableCell>{reading.current_value}</TableCell>
+                                                <TableCell>{reading.current_value - reading.previous_value} кВт</TableCell>
+                                                <TableCell><b>{reading.total_sum} ₽</b></TableCell>
+                                                <TableCell>
+                                                    <Chip 
+                                                        label={reading.is_paid ? "Оплачено" : "Долг"} 
+                                                        size="small" 
+                                                        color={reading.is_paid ? "success" : "error"}
+                                                        variant="soft"
+                                                        sx={{ borderRadius: '6px', fontSize: '11px' }}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow>
+                                                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                                                    Данные о показаниях отсутствуют
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Grid>
+
+                        {/* Кнопка ручной корректировки для админа */}
+                        <Grid item xs={12}>
+                            <Button 
+                                variant="text" 
+                                startIcon={<SpeedIcon />} 
+                                sx={{ textTransform: 'none', color: '#4318FF' }}
+                                onClick={() => {/* Логика добавления показания админом */}}
+                            >
+                                Внести показание вручную
+                            </Button>
+                        </Grid>
+                    </Grid>
                 </TabPanel>
             </DialogContent>
 

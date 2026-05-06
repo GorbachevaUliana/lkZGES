@@ -20,11 +20,13 @@ export default function AdminLayout({ children }) {
         { id: 'clients', label: 'Потребители', route: 'admin.clients.index' },
         { id: 'tickets', label: 'Обращения', route: 'admin.tickets.index' },
         { id: 'staff', label: 'Сотрудники', route: 'admin.staff.index' },
+        { id: 'applications', label: 'Заявки', route: 'admin.applications.index' },
+        { id: 'readings', label: 'Показания', route: 'admin.readings.index' }
     ];
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F4F7FE' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F4F7FE'}}>
             {/* Верхняя панель */}
-            <AppBar position="static" sx={{ bgcolor: '#fff', color: '#2B3674', boxShadow: 'none', borderBottom: '1px solid #E0E5F2' }}>
+            <AppBar position="sticky" sx={{ bgcolor: '#fff', color: '#2B3674', boxShadow: 'none', borderBottom: '1px solid #E0E5F2'}}>
                 <Container maxWidth="xl">
                     <Toolbar sx={{ justifyContent: 'space-between' }}>
                         <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
@@ -36,8 +38,7 @@ export default function AdminLayout({ children }) {
                                         key={item.id}
                                         component={Link} 
                                         href={route(item.route)} 
-                                        sx={{ color: route().current(item.route) ? '#4318FF' : '#A3AED0' }}
-                                    >
+                                        sx={{ color: route().current(item.route) ? '#4318FF' : '#A3AED0' }}>
                                         {item.label}
                                     </Button>
                                 )
@@ -51,8 +52,7 @@ export default function AdminLayout({ children }) {
                             
                             <Avatar 
                                 sx={{ cursor: 'pointer', bgcolor: '#4318FF' }} 
-                                onClick={(e) => setAnchorEl(e.currentTarget)}
-                            >
+                                onClick={(e) => setAnchorEl(e.currentTarget)}>
                                 {user?.name ? user.name[0] : '?'}
                             </Avatar>
 

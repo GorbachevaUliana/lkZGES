@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class CheckPermission
 {
@@ -16,8 +15,10 @@ class CheckPermission
     public function handle($request, Closure $next, $permission)
     {
         $user = auth()->user();
-        
-        if ($user->role === 'admin') return $next($request);
+
+        if ($user->role === 'admin') {
+            return $next($request);
+        }
 
         if ($user->permissions && in_array($permission, $user->permissions)) {
             return $next($request);

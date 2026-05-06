@@ -41,8 +41,7 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                     <Typography variant="h6" fontWeight="bold">Обращение №{data.id}</Typography>
                     <Button 
                         onClick={() => onOpenClientCard(data.user_id)}
-                        sx={{ color: 'rgba(255,255,255,0.8)', textTransform: 'none', p: 0, '&:hover': { color: '#fff', bgcolor: 'transparent' } }}
-                    >
+                        sx={{ color: 'rgba(255,255,255,0.8)', textTransform: 'none', p: 0, '&:hover': { color: '#fff', bgcolor: 'transparent' } }}>
                         От: {data.user?.name || `Пользователь #${data.user_id}`}
                     </Button>
                 </Box>
@@ -67,9 +66,7 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                                     onClick={() => window.open(file.url, '_blank')}
                                     variant="outlined" 
                                     size="small" 
-                                    clickable
-                                />
-                            
+                                    clickable/>
                             
                             )) : <Typography variant="body2" color="textDisabled">Нет файлов</Typography>}
                         </Box>
@@ -79,8 +76,7 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                                 <InputLabel>Статус обращения</InputLabel>
                                 <Select
                                     value={data.status || ''}
-                                    onChange={(e) => setData('status', e.target.value)}
-                                >
+                                    onChange={(e) => setData('status', e.target.value)}>
                                     <MenuItem value="open">Новое</MenuItem>
                                     <MenuItem value="closed">Решено</MenuItem>
                                     <MenuItem value="pending">В работе</MenuItem>
@@ -95,8 +91,7 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                             <Select 
                                 value={data.staff_id || ''} 
                                 label="Ответственный" 
-                                onChange={e => setData('staff_id', e.target.value)}
-                            >
+                                onChange={e => setData('staff_id', e.target.value)}>
                                 <MenuItem value=""><em>Не назначен</em></MenuItem>
                                 
                                 {staff_members.map(m => (
@@ -135,8 +130,7 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                                             label={file.file_name} 
                                             size="small" 
                                             onClick={() => window.open(file.url, '_blank')}
-                                            sx={{ bgcolor: '#fff', border: '1px solid #E0E5F2' }}
-                                        />
+                                            sx={{ bgcolor: '#fff', border: '1px solid #E0E5F2' }}/>
                                     ))}
                                 </Box>
                             </Box>
@@ -146,22 +140,19 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                         <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                             {data.replied_at ? 'Дополнить ответ:' : 'Написать ответ:'}
                         </Typography>
+
                         <TextField
                             fullWidth multiline rows={6}
                             placeholder="Введите текст ответа потребителю..."
                             value={data.admin_reply || ''}
                             onChange={e => setData('admin_reply', e.target.value)}
-                            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                        />
+                            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}/>
                         
                         <Button
                             variant="outlined"
-
-                            
                             component="label"
                             startIcon={<UploadIcon />}
-                            sx={{ mt: 2, borderRadius: '10px', textTransform: 'none', borderColor: '#E0E5F2', color: '#1B2559' }}
-                        >
+                            sx={{ mt: 2, borderRadius: '10px', textTransform: 'none', borderColor: '#E0E5F2', color: '#1B2559' }}>
                             Прикрепить документы (Админ)
                             <input type="file" hidden multiple onChange={e => setData('admin_files', Array.from(e.target.files))} />
                         </Button>
@@ -184,8 +175,7 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                     variant="contained" 
                     onClick={handleUpdate}
                     startIcon={<SaveIcon />}
-                    sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4, py: 1 }}
-                >
+                    sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4, py: 1 }}>
                     Сохранить и ответить
                 </Button>
             </DialogActions>

@@ -17,7 +17,7 @@ export default function WelcomePage() {
 
     return (
         <Container maxWidth="lg">
-            <Head title="Добро пожаловать" />
+            <Head title="Добро пожаловать"/>
             
             <Box sx={{ mt: 8, textAlign: 'center' }}>
                 <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">

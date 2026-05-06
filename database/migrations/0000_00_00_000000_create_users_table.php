@@ -17,8 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('role')->default('guest'); 
-            $table->foreignId('client_id')->nullable()->constrained('clients')->onDelete('set null');
+            $table->string('role')->default('client')->after('email');
+            $table->string('status')->default('active')->after('role');
+            $table->json('permissions')->nullable();
+            //$table->foreignId('client_id')->nullable()->constrained('clients')->onDelete('set null');
             $table->rememberToken();
             $table->timestamps();
         });

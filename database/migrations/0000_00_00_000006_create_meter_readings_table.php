@@ -13,14 +13,16 @@ return new class extends Migration
     {
         Schema::create('meter_readings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('client_id')->constrained()->onDelete('cascade');
+            $table->foreignId('property_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tariff_id')->nullable()->constrained('tariffs')->onDelete('set null');
             $table->integer('previous_value')->default(0);
             $table->integer('current_value');
-            $table->integer('consumed')->storedAs('current_value - previous_value');
-            $table->decimal('tariff', 8, 2)->default(5.45);
-            $table->decimal('total_sum', 10, 2);
+            $table->integer('consumed')->virtualAs('current_value - previous_value');
+            $table->decimal('total_sum', 10, 2)->nullable();
             $table->date('reading_date');
             $table->boolean('is_paid')->default(false);
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
     }

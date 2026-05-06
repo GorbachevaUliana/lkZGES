@@ -10,8 +10,11 @@ class TicketAttachment extends Model
         'ticket_id',
         'file_path',
         'file_name',
-        'is_admin'
+        'is_admin',
     ];
 
-    public function ticket() { return $this->belongsTo(Ticket::class); }
+    public function ticket()
+    {
+        return $this->belongsTo(Ticket::class);
+    }
 }

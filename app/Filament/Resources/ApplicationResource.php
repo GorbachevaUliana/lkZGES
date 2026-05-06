@@ -3,15 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ApplicationResource\Pages;
-use App\Filament\Resources\ApplicationResource\RelationManagers;
 use App\Models\Application;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ApplicationResource extends Resource
 {
@@ -40,7 +37,27 @@ class ApplicationResource extends Resource
                             ])->required(),
                         Forms\Components\Textarea::make('admin_comment')
                             ->label('Комментарий для потребителя'),
-                    ])
+                    ]),
+                Forms\Components\Section::make('Обработка')
+                    ->schema([
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'new' => 'Новая',
+                                'processing' => 'В работе',
+                                'approved' => 'Одобрена',
+                                'rejected' => 'Отклонена',
+                            ])->required(),
+
+                        // Выбор тарифа
+                        Forms\Components\Select::make('tariff_id')
+                            ->label('Назначить тариф')
+                            ->options(\App\Models\Tariff::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->helperText('Выберите тариф, который будет закреплен за потребителем при одобрении'),
+
+                        Forms\Components\Textarea::make('admin_comment')
+                            ->label('Комментарий для потребителя'),
+                    ]),
             ]);
     }
 
@@ -61,7 +78,6 @@ class ApplicationResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')->label('Дата подачи заявления')->dateTime(),
             ])
             ->filters([
-                //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -76,7 +92,6 @@ class ApplicationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
         ];
     }
 

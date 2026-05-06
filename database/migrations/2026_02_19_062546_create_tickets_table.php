@@ -14,9 +14,13 @@ return new class extends Migration
         Schema::create('tickets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('staff_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('replied_by')->nullable()->constrained('users');
             $table->string('subject');
             $table->text('message');
             $table->string('status')->default('new');
+            $table->text('admin_reply')->nullable();
+            $table->timestamp('replied_at')->nullable();
             $table->timestamps();
         });
     }
