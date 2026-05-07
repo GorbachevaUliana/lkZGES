@@ -16,31 +16,25 @@ import { Link, router, usePage } from '@inertiajs/react';
 
 const drawerWidth = 280;
 
-export default function ClientLayout({ user, children, title, application, properties, hasActiveProperties }) {
+export default function ClientLayout({ user, children, title, application }) {
     const { props } = usePage();
     const userData = user || props?.auth?.user;
     const applicationData = application || props?.application;
-    const propertiesData = properties || props?.properties;
-    const hasActive = hasActiveProperties ?? props?.hasActiveProperties ?? false;
-
-    // ИСПРАВЛЕНИЕ: Проверяем наличие активных объектов, а не только статус заявки
-    // Пользователь с активными properties имеет полный доступ
-    const canUseFullFeatures = hasActive || (propertiesData && propertiesData.some(p => p.status === 'active' && p.account_number));
+    
 
     const currentStatus = applicationData?.status || 'pending';
     const isApproved = currentStatus === 'approved';
     const isRejected = currentStatus === 'rejected';
     const hasApplication = !!applicationData;
 
-    // ИСПРАВЛЕНИЕ: Меню зависит от наличия активных объектов
-    const menuItems = !canUseFullFeatures && hasApplication 
+    const menuItems = !isApproved && hasApplication 
         ? [
             // Для pending/processing/rejected - урезанное меню
             { label: 'Главная', icon: <HomeIcon />, href: route('client.dashboard'), active: route().current('client.dashboard') },
             { label: 'Мои документы', icon: <DescriptionIcon />, href: route('client.documents'), active: route().current('client.documents') },
         ]
         : [
-            // Полное меню при наличии активных объектов
+            // Для approved - полное меню
             { label: 'Главная', icon: <HomeIcon />, href: route('client.dashboard'), active: route().current('client.dashboard') },
             { label: 'Мой профиль', icon: <PersonIcon />, href: route('client.profile'), active: route().current('client.profile') },
             { label: 'Документы', icon: <DescriptionIcon />, href: route('client.documents'), active: route().current('client.documents') },
@@ -59,6 +53,7 @@ export default function ClientLayout({ user, children, title, application, prope
                 }}>
                 {/* Шапка профиля с динамическим статусом */}
                 <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {/* <Avatar sx={{ bgcolor: isApproved ? '#4318FF' : isRejected ? '#C62828' : '#F57C00' }}> */}
                     <Avatar sx={{ bgcolor: '#4318FF'}}>
                         {userData?.name?.[0] || '?'}
                     </Avatar>
@@ -69,8 +64,7 @@ export default function ClientLayout({ user, children, title, application, prope
                     </Box>
                 </Box>
                 <Divider sx={{ mx: 2, mb: 2 }} />
-                {/* ИСПРАВЛЕНИЕ: Предупреждение показываем только без активных объектов */}
-                {!canUseFullFeatures && hasApplication && (
+                {!isApproved && hasApplication && (
                     <Alert 
                         severity={isRejected ? 'error' : 'info'} 
                         sx={{ mx: 2, mb: 2, borderRadius: '12px', fontSize: '12px' }}>

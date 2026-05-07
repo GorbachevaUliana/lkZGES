@@ -37,30 +37,27 @@ class ApplicationSubmitController extends Controller
     {
         $template = ApplicationTemplate::where('slug', $slug)->firstOrFail();
         $clientType = $request->input('client_type', 'individual');
-
-        // Нормализуем данные
-        $validatedData = $this->normalizeData($request->all());
+        
+        $validatedData = $this->normalizeData($request->all()); 
         $validatedData['client_type'] = $clientType;
 
         return DB::transaction(function () use ($validatedData, $template, $clientType, $request) {
             $user = auth()->user();
 
-            // 1. Создаём/обновляем клиента
+            // 1. Клиент
             $client = $this->createClient($validatedData, $user);
 
-            // 2. Создаём объект (Property)
-            $fullAddress = $this->buildFullAddress($validatedData);
-
+            // 2. Объект (Property)
             $property = Property::create([
                 'client_id' => $client->id,
-                'address' => $fullAddress,
+                'address' => $validatedData['address'] ?? $validatedData['Адрес'] ?? 'Не указано',
                 'status' => 'pending',
             ]);
 
-            // 3. Обновляем роль пользователя
+            // 3. Роль
             $user->update(['role' => 'applicant']);
 
-            // 4. Создаём заявку
+            // 4. Сначала создаем заявку (пустая ссылка на PDF пока что)
             $application = Application::create([
                 'user_id' => $user->id,
                 'client_id' => $client->id,
@@ -69,13 +66,13 @@ class ApplicationSubmitController extends Controller
                 'client_type' => $clientType,
                 'data' => $validatedData,
                 'status' => 'pending',
-                'generated_pdf_path' => '',
+                'generated_pdf_path' => '', // Заполним через минуту
             ]);
 
-            // 5. Генерируем PDF
+            // 5. Генерируем PDF, передавая и заявку, и объект недвижимости
             $pdfPath = $this->generatePdf($validatedData, $client, $clientType, $application, $property);
 
-            // 6. Обновляем путь к PDF
+            // 6. Обновляем путь к PDF в заявке
             $application->update(['generated_pdf_path' => $pdfPath]);
 
             // 7. Регистрируем документ
@@ -94,16 +91,11 @@ class ApplicationSubmitController extends Controller
                 ->with('success', 'Заявка успешно отправлена!');
         });
     }
-
-    /**
-     * Нормализация данных формы
-     */
     private function normalizeData(array $data): array
     {
         $normalized = [];
 
         foreach ($data as $key => $value) {
-            // Чекбоксы: { preset: [...], custom: [...] }
             if (is_array($value) && isset($value['preset'])) {
                 $presets = $value['preset'] ?? [];
                 $customs = collect($value['custom'] ?? [])
@@ -112,131 +104,62 @@ class ApplicationSubmitController extends Controller
                     ->toArray();
 
                 $normalized[$key] = implode(', ', array_merge($presets, $customs));
+
                 continue;
             }
 
-            // Селекты: { value: '...', customValue: '...' }
             if (is_array($value) && isset($value['value'])) {
                 $normalized[$key] = ($value['value'] === 'other')
                     ? ($value['customValue'] ?? 'Не указано')
                     : $value['value'];
+
                 continue;
             }
 
-            // Остальные значения
             $normalized[$key] = $value;
         }
 
         return $normalized;
     }
 
-    /**
-     * Создание/обновление клиента
-     */
     private function createClient(array $data, $user): Client
     {
-        // Ищем телефон в разных полях
-        $phone = $data['phone']
-            ?? $data['Телефон']
-            ?? $data['Контактный телефон']
-            ?? null;
-
-        // ФИО - поддерживаем разные ключи
-        $lastName = $data['last_name'] ?? $data['Фамилия'] ?? null;
-        $firstName = $data['first_name'] ?? $data['Имя'] ?? null;
-        $middleName = $data['middle_name'] ?? $data['Отчество'] ?? null;
-
-        // Данные для юрлиц
-        $companyName = $data['company_name'] ?? $data['Наименование организации'] ?? null;
-        $inn = $data['inn'] ?? $data['ИНН'] ?? null;
-
         return Client::updateOrCreate(
             ['user_id' => $user->id],
             [
                 'client_type' => $data['client_type'] ?? 'individual',
-                'last_name' => $lastName ?? 'Не указано',
-                'first_name' => $firstName ?? 'Не указано',
-                'middle_name' => $middleName ?? '',
-                'phone' => $phone,
-                'email' => $user->email,
-                'company_name' => $companyName,
-                'inn' => $inn,
+                'last_name' => $data['last_name'] ?? $data['Фамилия'] ?? 'Не указано',
+                'first_name' => $data['first_name'] ?? $data['Имя'] ?? 'Не указано',
+                'middle_name' => $data['middle_name'] ?? $data['Отчество'] ?? '',
+                // 'address' => $data['address'] ?? $data['Адрес'] ?? 'Не указано',
+                'phone' => $data['phone'] ?? $data['Телефон'] ?? 'Не указано',
+                'company_name' => $data['company_name'] ?? $data['Наименование организации'] ?? null,
+                'inn' => $data['inn'] ?? $data['ИНН'] ?? null,
             ]
         );
     }
 
-    /**
-     * Сборка полного адреса из составных полей
-     */
-    private function buildFullAddress(array $data): string
-    {
-        // Если есть готовое поле address - используем его
-        if (!empty($data['address'])) return $data['address'];
-        if (!empty($data['Адрес'])) return $data['Адрес'];
-
-        $parts = [];
-
-        // Регион (поддерживаем разные ключи, включая с пробелом)
-        $region = $data['region'] ?? $data[' region'] ?? $data['Регион'] ?? null;
-        if (!empty($region)) $parts[] = $region;
-
-        // Район
-        if (!empty($data['district'])) $parts[] = $data['district'];
-        elseif (!empty($data['Район'])) $parts[] = $data['Район'];
-
-        // Населенный пункт
-        $locality = $data['locality'] ?? $data['Населенный пункт'] ?? $data['Город'] ?? $data['city'] ?? null;
-        if (!empty($locality)) $parts[] = $locality;
-
-        // Улица
-        if (!empty($data['street'])) $parts[] = 'ул. ' . $data['street'];
-        elseif (!empty($data['Улица'])) $parts[] = 'ул. ' . $data['Улица'];
-
-        // Дом
-        if (!empty($data['house'])) $parts[] = 'д. ' . $data['house'];
-        elseif (!empty($data['Дом'])) $parts[] = 'д. ' . $data['Дом'];
-
-        // Корпус
-        if (!empty($data['corpus'])) $parts[] = 'корп. ' . $data['corpus'];
-        elseif (!empty($data['Корпус'])) $parts[] = 'корп. ' . $data['Корпус'];
-        elseif (!empty($data['building'])) $parts[] = 'корп. ' . $data['building'];
-
-        // Квартира
-        if (!empty($data['apartment'])) $parts[] = 'кв. ' . $data['apartment'];
-        elseif (!empty($data['Квартира'])) $parts[] = 'кв. ' . $data['Квартира'];
-
-        if (empty($parts)) {
-            return 'Адрес не указан';
-        }
-
-        return implode(', ', $parts);
-    }
-
-    /**
-     * Генерация PDF документа
-     */
     private function generatePdf(array $data, Client $client, string $clientType, $application, $property): string
     {
         $pdfTemplate = PdfTemplate::getTemplate($clientType, PdfTemplate::DOC_APPLICATION);
 
-        // Основные данные (системные)
         $mainInfo = [
-            'application_id' => $application->id,
-            'full_name' => trim("{$client->last_name} {$client->first_name} {$client->middle_name}"),
+            'application_id' => $application->id, // Теперь тут реальный номер заявки
+            'full_name' => "{$client->last_name} {$client->first_name} {$client->middle_name}",
             'user_email' => auth()->user()->email,
             'created_at' => now()->format('d.m.Y H:i'),
             'client_type_name' => Client::getClientTypes()[$clientType] ?? $clientType,
-            'address' => $property->address,
-            'phone' => $client->phone ?? 'Не указан',
-            // Для юрлиц
-            'company_name' => $client->company_name,
-            'inn' => $client->inn,
+            'address' => $property->address, // Берем адрес из объекта недвижимости
+            'phone' => $client->phone,
         ];
 
-        // Объединяем с данными из формы
-        $templateData = array_merge($data, $mainInfo);
-        // Добавляем $data для доступа в шаблоне
-        $templateData['data'] = $templateData;
+        $excludeKeys = [
+            'last_name', 'first_name', 'middle_name', 'address', 'phone',
+            'client_type', 'Фамилия', 'Имя', 'Отчество', 'Адрес', 'Телефон',
+        ];
+        $extraData = array_diff_key($data, array_flip($excludeKeys));
+
+        $templateData = array_merge($extraData, $mainInfo);
 
         if ($pdfTemplate) {
             $htmlContent = $pdfTemplate->render($templateData);
@@ -246,7 +169,8 @@ class ApplicationSubmitController extends Controller
         }
 
         $pdf = Pdf::loadHTML($htmlContent)->setPaper('a4');
-
+        
+        // Имя файла теперь тоже может содержать ID заявки для удобства
         $fileName = 'app_no_'.$application->id.'_'.time().'.pdf';
         $filePath = 'applications/'.$fileName;
 
@@ -255,9 +179,6 @@ class ApplicationSubmitController extends Controller
         return $filePath;
     }
 
-    /**
-     * Обработка загруженных файлов
-     */
     private function handleUploadedFiles(Request $request, Client $client, $appId): void
     {
         foreach ($request->allFiles() as $file) {

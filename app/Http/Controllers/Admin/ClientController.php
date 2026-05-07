@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Property;
 use App\Models\Tariff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -11,10 +12,72 @@ use Inertia\Inertia;
 
 class ClientController extends Controller
 {
+    /**
+     * Список потребителей
+     * ИСПРАВЛЕНО: Показываем только клиентов с активными объектами (ЛС)
+     * При мульти-собственности один клиент может иметь несколько объектов
+     */
     public function index()
     {
+        // Фильтруем клиентов, у которых есть хотя бы один активный объект с ЛС
+        // Загружаем properties заранее через with()
+        $clients = Client::with(['documents', 'tariff', 'readings', 'properties'])
+            ->whereHas('properties', function ($query) {
+                $query->where('status', 'active')
+                    ->whereNotNull('account_number')
+                    ->where('account_number', '!=', '');
+            })
+            ->get()
+            ->map(function ($client) {
+                // Фильтруем только активные properties из уже загруженных
+                $activeProperties = $client->properties->filter(function ($property) {
+                    return $property->status === 'active' 
+                        && !empty($property->account_number);
+                })->values();
+
+                // Определяем статус на основе активных объектов
+                $statusName = $client->status_name; // Вычисляется через аксессор
+                $status = $activeProperties->count() > 0 ? 'active' : 'inactive';
+                
+                // Получаем адрес из первого активного объекта
+                $propertyAddress = $activeProperties->first()?->address ?? $client->address;
+                // Получаем все ЛС одной строкой
+                $accountNumbersStr = $activeProperties->pluck('account_number')->implode(', ');
+                
+                return [
+                    'id' => $client->id,
+                    'user_id' => $client->user_id,
+                    'client_type' => $client->client_type,
+                    'client_type_name' => $client->client_type_name,
+                    'last_name' => $client->last_name,
+                    'first_name' => $client->first_name,
+                    'middle_name' => $client->middle_name,
+                    'full_name' => $client->full_name,
+                    'display_name' => $client->display_name,
+                    'company_name' => $client->company_name,
+                    'inn' => $client->inn,
+                    // ИСПРАВЛЕНО: адрес берём из первого активного объекта
+                    'address' => $propertyAddress,
+                    'phone' => $client->phone,
+                    'email' => $client->email,
+                    'status' => $status,
+                    'status_name' => $statusName,
+                    'tariff_id' => $client->tariff_id,
+                    'tariff' => $client->tariff,
+                    'tariff_category' => $client->tariff_category,
+                    'documents' => $client->documents,
+                    'readings' => $client->readings,
+                    'properties' => $activeProperties,
+                    'properties_count' => $activeProperties->count(),
+                    // ИСПРАВЛЕНО: Добавляем account_number для совместимости с фронтендом
+                    'account_number' => $accountNumbersStr ?: null,
+                    'account_numbers' => $accountNumbersStr,
+                    'created_at' => $client->created_at,
+                ];
+            });
+
         return Inertia::render('Admin/ClientsList', [
-            'clients' => Client::with(['documents', 'tariff', 'readings'])->get(),
+            'clients' => $clients,
             'tariffs' => Tariff::all(),
         ]);
     }

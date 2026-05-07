@@ -16,20 +16,13 @@ export default function Index({ auth, readings, data, id}) {
             field: 'client_name', 
             headerName: 'Клиент', 
             flex: 1.5,
-            // ИСПРАВЛЕНО: Берём имя через property.client.user
-            valueGetter: (params, row) => row.client?.user?.name || row.client?.full_name || 'Удален'
+            valueGetter: (params, row) => row.client?.user?.name || 'Удален'
         },
         { 
             field: 'address', 
             headerName: 'Адрес', 
             flex: 2,
-            valueGetter: (params, row) => row.property?.address || '—'
-        },
-        { 
-            field: 'account_number', 
-            headerName: 'Лицевой счёт', 
-            flex: 1,
-            valueGetter: (params, row) => row.property?.account_number || '—'
+            valueGetter: (params, row) => row.client?.address || '—'
         },
         { 
             field: 'reading_date', 
@@ -47,7 +40,7 @@ export default function Index({ auth, readings, data, id}) {
             field: 'total_sum', 
             headerName: 'Сумма', 
             flex: 1,
-            renderCell: (params) => <b>{params.value ? `${params.value} ₽` : '—'}</b>
+            renderCell: (params) => <b>{params.value} ₽</b>
         },
         { 
             field: 'is_paid', 
@@ -71,6 +64,7 @@ export default function Index({ auth, readings, data, id}) {
                     {!params.row.is_paid && (
                         <IconButton 
                             color="success" 
+                            // onClick={() => router.patch(route('admin.readings.verify', params.row.id))}
                             onClick={() => {
                                 router.post(`/admin/readings/${params.row.id}/verify`, {
                                     ...data,
@@ -94,7 +88,7 @@ export default function Index({ auth, readings, data, id}) {
             <Box sx={{ bgcolor: '#f4f7fe', minHeight: '90vh', py: 4 }}>
                 <Container maxWidth="xl">
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                        <Typography variant="h4" xs="" fontWeight="800" color="#1B2559">Реестр показаний</Typography>
+                        <Typography variant="h4" fontWeight="800" color="#1B2559">Реестр показаний</Typography>
                     </Box>
 
                     <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 20px 50px rgba(112, 144, 176, 0.15)' }}>

@@ -46,7 +46,7 @@ const statusConfig = {
     }
 };
 
-export default function Dashboard({ auth, client, properties = [], pendingProperties = [], activeApplications = [], hasActiveProperties = false, primaryAccountNumber = null }) {
+export default function Dashboard({ auth, client, properties = [], activeApplications = [] }) {
     const user = auth?.user;
 
     const applicationsArray = Array.isArray(activeApplications)
@@ -57,7 +57,7 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
     const applicationStatus = application?.status;
 
     const isApproved = applicationStatus === 'approved';
-    const hasActiveContract = hasActiveProperties || isApproved;
+    const hasActiveContract = isApproved || !!client?.account_number;
     const storageKey = `dismissed_success_alert_${application?.id}`;
 
     const [showSuccessBlock, setShowSuccessBlock] = useState(() => {
@@ -81,8 +81,6 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
             statusConfig={statusConfig}
             application={application}
             applicationStatus={applicationStatus}
-            properties={properties}
-            hasActiveProperties={hasActiveProperties}
         >
             {/*Приветствие / Статус договора / Новый объект*/}
             <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -109,10 +107,9 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                         <Typography variant="body2" sx={{ opacity: 0.9 }}>
                             {hasActiveContract ? 'Договор активен' : 'Ожидается оформление'}
                         </Typography>
-                        {/* ИСПРАВЛЕНИЕ: Используем primaryAccountNumber */}
-                        {primaryAccountNumber && (
+                        {client?.account_number && (
                             <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5 }}>
-                                ЛС: {primaryAccountNumber}
+                                ЛС: {client.account_number}
                             </Typography>
                         )}
                     </Paper>
@@ -196,7 +193,7 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
 
             {/*Мои объекты / Быстрые действия*/}
             <Grid container spacing={3}>
-                {/* Список объектов - только активные с ЛС */}
+                {/* Список объектов */}
                 <Grid item xs={12}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                         Мои объекты ({properties.length})
@@ -222,8 +219,6 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                                             <Divider sx={{ my: 1.5 }} />
                                             <Button
                                                 fullWidth
-                                                component={Link}
-                                                href={route('client.readings') + '?property=' + property.id}
                                                 endIcon={<ArrowIcon sx={{ fontSize: 10 }} />}
                                                 sx={{ justifyContent: 'space-between', color: '#4318FF', textTransform: 'none', fontSize: '0.85rem' }}
                                             >

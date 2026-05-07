@@ -1,53 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Head, useForm, router, usePage } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { 
     Container, Grid, Card, CardContent, Typography, 
     TextField, Button, Table, TableBody, TableCell, 
     TableContainer, TableHead, TableRow, Paper, Chip, 
-    Box, Divider, Alert, Select, MenuItem, FormControl, 
-    InputLabel, Tabs, Tab 
+    Box, Divider, Alert 
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import DownloadIcon from '@mui/icons-material/GetApp';
-import HomeIcon from '@mui/icons-material/Home';
 import ClientLayout from '@/Layouts/ClientLayout';
 
 import UICard from '@/Components/UI/Card';
 import UIButton from '@/Components/UI/Button';
 import InfoBox from '@/Components/UI/InfoBox';
 
-export default function Index({ 
-    client, 
-    property, 
-    activeProperties = [], 
-    currentTariff, 
-    lastReadingValue, 
-    history, 
-    auth, 
-    application 
-}) {
+export default function Index({ client, currentTariff, lastReadingValue, history, auth, application }) {
     const [consumed, setConsumed] = useState(0);
     const [totalSum, setTotalSum] = useState(0);
-    const [selectedPropertyId, setSelectedPropertyId] = useState(property?.id || '');
 
     const { data, setData, post, processing, errors, reset } = useForm({
         current_value: '',
         reading_date: new Date().toISOString().split('T')[0],
-        property_id: property?.id || '',
     });
 
-    // Обновляем property_id при смене объекта
     useEffect(() => {
-        if (selectedPropertyId && selectedPropertyId !== property?.id) {
-            router.visit(route('client.readings') + '?property=' + selectedPropertyId, {
-                preserveState: true,
-                preserveScroll: true,
-            });
-        }
-    }, [selectedPropertyId]);
+        console.log("Ввод:", data.current_value, "Тип:", typeof data.current_value);
 
-    useEffect(() => {
         const current = Number(data.current_value) || 0;
         const last = Number(lastReadingValue) || 0;
 
@@ -106,7 +85,7 @@ export default function Index({
             flex: 1,
             renderCell: (params) => (
                 <Typography sx={{ fontWeight: 'bold' }}>
-                    {params.value ? `${params.value} ₽` : '—'}
+                    {params.value} ₽
                 </Typography>
             )
         },
@@ -154,139 +133,72 @@ export default function Index({
             title="Показания и оплата"
             application={application}>
             <Grid container spacing={3}>
-                {/* Форма подачи показаний - ФИКСИРОВАННАЯ ШИРИНА */}
-                <Grid item xs={12} md={5} sx={{ minWidth: { md: '41.666%' } }}>
+                {/* Форма подачи показаний */}
+                <Grid item xs={12} md={5}>
                     <Paper sx={{ 
                         p: 3, 
                         borderRadius: '20px', 
-                        boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)',
-                        width: '100%',
-                        boxSizing: 'border-box'
+                        boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' 
                     }}>
-                        {/* Выбор объекта если их несколько */}
-                        {activeProperties.length > 1 && (
-                            <FormControl fullWidth sx={{ mb: 2 }}>
-                                <InputLabel>Выберите объект</InputLabel>
-                                <Select
-                                    value={selectedPropertyId}
-                                    label="Выберите объект"
-                                    onChange={(e) => setSelectedPropertyId(e.target.value)}
-                                >
-                                    {activeProperties.map((prop) => (
-                                        <MenuItem key={prop.id} value={prop.id}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <HomeIcon fontSize="small" sx={{ color: '#4318FF' }} />
-                                                <Box>
-                                                    <Typography variant="body2">{prop.address}</Typography>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        ЛС: {prop.account_number}
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom color="primary">Передать показания</Typography>
+                            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                                Предыдущее значение: <b>{lastReadingValue} кВт*ч</b>
+                            </Typography>
 
-                        {/* Информация о выбранном объекте */}
-                        {property && (
-                            <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1, 
-                                mb: 2,
-                                p: 1.5,
-                                bgcolor: '#F4F7FE',
-                                borderRadius: '12px'
-                            }}>
-                                <HomeIcon sx={{ color: '#4318FF' }} />
-                                <Box>
-                                    <Typography variant="body2" fontWeight="bold">
-                                        {property.address}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        ЛС: {property.account_number}
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        )}
+                            <form onSubmit={handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label="Текущее показание"
+                                    type="number"
+                                    value={data.current_value}
+                                    onChange={e => setData('current_value', e.target.value)}
+                                    error={!!errors.current_value}
+                                    helperText={errors.current_value}
+                                    sx={{ mb: 2 }}/>
+                                <TextField
+                                    fullWidth
+                                    label="Дата снятия"
+                                    type="date"
+                                    value={data.reading_date}
+                                    onChange={e => setData('reading_date', e.target.value)}
+                                    InputLabelProps={{ shrink: true }}
+                                    sx={{ mb: 3 }}/>
 
-                        <Typography variant="h6" gutterBottom color="primary">
-                            Передать показания
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                            Предыдущее значение: <b>{lastReadingValue} кВт*ч</b>
-                        </Typography>
-
-                        <form onSubmit={handleSubmit}>
-                            <TextField
-                                fullWidth
-                                label="Текущее показание"
-                                type="number"
-                                value={data.current_value}
-                                onChange={e => setData('current_value', e.target.value)}
-                                error={!!errors.current_value}
-                                helperText={errors.current_value}
-                                sx={{ mb: 2 }}
-                            />
-                            <TextField
-                                fullWidth
-                                label="Дата снятия"
-                                type="date"
-                                value={data.reading_date}
-                                onChange={e => setData('reading_date', e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{ mb: 3 }}
-                            />
-
-                            {/* Блок расчёта - ФИКСИРОВАННАЯ ВЫСОТА */}
-                            <Box sx={{ 
-                                p: 2, 
-                                bgcolor: '#F4F7FE', 
-                                borderRadius: '12px', 
-                                mb: 2,
-                                minHeight: '80px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'center'
-                            }}>
-                                {consumed > 0 ? (
-                                    <>
+                                {consumed > 0 && (
+                                    <Box sx={{ 
+                                        p: 2, 
+                                        bgcolor: '#F4F7FE', 
+                                        borderRadius: '12px', 
+                                        mb: 2 
+                                    }}>
                                         <Typography variant="body2">
                                             Расход: <b>{consumed} кВт*ч</b>
                                         </Typography>
+
                                         <Typography 
                                             variant="h5" 
                                             fontWeight="bold"
                                             sx={{ color: '#2E7D32' }}>
                                             {totalSum} ₽
                                         </Typography>
-                                    </>
-                                ) : (
-                                    <Typography variant="body2" color="text.secondary">
-                                        Введите показания для расчёта
-                                    </Typography>
+                                    </Box>
                                 )}
-                            </Box>
-
-                            <Button 
-                                fullWidth 
-                                variant="contained"
-                                sx={{ 
-                                    borderRadius: '12px',
-                                    bgcolor: '#4318FF'
-                                }}
-                                type="submit"
-                                disabled={processing || parseFloat(data.current_value) < parseFloat(lastReadingValue)}
-                            >
-                                Отправить показания
-                            </Button>
-                        </form>
+                                <Button 
+                                    fullWidth 
+                                    variant="contained"
+                                    sx={{ 
+                                        borderRadius: '12px',
+                                        bgcolor: '#4318FF'
+                                    }}
+                                    type="submit"
+                                    disabled={processing || parseFloat(data.current_value) < parseFloat(lastReadingValue)}>
+                                    Отправить показания
+                                </Button>
+                            </form>
+                        </CardContent>
                     </Paper>
                 </Grid>
-
-                {/* Тариф и история */}
                 <Grid item xs={12} md={7}>
                     <Paper sx={{ 
                         p: 3, 

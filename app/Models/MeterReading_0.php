@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MeterReading extends Model
 {
     protected $fillable = [
+        // 'client_id',
         'tariff_id',
         'previous_value',
         'current_value',
@@ -25,6 +26,11 @@ class MeterReading extends Model
     ];
 
     // ==================== RELATIONSHIPS ====================
+
+    // public function client(): BelongsTo
+    // {
+    //     return $this->belongsTo(Client::class);
+    // }
 
     public function tariff(): BelongsTo
     {
@@ -45,7 +51,6 @@ class MeterReading extends Model
 
     /**
      * Автоматический расчет при создании записи
-     * ИСПРАВЛЕНО: Тариф ищется по категории клиента
      */
     protected static function booted()
     {
@@ -55,31 +60,21 @@ class MeterReading extends Model
             $client = $property?->client;
 
             if ($client) {
-                // ИСПРАВЛЕНО: Ищем тариф по категории клиента (tariff_category)
-                $tariff = Tariff::where('name', $client->tariff_category)
-                    ->where('starts_at', '<=', now())
-                    ->where(function ($query) {
-                        $query->where('ends_at', '>=', now())
-                            ->orWhereNull('ends_at');
-                    })
-                    ->first();
+                // Берем тариф напрямую у клиента или из категории
+                $tariff = $client->tariff; // У тебя в Client.php есть связь tariff()
 
                 if ($tariff) {
                     $reading->tariff_id = $tariff->id;
-                    // Получаем последнее значение по property_id
+                    // Получаем последнее значение по property_id, а не по клиенту!
                     $reading->previous_value = self::getLastValue($reading->property_id);
                     $consumed = $reading->current_value - $reading->previous_value;
                     $reading->total_sum = $tariff->calculateCost($consumed);
-                } else {
-                    // Если тариф не найден, ставим дефолтные значения
-                    $reading->previous_value = self::getLastValue($reading->property_id);
-                    $reading->total_sum = 0;
                 }
             }
         });
     }
 
-    // Поиск последнего значения по объекту (адресу)
+    // Поиск последнего значения теперь по объекту (адресу)
     public static function getLastValue($propertyId)
     {
         return self::where('property_id', $propertyId)

@@ -13,88 +13,92 @@ class DashboardController extends Controller
 {
     /**
      * Главная страница ЛК
+     * ИСПРАВЛЕНО: Правильная загрузка properties для мульти-собственности
      */
     public function index()
     {
         $user = Auth::user();
         $client = $user->client;
-        $application = Application::where('user_id', $user->id)
+
+        // Получаем только АКТИВНЫЕ объекты с ЛС для карточек "Мои объекты"
+        $activeProperties = $user->properties()
+            ->where('status', 'active')
+            ->whereNotNull('account_number')
+            ->where('account_number', '!=', '')
+            ->get();
+
+        // Получаем объекты БЕЗ ЛС (на рассмотрении)
+        $pendingProperties = $user->properties()
+            ->where(function ($query) {
+                $query->where('status', '!=', 'active')
+                    ->orWhereNull('account_number')
+                    ->orWhere('account_number', '');
+            })
+            ->get();
+
+        // Получаем активные заявки
+        $activeApplications = $user->applications()
+            ->whereIn('status', ['pending', 'processing'])
+            ->with('property')
             ->latest()
-            ->first();
+            ->get();
+
+        // Получаем первый активный ЛС для отображения в шапке
+        $primaryAccountNumber = $activeProperties->first()?->account_number;
 
         return Inertia::render('Client/Dashboard', [
-            // 'application' => $application ? new ApplicationResource($application) : null,
-            'properties' => $user->client->properties()->where('status', 'active')->get(),
-            'activeApplications' => $user->applications()->whereIn('status', ['pending', 'processing'])->with('property')->get(),
-            'client' => $user->client,
+            'properties' => $activeProperties,
+            'pendingProperties' => $pendingProperties,
+            'activeApplications' => $activeApplications,
+            'client' => $client,
+            'hasActiveProperties' => $activeProperties->count() > 0,
+            'primaryAccountNumber' => $primaryAccountNumber,
         ]);
     }
-    //     $applicationData = null;
-    //     if ($application) {
-    //         $applicationData = [
-    //             'id' => $application->id,
-    //             'status' => $application->status,
-    //             'created_at' => $application->created_at->format('d.m.Y H:i'),
-    //             'admin_comment' => $application->admin_comment,
-    //             'client' => $application->client ? [
-    //                 'id' => $application->client->id,
-    //                 'account_number' => $application->client->account_number,
-    //                 'first_name' => $application->client->first_name,
-    //                 'last_name' => $application->client->last_name,
-    //                 'middle_name' => $application->client->middle_name,
-    //             ] : null,
-    //         ];
-    //     }
-
-    //     if ($user->role === 'applicant') {
-    //         return Inertia::render('Client/Dashboard', [
-    //             'auth' => ['user' => $user],
-    //             'client' => $client,
-    //             'application' => $applicationData,
-    //             'stats' => null,
-    //         ]);
-    //     }
-
-    //     return Inertia::render('Client/Dashboard', [
-    //         'auth' => ['user' => $user],
-    //         'client' => $client ? [
-    //             'id' => $client->id,
-    //             'account_number' => $client->account_number,
-    //             'first_name' => $client->first_name,
-    //             'last_name' => $client->last_name,
-    //             'middle_name' => $client->middle_name,
-    //             'phone' => $client->phone,
-    //             'address' => $client->address,
-    //         ] : null,
-    //         'application' => $applicationData,
-    //         'stats' => [
-    //             'clients_count' => \App\Models\Client::count(),
-    //             'tickets_count' => Ticket::where('status', 'new')->count(),
-    //         ],
-    //     ]);
-    // }
 
     /**
      * Профиль клиента
+     * ИСПРАВЛЕНО: Добавлены hasActiveProperties и properties для навигации
      */
     public function profile()
     {
         $user = Auth::user();
+        $client = $user->client;
         $application = Application::where('user_id', $user->id)->latest()->first();
+
+        // ИСПРАВЛЕНО: Получаем активные объекты для навигации
+        $activeProperties = $user->properties()
+            ->where('status', 'active')
+            ->whereNotNull('account_number')
+            ->where('account_number', '!=', '')
+            ->get();
 
         return Inertia::render('Client/Profile', [
             'auth' => ['user' => $user],
             'user' => $user,
-            'client' => $user->client,
+            'client' => $client,
             'application' => $application,
+            'properties' => $activeProperties,
+            'hasActiveProperties' => $activeProperties->count() > 0,
         ]);
     }
 
+    /**
+     * Документы клиента
+     * ИСПРАВЛЕНО: Добавлены hasActiveProperties и properties для навигации
+     */
     public function documents()
     {
         $user = Auth::user();
         $client = $user->client;
         $application = Application::where('user_id', $user->id)->latest()->first();
+
+        // ИСПРАВЛЕНО: Получаем активные объекты для навигации
+        $activeProperties = $user->properties()
+            ->where('status', 'active')
+            ->whereNotNull('account_number')
+            ->where('account_number', '!=', '')
+            ->get();
 
         $documents = [];
         if ($client) {
@@ -127,6 +131,8 @@ class DashboardController extends Controller
             'auth' => ['user' => $user],
             'documents' => $documents,
             'application' => $application,
+            'properties' => $activeProperties,
+            'hasActiveProperties' => $activeProperties->count() > 0,
         ]);
     }
 
@@ -135,11 +141,20 @@ class DashboardController extends Controller
      */
     public function application()
     {
+        $user = auth()->user();
+        $activeProperties = $user->properties()
+            ->where('status', 'active')
+            ->whereNotNull('account_number')
+            ->where('account_number', '!=', '')
+            ->get();
+
         return Inertia::render('Dashboard', [
             'myApplications' => Application::with('template')
                 ->where('user_id', auth()->id())
                 ->latest()
                 ->get(),
+            'properties' => $activeProperties,
+            'hasActiveProperties' => $activeProperties->count() > 0,
         ]);
     }
 }

@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
-import {
-    Container, Typography, Paper, Button, Box,
-    Dialog, DialogContent, TextField, DialogActions,
+import { 
+    Container, Typography, Paper, Button, Box, 
+    Dialog, DialogContent, TextField, DialogActions, 
     Tabs, Tab, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, IconButton,
     Snackbar, Alert, InputBase, Grid,
-    FormControl, InputLabel, Select, MenuItem, FormHelperText
+    FormControl, InputLabel, Select, MenuItem, FormHelperText 
 } from '@mui/material';
-import {
+import { 
     Add as AddIcon, Search as SearchIcon
 } from '@mui/icons-material';
 import { AddressSuggestions } from 'react-dadata';
@@ -37,17 +37,17 @@ export default function ClientsList({ auth, clients, tariffs }) {
     const [confirmMeta, setConfirmMeta] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
 
     const { data, setData, post, reset, processing, errors } = useForm({
-        id: '',
-        account_number: '',
+        id: '', 
+        account_number: '', 
         client_type: 'individual',
         status: 'active',
-        last_name: '',
+        last_name: '', 
         first_name: '',
-        middle_name: '',
+        middle_name: '', 
         company_name: '',
-        address: '',
-        phone: '',
-        email: '',
+        address: '', 
+        phone: '', 
+        email: '', 
         tariff_id: '',
     });
 
@@ -78,7 +78,7 @@ export default function ClientsList({ auth, clients, tariffs }) {
         const query = searchQuery.toLowerCase();
         const altQuery = fixKeyboardLayout(query);
         return (clients || []).filter(c => {
-            const s = `${c.last_name} ${c.first_name} ${c.middle_name} ${c.company_name} ${c.account_number} ${c.address} ${c.phone}`.toLowerCase();
+            const s = `${c.last_name} ${c.first_name} ${c.middle_name} ${c.company_name} ${c.account_number} ${c.address}`.toLowerCase();
             return s.includes(query) || s.includes(altQuery);
         });
     }, [searchQuery, clients]);
@@ -88,18 +88,17 @@ export default function ClientsList({ auth, clients, tariffs }) {
             field: 'account_number',
             headerName: 'Лицевой счет',
             width: 150,
-            valueGetter: (value, row) => row.account_number || row.account_numbers || 'Не указан',
+            renderCell: (params) => params.value ? (
+                params.value
+            ):(
+                <Typography component="span" variant="body2" color="text.secondary">Не указан</Typography>
+            )
         },
-        {
-            field: 'display_name',
-            headerName: 'Потребитель',
+        { 
+            field: 'display_name', 
+            headerName: 'Потребитель', 
             flex: 1,
-            valueGetter: (value, row) => {
-                if (row.client_type === 'legal') {
-                    return row.company_name || '—';
-                }
-                return `${row.last_name || ''} ${row.first_name || ''} ${row.middle_name || ''}`.trim() || '—';
-            }
+            valueGetter: (params, row) => row.client_type === 'legal' ? row.company_name : `${row.last_name} ${row.first_name} ${row.middle_name}`.trim()
         },
         {
             field: 'client_type',
@@ -107,37 +106,26 @@ export default function ClientsList({ auth, clients, tariffs }) {
             width: 250,
             valueFormatter: (value) => {
                 const types = {
-                    'legal': 'Юридическое лицо',
-                    'individual': 'Физическое лицо'
+                    'legal' : 'Юридическое лицо',
+                    'individual' : 'Физическое лицо'
                 };
-                return types[value] || value || '—';
+
+                return types[value] || value;
             }
         },
-        // ИСПРАВЛЕНО: Явный valueGetter для адреса
-        {
-            field: 'address',
-            headerName: 'Адрес',
-            width: 250,
-            valueGetter: (value, row) => row.address || 'Не указан',
-        },
-        // ИСПРАВЛЕНО: Явный valueGetter для телефона
-        {
-            field: 'phone',
-            headerName: 'Телефон',
-            width: 180,
-            valueGetter: (value, row) => row.phone || 'Не указан',
-        },
+        { field: 'address', headerName: 'Адрес', width: 250 },
+        { field: 'phone', headerName: 'Телефон', width: 180 },
     ];
 
     const promptDeleteClient = (id) => {
         setConfirmMeta({
-            open: true,
-            title: 'Удаление профиля',
-            content: `Вы действительно хотите удалить клиента №${id}`,
+            open:true,
+            title:'Удаление профиля',
+            content:`Вы действительно хотите удалить клиента №${id}`,
             onConfirm: () => {
                 router.post(`/admin/clients/${data.id}`, {
                     ...data,
-                    _method: 'DELETE',
+                    _method:'DELETE',
                 }, {
                     onSuccess: () => {
                         setConfirmMeta(prev => ({ ...prev, open: false }));
@@ -148,7 +136,6 @@ export default function ClientsList({ auth, clients, tariffs }) {
             }
         })
     }
-
     return (
         <AdminLayout>
             <Head title="Потребители" />
@@ -159,12 +146,12 @@ export default function ClientsList({ auth, clients, tariffs }) {
                         <Box display="flex" gap={2}>
                             <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: 300, border: '1px solid #E0E5F2', boxShadow: 'none' }}>
                                 <SearchIcon sx={{ color: '#A3AED0' }} />
-                                <InputBase
-                                    placeholder="Поиск..."
-                                    fullWidth
-                                    sx={{ ml: 1 }}
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
+                                <InputBase 
+                                    placeholder="Поиск..." 
+                                    fullWidth 
+                                    sx={{ ml: 1 }} 
+                                    value={searchQuery} 
+                                    onChange={e => setSearchQuery(e.target.value)} 
                                 />
                             </Paper>
                             <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ borderRadius: '16px', bgcolor: '#4318FF' }}>
@@ -174,21 +161,20 @@ export default function ClientsList({ auth, clients, tariffs }) {
                     </Box>
 
                     <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
-                        <DataGrid
-                            rows={filteredClients}
-                            columns={columns}
-                            autoHeight
+                        <DataGrid 
+                            rows={filteredClients} 
+                            columns={columns} 
+                            autoHeight 
                             onRowDoubleClick={handleRowClick}
                             sx={{ border: 'none' }}
-                            getRowId={(row) => row.id}
                         />
                     </Paper>
 
                     {/* МОДАЛКА СОЗДАНИЯ */}
                     <Dialog open={createOpen} onClose={() => {
                         setCreateOpen(false);
-                        reset();
-                    }} maxWidth="md" fullWidth>
+                        reset();}
+                    } maxWidth="md" fullWidth>
                         <Box sx={{ bgcolor: '#0B1437', color: 'white', p: 3 }}>
                             <Typography variant="h5" fontWeight="bold">Регистрация потребителя</Typography>
                         </Box>
@@ -204,13 +190,13 @@ export default function ClientsList({ auth, clients, tariffs }) {
                                             </Select>
                                         </FormControl>
                                     </Grid>
-
+                                    
                                     <Grid item xs={12}>
                                         <AddressSuggestions
                                             token={DADATA_API_KEY}
                                             value={data.address || ''}
                                             onChange={s => setData('address', s?.value || '')}
-                                            customInput={DadataInput} />
+                                            customInput={DadataInput}/>
                                     </Grid>
 
                                     <Grid item xs={4}>
@@ -231,7 +217,7 @@ export default function ClientsList({ auth, clients, tariffs }) {
 
                                     <Grid item xs={4}><TextField fullWidth label="Телефон" variant="standard" value={data.phone} onChange={e => setData('phone', e.target.value)} /></Grid>
                                     <Grid item xs={4}><TextField fullWidth label="Email" variant="standard" value={data.email} onChange={e => setData('email', e.target.value)} /></Grid>
-
+                                    
                                     <Grid item xs={4}>
                                         <FormControl fullWidth variant="standard" error={!!errors.tariff_id}>
                                             <InputLabel>Тариф</InputLabel>
@@ -252,18 +238,18 @@ export default function ClientsList({ auth, clients, tariffs }) {
                         </form>
                     </Dialog>
 
-                    <ClientCard
-                        open={editOpen} onClose={() => setEditOpen(false)}
+                    <ClientCard 
+                        open={editOpen} onClose={() => setEditOpen(false)} 
                         data={data} setData={setData} errors={errors}
                         showToast={showToast} onDeleteClient={promptDeleteClient}
                         tariffs={tariffs}
                     />
 
-                    <ConfirmDialog
-                        open={confirmMeta.open} title={confirmMeta.title} content={confirmMeta.content}
-                        onConfirm={confirmMeta.onConfirm} onClose={() => setConfirmMeta(p => ({ ...p, open: false }))}
+                    <ConfirmDialog 
+                        open={confirmMeta.open} title={confirmMeta.title} content={confirmMeta.content} 
+                        onConfirm={confirmMeta.onConfirm} onClose={() => setConfirmMeta(p => ({ ...p, open: false }))} 
                     />
-
+                    
                     <Snackbar open={toast.open} autoHideDuration={3000} onClose={() => setToast(p => ({ ...p, open: false }))}>
                         <Alert severity={toast.severity} variant="filled">{toast.message}</Alert>
                     </Snackbar>

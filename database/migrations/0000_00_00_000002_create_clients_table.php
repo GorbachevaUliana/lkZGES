@@ -39,6 +39,7 @@ return new class extends Migration
             $table->string('middle_name')->nullable();
             
             // Для юрлиц
+            
             $table->string('company_name')->nullable();
             $table->string('inn')->nullable();
             $table->string('kpp')->nullable();

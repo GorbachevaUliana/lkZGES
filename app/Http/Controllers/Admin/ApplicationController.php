@@ -52,15 +52,12 @@ class ApplicationController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:pending,processing,approved,rejected',
             'admin_comment' => 'nullable|string|max:1000',
-            // Если статус "approved", тариф обязателен
             'tariff_id' => 'required_if:status,approved|exists:tariffs,id',
-            // Если статус "approved", ЛС обязателен и должен быть уникален в таблице properties
             'account_number' => [
                 'required_if:status,approved',
                 'nullable',
                 'string',
                 'max:50',
-                // Проверка уникальности ЛС только при одобрении
                 $request->status === 'approved' ? 'unique:properties,account_number' : '',
             ],
         ]);

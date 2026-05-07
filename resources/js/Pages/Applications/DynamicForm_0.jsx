@@ -1,24 +1,25 @@
 import React, { useState, useMemo } from "react";
 import { Head, useForm } from '@inertiajs/react';
-import {
-    Container, Typography, TextField, Button, Box, Paper,
+import { 
+    Container, Typography, TextField, Button, Box, Paper, 
     Stepper, Step, StepLabel, Card, CardContent, Grid, Divider,
-    Checkbox
+    Checkbox, Select, MenuItem, FormControlLabel
 } from "@mui/material";
-import {
-    Person as PersonIcon,
+import { 
+    Person as PersonIcon, 
     Business as BusinessIcon,
     ArrowForward as ArrowIcon,
     ArrowBack as BackIcon,
     Send as SendIcon,
+    CheckBox
 } from '@mui/icons-material';
+// import GuestLayout from '@/Layouts/GuestLayout';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { IMaskInput } from "react-imask";
 
 
 const steps = ['Тип клиента', 'Заполнение данных', 'Проверка'];
 
-// Маска для паспорта
 const PassportMask = React.forwardRef(function PassportMask(props, ref) {
     const { onChange, ...other } = props;
     return (
@@ -33,59 +34,29 @@ const PassportMask = React.forwardRef(function PassportMask(props, ref) {
     );
 });
 
-// Маска для телефона
-const PhoneMask = React.forwardRef(function PhoneMask(props, ref) {
-    const { onChange, ...other } = props;
-    return (
-        <IMaskInput
-            {...other}
-            mask="+7 (000) 000-00-00"
-            inputRef={ref}
-            onAccept={(value) => onChange({ target: { name: props.name, value } })}
-            overwrite
-        />
-    );
-});
-
-// Маска для СНИЛС
-const SnilsMask = React.forwardRef(function SnilsMask(props, ref) {
-    const { onChange, ...other } = props;
-    return (
-        <IMaskInput
-            {...other}
-            mask="000-000-000 00"
-            inputRef={ref}
-            onAccept={(value) => onChange({ target: { name: props.name, value } })}
-            overwrite
-        />
-    );
-});
-
-export default function DynamicForm({ template }) {
+export default function DynamicForm({template}) {
     const [activeStep, setActiveStep] = useState(0);
     const [clientType, setClientType] = useState('individual');
-
-    // Инициализация данных формы
     const initialData = useMemo(() => {
         const fields = { client_type: 'individual' };
         template.content?.forEach(block => {
-            // Используем key если есть, иначе label
-            const key = block.data.key || block.data.label;
 
+            
+            const { label, type } = block.data;
             if (block.type === 'checkbox_group') {
-                fields[key] = { preset: [], custom: [] };
+                fields[label] = { preset: [], custom: [] };
             } else if (block.type === 'select_field') {
-                fields[key] = { value: '', customValue: '' };
+                fields[label] = { value: '', customValue: '' };
             } else if (block.type === 'input_field') {
-                fields[key] = '';
+                fields[label] = '';
             }
         });
         return fields;
     }, [template]);
 
+
     const { data, setData, post, processing, errors } = useForm(initialData);
 
-    // Фильтрация полей по видимости
     const visibleFields = useMemo(() => {
         return template.content?.filter(block => {
             const allowedTypes = ['input_field', 'select_field', 'checkbox_group', 'section_header'];
@@ -103,18 +74,13 @@ export default function DynamicForm({ template }) {
         setData('client_type', type);
     };
 
-    // Получить key поля
-    const getFieldKey = (block) => block.data.key || block.data.label;
-
-    // Проверка валидности шага
     const isStepValid = (step) => {
         if (step === 0) return !!clientType;
         if (step === 1) {
             return visibleFields
                 .filter(f => f.data.is_required)
                 .every(f => {
-                    const key = getFieldKey(f);
-                    const val = data[key];
+                    const val = data[f.data.label];
                     if (f.type === 'checkbox_group') {
                         return val.preset.length > 0 || val.custom.some(c => c.value.trim() !== '');
                     }
@@ -129,40 +95,11 @@ export default function DynamicForm({ template }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('application.store', template.slug));
-    };
-
-    // Компонент маски ввода
-    const getInputComponent = (specialFormat) => {
-        switch (specialFormat) {
-            case 'passport': return PassportMask;
-            case 'phone': return PhoneMask;
-            case 'snils': return SnilsMask;
-            default: return undefined;
-        }
-    };
-
-    // Рендер значения для превью
-    const renderValue = (block, value) => {
-        if (!value) return '—';
-
-        if (block.type === 'checkbox_group') {
-            const selected = [
-                ...(value.preset || []),
-                ...(value.custom?.map(c => c.value).filter(Boolean) || [])
-            ];
-            return selected.length > 0 ? selected.join(', ') : '—';
-        }
-
-        if (block.type === 'select_field') {
-            if (value.value === 'other') return value.customValue || '—';
-            return value.value || '—';
-        }
-
-        return typeof value === 'string' ? value : JSON.stringify(value);
+        post(route('application.store', template.slug ));
     };
 
     return (
+        // <GuestLayout>
         <ClientLayout>
             <Head title={template.title} />
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
@@ -170,7 +107,7 @@ export default function DynamicForm({ template }) {
                     <Typography variant="h4" gutterBottom fontWeight="bold" color="#1B2559">
                         {template.title}
                     </Typography>
-
+                    
                     <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
                         {steps.map((label) => (
                             <Step key={label}><StepLabel>{label}</StepLabel></Step>
@@ -199,9 +136,9 @@ export default function DynamicForm({ template }) {
                                         { id: 'legal', icon: BusinessIcon, title: 'Юридическое лицо', desc: 'Для организаций' }
                                     ].map(item => (
                                         <Grid item xs={12} md={6} key={item.id}>
-                                            <Card
+                                            <Card 
                                                 onClick={() => handleClientTypeChange(item.id)}
-                                                sx={{
+                                                sx={{ 
                                                     cursor: 'pointer',
                                                     border: clientType === item.id ? '2px solid #4318FF' : '1px solid #E0E5F2',
                                                     borderRadius: '20px',
@@ -220,15 +157,15 @@ export default function DynamicForm({ template }) {
                             </Box>
                         )}
 
-                        {/* ШАГ 1: Поля формы */}
+                        {/* ШАГ 1: Поля из БД */}
                         {activeStep === 1 && (
                             <Box>
                                 <Typography variant="h6" sx={{ mb: 3 }}>Данные заявителя</Typography>
                                 <Grid container spacing={3}>
                                     {visibleFields.map((block, index) => {
-                                        const { label, key, is_required, options, allow_custom, allow_multiple_custom, special_format, type } = block.data;
-                                        const fieldKey = key || label;
+                                        const { label, is_required, options, allow_custom, allow_multiple_custom, special_format } = block.data;
 
+                                        // Важно: возвращаем результат switch
                                         switch (block.type) {
                                             case 'section_header':
                                                 return (
@@ -242,16 +179,15 @@ export default function DynamicForm({ template }) {
 
                                             case 'input_field':
                                                 return (
-                                                    <Grid item xs={12} sm={6} key={index}>
+                                                    <Grid item xs={12} key={index}>
                                                         <TextField
                                                             fullWidth
                                                             label={label}
                                                             required={is_required}
-                                                            value={data[fieldKey] || ''}
-                                                            onChange={e => setData(fieldKey, e.target.value)}
-                                                            type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
-                                                            InputProps={special_format && special_format !== 'none' ? {
-                                                                inputComponent: getInputComponent(special_format),
+                                                            value={data[label] || ''}
+                                                            onChange={e => setData(label, e.target.value)}
+                                                            InputProps={special_format === 'passport' ? {
+                                                                inputComponent: PassportMask,
                                                             } : {}}
                                                         />
                                                     </Grid>
@@ -259,29 +195,26 @@ export default function DynamicForm({ template }) {
 
                                             case 'select_field':
                                                 return (
-                                                    <Grid item xs={12} sm={6} key={index}>
+                                                    <Grid item xs={12} key={index}>
                                                         <TextField
                                                             select
                                                             fullWidth
                                                             label={label}
-                                                            required={is_required}
-                                                            value={data[fieldKey]?.value || ''}
-                                                            onChange={e => setData(fieldKey, { ...data[fieldKey], value: e.target.value })}
+                                                            value={data[label]?.value || ''}
+                                                            onChange={e => setData(label, { ...data[label], value: e.target.value })}
                                                             SelectProps={{ native: true }}
                                                         >
                                                             <option value=""></option>
-                                                            {options?.map((opt, i) => (
-                                                                <option key={i} value={opt.value}>{opt.value}</option>
-                                                            ))}
+                                                            {options?.map(opt => <option key={opt.value} value={opt.value}>{opt.value}</option>)}
                                                             {allow_custom && <option value="other">Другое (ввести свой вариант)</option>}
                                                         </TextField>
-                                                        {allow_custom && data[fieldKey]?.value === 'other' && (
+                                                        {allow_custom && data[label]?.value === 'other' && (
                                                             <TextField
                                                                 fullWidth
                                                                 sx={{ mt: 2 }}
-                                                                placeholder="Введите свой вариант..."
-                                                                value={data[fieldKey]?.customValue || ''}
-                                                                onChange={e => setData(fieldKey, { ...data[fieldKey], customValue: e.target.value })}
+                                                                placeholder="Введите наименование..."
+                                                                value={data[label]?.customValue || ''}
+                                                                onChange={e => setData(label, { ...data[label], customValue: e.target.value })}
                                                             />
                                                         )}
                                                     </Grid>
@@ -290,54 +223,48 @@ export default function DynamicForm({ template }) {
                                             case 'checkbox_group':
                                                 return (
                                                     <Grid item xs={12} key={index}>
-                                                        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                                                            {label}
-                                                            {is_required && ' *'}
-                                                        </Typography>
-                                                        <Box sx={{ pl: 1 }}>
-                                                            {options?.map((opt, i) => (
-                                                                <Box key={i} sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                    <Checkbox
-                                                                        checked={data[fieldKey]?.preset?.includes(opt.value) || false}
-                                                                        onChange={e => {
-                                                                            const next = e.target.checked
-                                                                                ? [...(data[fieldKey]?.preset || []), opt.value]
-                                                                                : data[fieldKey].preset.filter(v => v !== opt.value);
-                                                                            setData(fieldKey, { ...data[fieldKey], preset: next });
-                                                                        }}
-                                                                    />
-                                                                    <Typography>{opt.value}</Typography>
-                                                                </Box>
-                                                            ))}
-                                                            {/* Кастомные чекбоксы */}
-                                                            {data[fieldKey]?.custom?.map((item, i) => (
-                                                                <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                                                    <Checkbox checked disabled />
-                                                                    <TextField
-                                                                        size="small"
-                                                                        fullWidth
-                                                                        value={item.value}
-                                                                        onChange={e => {
-                                                                            const next = [...data[fieldKey].custom];
-                                                                            next[i].value = e.target.value;
-                                                                            setData(fieldKey, { ...data[fieldKey], custom: next });
-                                                                        }}
-                                                                    />
-                                                                </Box>
-                                                            ))}
-                                                            {allow_multiple_custom && (
-                                                                <Button
-                                                                    size="small"
-                                                                    variant="text"
-                                                                    onClick={() => setData(fieldKey, {
-                                                                        ...data[fieldKey],
-                                                                        custom: [...(data[fieldKey]?.custom || []), { id: Date.now(), value: '' }]
-                                                                    })}
-                                                                >
-                                                                    + Добавить свой вариант
-                                                                </Button>
-                                                            )}
-                                                        </Box>
+                                                        <Typography variant="subtitle2" sx={{ mb: 1, color: '#A3AED0' }}>{label}</Typography>
+                                                        {options?.map((opt, i) => (
+                                                            <Box key={i} sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Checkbox 
+                                                                    checked={data[label]?.preset?.includes(opt.value) || false}
+                                                                    onChange={e => {
+                                                                        const next = e.target.checked 
+                                                                            ? [...(data[label]?.preset || []), opt.value]
+                                                                            : data[label].preset.filter(v => v !== opt.value);
+                                                                        setData(label, { ...data[label], preset: next });
+                                                                    }}
+                                                                />
+                                                                <Typography>{opt.value}</Typography>
+                                                            </Box>
+                                                        ))}
+                                                        {/* Кнопка "Ещё" и кастомные поля */}
+                                                        {data[label]?.custom?.map((item, i) => (
+                                                            <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                                <Checkbox checked disabled />
+                                                                <TextField 
+                                                                    size="small" 
+                                                                    fullWidth 
+                                                                    value={item.value} 
+                                                                    onChange={e => {
+                                                                        const next = [...data[label].custom];
+                                                                        next[i].value = e.target.value;
+                                                                        setData(label, { ...data[label], custom: next });
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        ))}
+                                                        {allow_multiple_custom && (
+                                                            <Button 
+                                                                size="small" 
+                                                                onClick={() => setData(label, {
+                                                                    ...data[label],
+                                                                    custom: [...(data[label]?.custom || []), { id: Date.now(), value: '' }]
+                                                                })}
+                                                            >
+                                                                + Ещё
+                                                            </Button>
+                                                        )}
                                                     </Grid>
                                                 );
 
@@ -350,23 +277,47 @@ export default function DynamicForm({ template }) {
                         )}
 
                         {/* ШАГ 2: Подтверждение */}
+                        {/* ШАГ 2: Подтверждение */}
                         {activeStep === 2 && (
                             <Box>
                                 <Typography variant="h6" sx={{ mb: 3 }}>Проверьте введённые данные</Typography>
                                 <Grid container spacing={2}>
                                     {visibleFields.map((block, index) => {
+                                        const label = block.data.label;
+                                        const value = data[label];
+
+                                        // Пропускаем заголовки секций
                                         if (block.type === 'section_header') return null;
 
-                                        const { label, key } = block.data;
-                                        const fieldKey = key || label;
-                                        const value = data[fieldKey];
+                                        // Функция для красивого вывода значений
+                                        const renderValue = () => {
+                                            if (!value) return '—';
+
+                                            // Если это чекбоксы
+                                            if (block.type === 'checkbox_group') {
+                                                const selected = [
+                                                    ...(value.preset || []),
+                                                    ...(value.custom?.map(c => c.value).filter(Boolean) || [])
+                                                ];
+                                                return selected.length > 0 ? selected.join(', ') : '—';
+                                            }
+
+                                            // Если это селект с "Другое"
+                                            if (block.type === 'select_field') {
+                                                if (value.value === 'other') return value.customValue || '—';
+                                                return value.value || '—';
+                                            }
+
+                                            // Обычная строка (input_field)
+                                            return typeof value === 'string' ? value : JSON.stringify(value);
+                                        };
 
                                         return (
-                                            <Grid item xs={12} sm={6} key={index}>
+                                            <Grid item xs={12} md={6} key={index}>
                                                 <Paper variant="outlined" sx={{ p: 2, borderRadius: '12px', bgcolor: '#F4F7FE' }}>
                                                     <Typography variant="caption" color="text.secondary">{label}</Typography>
                                                     <Typography variant="body1" fontWeight="bold">
-                                                        {renderValue(block, value)}
+                                                        {renderValue()}
                                                     </Typography>
                                                 </Paper>
                                             </Grid>
@@ -379,37 +330,38 @@ export default function DynamicForm({ template }) {
                         <Divider sx={{ my: 4 }} />
 
                         <Box display="flex" justifyContent="space-between">
-                            <Button
+                            <Button 
                                 variant="text"
-                                disabled={activeStep === 0}
-                                onClick={handleBack}
+                                disabled={activeStep === 0} 
+                                onClick={handleBack} 
                                 startIcon={<BackIcon />}>
                                 Назад
                             </Button>
-
+                            
                             {activeStep < steps.length - 1 ? (
-                                <Button
-                                    variant="contained"
-                                    onClick={handleNext}
+                                <Button 
+                                    variant="contained" 
+                                    onClick={handleNext} 
                                     disabled={!isStepValid(activeStep)}
                                     endIcon={<ArrowIcon />}
                                     sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4 }}>
                                     Далее
                                 </Button>
                             ) : (
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    disabled={processing}
+                                <Button 
+                                    type="submit" 
+                                    variant="contained" 
+                                    disabled={processing} 
                                     startIcon={<SendIcon />}
                                     sx={{ bgcolor: '#2E7D32', borderRadius: '12px', px: 4, '&:hover': { bgcolor: '#1b5e20' } }}>
-                                    Отправить заявку
+                                    Отправить
                                 </Button>
                             )}
                         </Box>
                     </form>
                 </Paper>
             </Container>
+        {/* </GuestLayout> */}
         </ClientLayout>
     );
 }

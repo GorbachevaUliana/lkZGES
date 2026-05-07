@@ -9,9 +9,8 @@ class ApplicationService
 {
     /**
      * Логика обновления статуса заявки
+     * При одобрении активируется конкретное свойство из заявки (property_id)
      */
-// App\Services\ApplicationService.php
-
     public function updateStatus(Application $application, array $data): void
     {
         DB::transaction(function () use ($application, $data) {
@@ -24,11 +23,41 @@ class ApplicationService
 
                 // 2. Обновляем клиента, добавляя tariff_category
                 $application->client->update([
-                    // 'tariff_id' => $data['tariff_id'],
-                    'tariff_category' => $tariff ? $tariff->name : null, // Сохраняем имя тарифа
+                    'tariff_category' => $tariff ? $tariff->name : null,
                 ]);
                 
-                $application->client->activate($data['account_number']);
+                // 3. Активируем конкретное свойство из заявки
+                $propertyId = $application->property_id;
+                $propertyActivated = false;
+                
+                if ($propertyId) {
+                    // Активируем свойство по ID из заявки
+                    $property = \App\Models\Property::find($propertyId);
+                    if ($property) {
+                        $property->update([
+                            'status' => 'active',
+                            'account_number' => $data['account_number']
+                        ]);
+                        $propertyActivated = true;
+                    }
+                }
+                
+                // Fallback: если property_id нет или свойство не найдено
+                if (!$propertyActivated) {
+                    // Находим последнее свойство клиента
+                    $property = $application->client->properties()->latest()->first();
+                    if ($property) {
+                        $property->update([
+                            'status' => 'active',
+                            'account_number' => $data['account_number']
+                        ]);
+                    }
+                }
+                
+                // 4. Обновляем роль пользователя на 'client' (только один раз!)
+                if ($application->client->user) {
+                    $application->client->user->update(['role' => 'client']);
+                }
             }
 
             // Обновляем саму заявку

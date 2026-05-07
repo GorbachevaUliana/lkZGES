@@ -22,7 +22,7 @@ class Client extends Model
         'address',
         'phone',
         'email',
-        // 'status' - УБРАНО! Статус хранится в таблице properties
+        'status',
         'tariff_id',
         'client_id',
         'tariff_category',
@@ -121,7 +121,7 @@ class Client extends Model
     }
 
     /**
-     * Объекты клиента
+     *  Объекты клиента
      */
     public function properties(): HasMany
     {
@@ -162,67 +162,41 @@ class Client extends Model
      */
     public function getClientTypeNameAttribute(): string
     {
-        return self::getClientTypes()[$this->client_type] ?? ($this->client_type ?? 'Не указан');
+        return self::getClientTypes()[$this->client_type] ?? $this->client_type;
     }
 
     /**
-     * Название статуса - определяется по статусу объектов (properties)
-     * ИСПРАВЛЕНО: Статус вычисляется из properties, т.к. в clients нет колонки status
+     * Название статуса
      */
     public function getStatusNameAttribute(): string
     {
-        // Статус определяется по активным объектам
-        $hasActive = $this->properties()->where('status', 'active')
-            ->whereNotNull('account_number')
-            ->where('account_number', '!=', '')
-            ->exists();
-        
-        if ($hasActive) {
-            return 'Активен';
-        }
-        
-        $hasPending = $this->properties()->where('status', 'pending')->exists();
-        if ($hasPending) {
-            return 'Ожидает активации';
-        }
-        
-        return 'Неактивен';
+        return self::getStatuses()[$this->status] ?? $this->status;
     }
 
     // ==================== SCOPES ====================
 
     /**
-     * Активные клиенты (есть хотя бы один активный объект)
+     * Активные клиенты
      */
     public function scopeActive($query)
     {
-        return $query->whereHas('properties', function ($q) {
-            $q->where('status', self::STATUS_ACTIVE)
-                ->whereNotNull('account_number')
-                ->where('account_number', '!=', '');
-        });
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
     /**
-     * Неактивные клиенты (нет активных объектов)
+     * Неактивные клиенты
      */
     public function scopeInactive($query)
     {
-        return $query->whereDoesntHave('properties', function ($q) {
-            $q->where('status', self::STATUS_ACTIVE)
-                ->whereNotNull('account_number')
-                ->where('account_number', '!=', '');
-        });
+        return $query->where('status', self::STATUS_INACTIVE);
     }
 
     /**
-     * Ожидающие активации (есть объекты в ожидании)
+     * Ожидающие активации
      */
     public function scopePending($query)
     {
-        return $query->whereHas('properties', function ($q) {
-            $q->where('status', self::STATUS_PENDING);
-        });
+        return $query->where('status', self::STATUS_PENDING);
     }
 
     /**
@@ -260,46 +234,52 @@ class Client extends Model
     }
 
     /**
-     * Активен ли клиент (есть активные объекты)
+     * Активен ли клиент
      */
     public function isActive(): bool
     {
-        return $this->properties()
-            ->where('status', self::STATUS_ACTIVE)
-            ->whereNotNull('account_number')
-            ->where('account_number', '!=', '')
-            ->exists();
+        return $this->status === self::STATUS_ACTIVE;
     }
 
     /**
-     * Активировать клиента (присвоить лицевой счёт объекту)
-     * ИСПРАВЛЕНО: Не обновляем status в clients - колонки не существует!
-     * Статус хранится только в таблице properties
+     * Активировать клиента (присвоить лицевой счёт)
      */
+// App\Models\Client.php
+
+/**
+ * Активировать клиента
+**/
     public function activate(string $accountNumber): void
     {
-        // Находим свойство, которое нужно активировать
-        $property = $this->properties()->latest()->first();
+        // 1. Убираем обновление status и account_number отсюда, 
+        // так как этих колонок нет в таблице clients
+        $this->update([
+            'updated_at' => now(), 
+        ]);
+
+        // 2. Обновляем данные в связанной таблице properties
+        // Предполагается, что у клиента есть связь properties()
+        $property = $this->properties()->first(); 
 
         if ($property) {
             $property->update([
-                'status' => self::STATUS_ACTIVE,
+                'status' => self::STATUS_ACTIVE, // Убедитесь, что константа STATUS_ACTIVE определена
                 'account_number' => $accountNumber
             ]);
         }
 
-        // Обновляем ROLE пользователя (не status!)
+        // 3. Обновляем статус пользователя (User), если это необходимо
         if ($this->user) {
-            $this->user->update(['role' => 'client']);
+            $this->user->update(['status' => 'client']);
         }
     }
 
     /**
-     * Деактивировать клиента (деактивировать все объекты)
+     * Деактивировать клиента
      */
     public function deactivate(): void
     {
-        $this->properties()->update(['status' => self::STATUS_INACTIVE]);
+        $this->update(['status' => self::STATUS_INACTIVE]);
     }
 
     /**
@@ -310,6 +290,10 @@ class Client extends Model
         $this->update(['user_id' => $user->id]);
     }
 
+    // public function readings()
+    // {
+    //     return $this->hasMany(MeterReading::class);
+    // }
     public function readings()
     {
         return $this->hasManyThrough(MeterReading::class, Property::class);
