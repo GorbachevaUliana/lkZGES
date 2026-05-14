@@ -27,32 +27,14 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
-        
-        // Админы и сотрудники идут в админ-панель
         if ($user->role === 'admin' || $user->role === 'staff') {
             return redirect()->intended(route('admin.clients.index', absolute: false));
         }
 
-        // Проверяем наличие привязанного клиента через связь
-        $client = $user->client;
-        
-        if ($client) {
-            // Проверяем наличие активных объектов
-            $hasActiveProperties = $client->properties()
-                ->where('status', 'active')
-                ->whereNotNull('account_number')
-                ->where('account_number', '!=', '')
-                ->exists();
-            
-            if ($hasActiveProperties) {
-                return redirect()->intended(route('client.dashboard', absolute: false));
-            }
-            
-            // Есть клиент, но нет активных объектов - в профиль
+        if ($user->client_id) {
             return redirect()->intended(route('client.profile', absolute: false));
         }
 
-        // Нет клиента - на страницу выбора
         return redirect()->intended(route('welcome.step', absolute: false));
     }
 

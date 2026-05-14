@@ -2,29 +2,99 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Property extends Model
 {
-    protected $fillable = ['client_id', 'account_number', 'address', 'status'];
+    use HasFactory;
 
-    // Объект принадлежит клиенту
-    public function client(): BelongsTo
+    protected $fillable = [
+        'client_id',
+        'tariff_id',
+        'account_number',
+        'address',
+        'property_type',
+        'area',
+        'status',
+        'meter_number',
+    ];
+
+    protected $casts = [
+        'area' => 'decimal:2',
+        'status' => 'string',
+    ];
+
+    /**
+     * Статусы объекта
+     */
+    const STATUS_PENDING = 'pending';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_INACTIVE = 'inactive';
+
+    /**
+     * Связь с клиентом
+     */
+    public function client()
     {
         return $this->belongsTo(Client::class);
     }
 
-    // У объекта много показаний
-    public function readings(): HasMany
+    /**
+     * Связь с тарифом
+     */
+    public function tariff()
+    {
+        return $this->belongsTo(Tariff::class);
+    }
+
+    /**
+     * Связь с заявками
+     */
+    public function applications()
+    {
+        return $this->hasMany(Application::class);
+    }
+
+    /**
+     * Связь с показаниями счетчиков
+     */
+    public function meterReadings()
     {
         return $this->hasMany(MeterReading::class);
     }
 
-    // У объекта могут быть заявки (например, на перепломбировку или ремонт)
-    public function applications(): HasMany
+    /**
+     * Связь с платежами
+     */
+    // public function payments()
+    // {
+    //     return $this->hasMany(Payment::class);
+    // }
+
+    /**
+     * Проверка активности объекта
+     */
+    public function isActive(): bool
     {
-        return $this->hasMany(Application::class);
+        return $this->status === self::STATUS_ACTIVE && !empty($this->account_number);
+    }
+
+    /**
+     * Получить последнее показание счетчика
+     */
+    public function getLastReadingAttribute(): ?MeterReading
+    {
+        return $this->meterReadings()->latest('reading_date')->first();
+    }
+
+    /**
+     * Scope для активных объектов с ЛС
+     */
+    public function scopeActiveWithAccount($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE)
+            ->whereNotNull('account_number')
+            ->where('account_number', '!=', '');
     }
 }

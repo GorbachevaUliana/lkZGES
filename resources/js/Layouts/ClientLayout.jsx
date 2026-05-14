@@ -92,6 +92,7 @@ export default function ClientLayout({ user, children, title, application, prope
                 
                 <List sx={{ px: 2 }}>
                     {menuItems.map((item) => (
+                        
                         <ListItem key={item.label} disablePadding sx={{ mb: 1 }}>
                             <ListItemButton 
                                 component={Link} 

@@ -24,11 +24,11 @@ Route::redirect('/', '/login');
 
 /*
 |--------------------------------------------------------------------------
-| Страница приветствия (для новых пользователей)
+| Общие роуты для всех авторизованных
 |--------------------------------------------------------------------------
 */
-// Доступна сразу после регистрации (без требования верификации)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Страница приветствия (выбор: привязать ЛС или подать заявку)
     Route::get('/welcome-step', [AccountController::class, 'index'])->name('welcome.step');
     Route::post('/account/link', [AccountController::class, 'link'])->name('account.link');
 });

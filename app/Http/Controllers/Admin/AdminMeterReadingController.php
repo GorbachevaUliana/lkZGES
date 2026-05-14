@@ -10,7 +10,6 @@ class AdminMeterReadingController extends Controller
 {
     /**
      * Реестр показаний
-     * ИСПРАВЛЕНО: Правильная передача данных клиента и адреса
      */
     public function index()
     {
@@ -26,13 +25,11 @@ class AdminMeterReadingController extends Controller
                     'total_sum' => $reading->total_sum,
                     'is_paid' => $reading->is_paid,
                     'tariff' => $reading->tariff,
-                    // Данные через property
                     'property' => $reading->property ? [
                         'id' => $reading->property->id,
                         'address' => $reading->property->address,
                         'account_number' => $reading->property->account_number,
                     ] : null,
-                    // Клиент через property
                     'client' => $reading->property?->client ? [
                         'id' => $reading->property->client->id,
                         'full_name' => $reading->property->client->full_name,
@@ -53,7 +50,6 @@ class AdminMeterReadingController extends Controller
     {
         $reading = MeterReading::findOrFail($id);
         $reading->update(['is_paid' => true]);
-
         return back()->with('success', 'Статус оплаты обновлен');
     }
 }

@@ -109,7 +109,6 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                         <Typography variant="body2" sx={{ opacity: 0.9 }}>
                             {hasActiveContract ? 'Договор активен' : 'Ожидается оформление'}
                         </Typography>
-                        {/* ИСПРАВЛЕНИЕ: Используем primaryAccountNumber */}
                         {primaryAccountNumber && (
                             <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5 }}>
                                 ЛС: {primaryAccountNumber}

@@ -39,39 +39,24 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // 1. Создаем пользователя с ролью 'guest' (новый пользователь)
+        // 1. Создаем пользователя
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'guest', // Новый пользователь - ещё не привязал ЛС и не подал заявку
         ]);
 
         // 2. Ищем, создал ли уже админ запись для этого email в таблице clients
         $client = Client::where('email', $request->email)->first();
 
         if ($client) {
-            // Привязываем клиента к пользователю (client.user_id = user.id)
-            $client->update(['user_id' => $user->id]);
-            
-            // Обновляем роль пользователя
-            $user->update(['role' => 'client']);
+            // Если нашли — привязываем client_id к пользователю
+            $user->update(['client_id' => $client->id]);
 
             event(new Registered($user));
             Auth::login($user);
 
-            // Проверяем наличие активных объектов
-            $hasActiveProperties = $client->properties()
-                ->where('status', 'active')
-                ->whereNotNull('account_number')
-                ->where('account_number', '!=', '')
-                ->exists();
-            
-            if ($hasActiveProperties) {
-                return redirect(route('client.dashboard'));
-            }
-
-            // Есть клиент, но нет активных объектов - в профиль
+            // Сразу отправляем в профиль, так как счет уже подтвержден админом
             return redirect(route('client.profile'));
         }
 

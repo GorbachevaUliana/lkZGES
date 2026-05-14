@@ -14,15 +14,12 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
-    
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'status', 'permissions', 'client_id',
+        'name', 'email', 'password', 'role', 'status', 'permissions',
     ];
-    
     protected $hidden = [
         'password', 'remember_token',
     ];
-    
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
@@ -39,7 +36,6 @@ class User extends Authenticatable implements FilamentUser
     }
 
     // ==================== RELATIONSHIPS ====================
-    
     public function client(): HasOne
     {
         return $this->hasOne(Client::class);
@@ -50,11 +46,17 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasManyThrough(Property::class, Client::class);
     }
 
+    /**
+     * Обращения пользователя
+     */
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
     }
 
+    /**
+     * Заявки пользователя
+     */
     public function applications(): HasMany
     {
         return $this->hasMany(Application::class);
@@ -62,31 +64,49 @@ class User extends Authenticatable implements FilamentUser
 
     // ==================== ROLE CHECKS ====================
 
+    /**
+     * Проверка: гость (не подал заявку, не привязал ЛС)
+     */
     public function isGuest(): bool
     {
         return $this->role === 'guest';
     }
 
+    /**
+     * Проверка: заявитель (подал заявку, ждёт рассмотрения)
+     */
     public function isApplicant(): bool
     {
         return $this->role === 'applicant';
     }
 
+    /**
+     * Проверка: полноценный клиент с ЛС
+     */
     public function isClient(): bool
     {
         return $this->role === 'client';
     }
 
+    /**
+     * Проверка: сотрудник
+     */
     public function isStaff(): bool
     {
         return $this->role === 'staff';
     }
 
+    /**
+     * Проверка: администратор
+     */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
+    /**
+     * Имеет доступ к админ-панели (staff или admin)
+     */
     public function canAccessAdmin(): bool
     {
         return in_array($this->role, ['staff', 'admin']);
@@ -94,9 +114,11 @@ class User extends Authenticatable implements FilamentUser
 
     /**
      * Может создавать обращения (только полноценный клиент)
+     * ИСПРАВЛЕНО: Проверяем также наличие активных объектов
      */
     public function canCreateTickets(): bool
     {
+        // Проверяем роль client И наличие хотя бы одного активного объекта с ЛС
         if ($this->role !== 'client') {
             return false;
         }
@@ -109,6 +131,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function hasActiveProperties(): bool
     {
+        // Используем существующую связь properties (hasManyThrough)
         return $this->properties()
             ->where('status', 'active')
             ->whereNotNull('account_number')
@@ -128,6 +151,9 @@ class User extends Authenticatable implements FilamentUser
             ->get();
     }
 
+    /**
+     * Имеет доступ к личному кабинету (applicant или client)
+     */
     public function canAccessClientArea(): bool
     {
         return in_array($this->role, ['applicant', 'client']);
@@ -135,6 +161,9 @@ class User extends Authenticatable implements FilamentUser
 
     // ==================== PERMISSION CHECKS ====================
 
+    /**
+     * Проверка разрешения по ID страницы
+     */
     public function hasPermission(string $permission): bool
     {
         if ($this->role === 'admin') {

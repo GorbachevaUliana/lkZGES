@@ -2,7 +2,6 @@ import React from 'react';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { Paper, Grid, Typography, Box, Button, TextField, Alert } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import { Link } from '@inertiajs/react';
 
 export default function Profile({ auth, client, application }) {
     return (
@@ -16,13 +15,7 @@ export default function Profile({ auth, client, application }) {
                     <Typography color="text.secondary" sx={{ mb: 3 }}>
                         Чтобы пользоваться всеми функциями ЛК, необходимо подать заявку на заключение договора.
                     </Typography>
-                    <Button 
-                        component={Link}
-                        href={route('application.show', { slug: 'konstruktor' })}
-                        variant="contained" 
-                        size="large" 
-                        sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
-                    >
+                    <Button variant="contained" size="large" sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4 }}>
                         Заполнить заявку
                     </Button>
                 </Paper>

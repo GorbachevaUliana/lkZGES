@@ -12,15 +12,8 @@ use Inertia\Inertia;
 
 class ClientController extends Controller
 {
-    /**
-     * Список потребителей
-     * ИСПРАВЛЕНО: Показываем только клиентов с активными объектами (ЛС)
-     * При мульти-собственности один клиент может иметь несколько объектов
-     */
     public function index()
     {
-        // Фильтруем клиентов, у которых есть хотя бы один активный объект с ЛС
-        // Загружаем properties заранее через with()
         $clients = Client::with(['documents', 'tariff', 'readings', 'properties'])
             ->whereHas('properties', function ($query) {
                 $query->where('status', 'active')
@@ -29,19 +22,15 @@ class ClientController extends Controller
             })
             ->get()
             ->map(function ($client) {
-                // Фильтруем только активные properties из уже загруженных
                 $activeProperties = $client->properties->filter(function ($property) {
                     return $property->status === 'active' 
                         && !empty($property->account_number);
                 })->values();
 
-                // Определяем статус на основе активных объектов
-                $statusName = $client->status_name; // Вычисляется через аксессор
+                $statusName = $client->status_name;
                 $status = $activeProperties->count() > 0 ? 'active' : 'inactive';
                 
-                // Получаем адрес из первого активного объекта
                 $propertyAddress = $activeProperties->first()?->address ?? $client->address;
-                // Получаем все ЛС одной строкой
                 $accountNumbersStr = $activeProperties->pluck('account_number')->implode(', ');
                 
                 return [
@@ -56,7 +45,6 @@ class ClientController extends Controller
                     'display_name' => $client->display_name,
                     'company_name' => $client->company_name,
                     'inn' => $client->inn,
-                    // ИСПРАВЛЕНО: адрес берём из первого активного объекта
                     'address' => $propertyAddress,
                     'phone' => $client->phone,
                     'email' => $client->email,
@@ -69,7 +57,6 @@ class ClientController extends Controller
                     'readings' => $client->readings,
                     'properties' => $activeProperties,
                     'properties_count' => $activeProperties->count(),
-                    // ИСПРАВЛЕНО: Добавляем account_number для совместимости с фронтендом
                     'account_number' => $accountNumbersStr ?: null,
                     'account_numbers' => $accountNumbersStr,
                     'created_at' => $client->created_at,
