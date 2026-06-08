@@ -243,7 +243,7 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                 </Grid>
 
                 {/* Быстрые действия */}
-                <Grid item xs={12}>
+                <Grid item xs={12} md={6}>
                     <Paper sx={{ p: 3, borderRadius: '20px' }}>
                         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Быстрые действия</Typography>
                         <Box display="flex" gap={2} flexWrap="wrap">
@@ -265,6 +265,30 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                             >
                                 Обращения
                             </Button>
+                        </Box>
+                    </Paper>
+                </Grid>
+
+                {/* QR-код блок */}
+                <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 3, borderRadius: '20px' }}>
+                        <Box display="flex" gap={2} alignItems="flex-start">
+                            <Box sx={{ flexShrink: 0 }}>
+                                <a href="https://forms.yandex.ru/cloud/6a0670c7493639178613adf6" target="_blank" rel="noopener noreferrer">
+                                    <img 
+                                        src="http://qrcoder.ru/code/?https%3A%2F%2Fforms.yandex.ru%2Fcloud%2F6a0670c7493639178613adf6&3&0"
+                                        width="123" 
+                                        height="123" 
+                                        border="0" 
+                                        title="QR код"
+                                        alt="QR код"
+                                    />
+                                </a>
+                            </Box>
+                            <Typography variant="body2">
+                                Откажитесь от бумажных квитанций! Заполните заявку на переход на электронные квитанции. Отсканируйте QR-код, либо перейдите по ссылке.<br/>
+                                <strong>https://forms.yandex.ru/cloud/6a0670c7493639178613adf6</strong>
+                            </Typography>
                         </Box>
                     </Paper>
                 </Grid>

@@ -45,17 +45,14 @@ class MeterReading extends Model
 
     /**
      * Автоматический расчет при создании записи
-     * ИСПРАВЛЕНО: Тариф ищется по категории клиента
      */
     protected static function booted()
     {
         static::creating(function ($reading) {
-            // Ищем клиента через объект недвижимости (property)
             $property = Property::with('client')->find($reading->property_id);
             $client = $property?->client;
 
             if ($client) {
-                // ИСПРАВЛЕНО: Ищем тариф по категории клиента (tariff_category)
                 $tariff = Tariff::where('name', $client->tariff_category)
                     ->where('starts_at', '<=', now())
                     ->where(function ($query) {
@@ -66,12 +63,10 @@ class MeterReading extends Model
 
                 if ($tariff) {
                     $reading->tariff_id = $tariff->id;
-                    // Получаем последнее значение по property_id
                     $reading->previous_value = self::getLastValue($reading->property_id);
                     $consumed = $reading->current_value - $reading->previous_value;
                     $reading->total_sum = $tariff->calculateCost($consumed);
                 } else {
-                    // Если тариф не найден, ставим дефолтные значения
                     $reading->previous_value = self::getLastValue($reading->property_id);
                     $reading->total_sum = 0;
                 }
@@ -79,7 +74,6 @@ class MeterReading extends Model
         });
     }
 
-    // Поиск последнего значения по объекту (адресу)
     public static function getLastValue($propertyId)
     {
         return self::where('property_id', $propertyId)

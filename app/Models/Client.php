@@ -136,10 +136,10 @@ class Client extends Model
     public function getDisplayNameAttribute(): string
     {
         if ($this->client_type === self::TYPE_LEGAL) {
-            return $this->company_name ?? $this->full_name;
+            return !empty($this->company_name) ? $this->company_name : ($this->full_name ?: 'Название не указано');
         }
 
-        return $this->full_name;
+        return $this->full_name ?: 'ФИО не указано';
     }
 
     /**
@@ -147,9 +147,13 @@ class Client extends Model
      */
     public function getFullNameAttribute(): string
     {
-        return trim(($this->last_name ?? '').' '.
-                    ($this->first_name ?? '').' '.
-                    ($this->middle_name ?? ''));
+        $parts = array_filter([
+            $this->last_name,
+            $this->first_name,
+            $this->middle_name
+        ]);
+
+        return count($parts) > 0 ? implode(' ', $parts) : '';
     }
 
     public function tariff(): BelongsTo
@@ -167,24 +171,21 @@ class Client extends Model
 
     /**
      * Название статуса - определяется по статусу объектов (properties)
-     * ИСПРАВЛЕНО: Статус вычисляется из properties, т.к. в clients нет колонки status
      */
     public function getStatusNameAttribute(): string
     {
-        // Статус определяется по активным объектам
-        $hasActive = $this->properties()->where('status', 'active')
+        // Если связь properties уже загружена, используем коллекцию, а не новый запрос в БД
+        $props = $this->relationLoaded('properties') ? $this->properties : $this->properties();
+        
+        $hasActive = $props->where('status', 'active')
             ->whereNotNull('account_number')
             ->where('account_number', '!=', '')
-            ->exists();
+            ->count() > 0;
         
-        if ($hasActive) {
-            return 'Активен';
-        }
+        if ($hasActive) return 'Активен';
         
-        $hasPending = $this->properties()->where('status', 'pending')->exists();
-        if ($hasPending) {
-            return 'Ожидает активации';
-        }
+        $hasPending = $props->where('status', 'pending')->count() > 0;
+        if ($hasPending) return 'Ожидает активации';
         
         return 'Неактивен';
     }

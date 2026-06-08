@@ -12,10 +12,6 @@ use Illuminate\Support\Facades\Storage;
 
 class ConstructorController extends Controller
 {
-    /**
-     * ИСПРАВЛЕНО: Убраны несуществующие поля (status, address в clients)
-     * ИСПРАВЛЕНО: Добавлено property_id в Application
-     */
     public function submit(Request $request)
     {
         $validatedData = $request->validate([
@@ -28,7 +24,6 @@ class ConstructorController extends Controller
         return DB::transaction(function () use ($validatedData) {
             $user = auth()->user();
 
-            // Создаем клиента БЕЗ status и address
             $client = Client::create([
                 'last_name' => $validatedData['last_name'],
                 'first_name' => $validatedData['first_name'],
@@ -37,19 +32,16 @@ class ConstructorController extends Controller
                 'email' => $user->email,
             ]);
 
-            // Создаём объект недвижимости с адресом
             $property = Property::create([
                 'client_id' => $client->id,
                 'address' => $validatedData['address'],
                 'status' => 'pending',
             ]);
 
-            // Обновляем пользователя
             $user->update([
                 'role' => 'applicant',
             ]);
 
-            // Генерируем PDF
             $pdf = Pdf::loadView('pdf.application_contract', [
                 'data' => $validatedData,
                 'user_email' => $user->email,
@@ -59,12 +51,10 @@ class ConstructorController extends Controller
             $fileName = 'app_'.$client->id.'_'.time().'.pdf';
             $filePath = 'applications/'.$fileName;
             Storage::disk('public')->put($filePath, $pdf->output());
-
-            // ИСПРАВЛЕНО: Создаем заявку с property_id
             Application::create([
                 'user_id' => $user->id,
                 'client_id' => $client->id,
-                'property_id' => $property->id, // ДОБАВЛЕНО!
+                'property_id' => $property->id,
                 'template_id' => 1,
                 'data' => $validatedData,
                 'status' => 'pending',

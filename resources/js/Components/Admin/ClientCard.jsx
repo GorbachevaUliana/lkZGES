@@ -41,11 +41,18 @@ export default function ClientCard({
 
     const handleUpdateSubmit = () => {
         router.post(`/admin/clients/${data.id}`, {
-            ...data,
+            client_type: data.client_type,
+            last_name: data.last_name,
+            first_name: data.first_name,
+            middle_name: data.middle_name,
+            company_name: data.company_name,
+            address: data.address,
+            phone: data.phone,
+            email: data.email,
+            tariff_id: data.tariff_id,
             _method: 'PUT',
         }, {
             onSuccess: () => showToast('Данные успешно обновлены'),
-            forceFormData: true
         });
     };
 
@@ -54,7 +61,7 @@ export default function ClientCard({
         if (!file) return;
 
         router.post(route('admin.clients.upload', data.id), { file }, {
-            forceFormData: true,
+            forceFormData: true, // Здесь он нужен, так как загружается файл
             onSuccess: (page) => {
                 const updated = page.props.clients.find(c => c.id === data.id);
                 if (updated) setData('documents', updated.documents);
@@ -63,28 +70,28 @@ export default function ClientCard({
         });
     };
 
-    const displayName = data.client_type === 'legal' 
-        ? data.company_name 
-        : `${data.last_name || ''} ${data.first_name || ''} ${data.middle_name || ''}`;
+    // ИСПРАВЛЕНИЕ №2: Надежное вычисление ФИО и отображаемого имени с подстраховками
+    const fullName = [data.last_name, data.first_name, data.middle_name]
+        .map(str => str?.trim())
+        .filter(Boolean)
+        .join(' ');
+
+    const displayName = data.client_type === 'legal'
+        ? (data.company_name?.trim() || fullName || 'Название компании не указано')
+        : (fullName || 'ФИО не указано');
+
+    const avatarName = data.client_type === 'legal' 
+        ? (data.company_name || data.last_name || 'Ю') 
+        : (data.last_name || 'Ф');
 
     const inputSx = {
         '& .MuiOutlinedInput-root': {
             borderRadius: '12px',
             backgroundColor: '#fff',
-
-            '& input': {
-                padding: '12px 14px',
-            },
-
-            '& fieldset': {
-                borderColor: '#E0E5F2',
-            },
-            '&:hover fieldset': {
-                borderColor: '#B8C1EC',
-            },
-            '&.Mui-focused fieldset': {
-                borderColor: '#4318FF',
-            },
+            '& input': { padding: '12px 14px' },
+            '& fieldset': { borderColor: '#E0E5F2' },
+            '&:hover fieldset': { borderColor: '#B8C1EC' },
+            '&.Mui-focused fieldset': { borderColor: '#4318FF' },
         },
     };
 
@@ -93,10 +100,11 @@ export default function ClientCard({
             {/* Шапка карточки */}
             <Box sx={{ bgcolor: '#0B1437', color: 'white', p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box display="flex" alignItems="center" gap={2}>
-                    <ClientAvatar name={data.client_type === 'legal' ? data.company_name : data.last_name} sx={{ width: 56, height: 56 }} />
+                    {/* Исправлен нейминг для аватара */}
+                    <ClientAvatar name={avatarName} sx={{ width: 56, height: 56 }} />
                     <Box>
                         <Typography variant="h5" fontWeight="bold">
-                            {displayName || 'Загрузка...'}
+                            {displayName}
                         </Typography>
                         <Box display="flex" gap={2} sx={{ opacity: 0.7 }}>
                             <Typography variant="body2">Л/С: {data.account_number}</Typography>
