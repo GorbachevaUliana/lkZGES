@@ -7,6 +7,12 @@ use Illuminate\Support\Facades\DB;
 
 class ApplicationService
 {
+    /**
+     * Обновление статуса заявки
+     *
+     * ВАЖНО: Тариф сохраняется на уровне объекта (property), а не клиента!
+     * Каждый объект энергоснабжения имеет свой тариф.
+     */
     public function updateStatus(Application $application, array $data): void
     {
         DB::transaction(function () use ($application, $data) {
@@ -16,34 +22,28 @@ class ApplicationService
             if ($newStatus === 'approved' && $application->client) {
                 $tariff = \App\Models\Tariff::find($data['tariff_id']);
 
-                $application->client->update([
-                    'tariff_category' => $tariff ? $tariff->name : null,
-                ]);
-                
+                // Определяем объект для активации
                 $propertyId = $application->property_id;
-                $propertyActivated = false;
-                
+                $property = null;
+
                 if ($propertyId) {
                     $property = \App\Models\Property::find($propertyId);
-                    if ($property) {
-                        $property->update([
-                            'status' => 'active',
-                            'account_number' => $data['account_number']
-                        ]);
-                        $propertyActivated = true;
-                    }
                 }
-                
-                if (!$propertyActivated) {
+
+                if (!$property) {
                     $property = $application->client->properties()->latest()->first();
-                    if ($property) {
-                        $property->update([
-                            'status' => 'active',
-                            'account_number' => $data['account_number']
-                        ]);
-                    }
                 }
-                
+
+                // Активируем объект с лицевым счётом и тарифом
+                if ($property) {
+                    $property->update([
+                        'status' => 'active',
+                        'account_number' => $data['account_number'],
+                        'tariff_id' => $tariff ? $tariff->id : null, // Тариф привязан к объекту!
+                    ]);
+                }
+
+                // Обновляем роль пользователя
                 if ($application->client->user) {
                     $application->client->user->update(['role' => 'client']);
                 }

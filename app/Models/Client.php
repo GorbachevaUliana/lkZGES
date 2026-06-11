@@ -22,10 +22,8 @@ class Client extends Model
         'address',
         'phone',
         'email',
-        // 'status' - УБРАНО! Статус хранится в таблице properties
-        'tariff_id',
-        'client_id',
-        'tariff_category',
+        // УБРАНО: tariff_id - тарифы теперь на уровне объектов (properties)
+        // УБРАНО: tariff_category - не используется
     ];
 
     protected $casts = [
@@ -121,7 +119,7 @@ class Client extends Model
     }
 
     /**
-     * Объекты клиента
+     * Объекты клиента (с тарифами)
      */
     public function properties(): HasMany
     {
@@ -156,11 +154,6 @@ class Client extends Model
         return count($parts) > 0 ? implode(' ', $parts) : '';
     }
 
-    public function tariff(): BelongsTo
-    {
-        return $this->belongsTo(Tariff::class);
-    }
-
     /**
      * Название типа клиента
      */
@@ -176,17 +169,17 @@ class Client extends Model
     {
         // Если связь properties уже загружена, используем коллекцию, а не новый запрос в БД
         $props = $this->relationLoaded('properties') ? $this->properties : $this->properties();
-        
+
         $hasActive = $props->where('status', 'active')
             ->whereNotNull('account_number')
             ->where('account_number', '!=', '')
             ->count() > 0;
-        
+
         if ($hasActive) return 'Активен';
-        
+
         $hasPending = $props->where('status', 'pending')->count() > 0;
         if ($hasPending) return 'Ожидает активации';
-        
+
         return 'Неактивен';
     }
 
@@ -311,10 +304,11 @@ class Client extends Model
         $this->update(['user_id' => $user->id]);
     }
 
+    /**
+     * Показания через объекты
+     */
     public function readings()
     {
         return $this->hasManyThrough(MeterReading::class, Property::class);
     }
-
-    protected $with = ['tariff'];
 }

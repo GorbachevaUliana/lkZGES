@@ -92,6 +92,60 @@ class ApplicationTemplateResource extends Resource
                                             ])->default('all'),
                                     ])->columns(3),
 
+                                //Динамический блок
+                                Forms\Components\Builder\Block::make('dynamic_input')
+                                    ->label('Динамический список')
+                                    ->icon('heroicon-o-arrows-pointing-out')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('key')
+                                                    ->label('Ключ поля (для PDF)')
+                                                    ->required()
+                                                    ->helperText('Например: notification_delivery'),
+                                                Forms\Components\TextInput::make('label')
+                                                    ->label('Заголовок для пользователя')
+                                                    ->required()
+                                            ]),
+                                        Forms\Components\Toggle::make('is_required')
+                                            ->label('Обязательное')
+                                            ->default(false),
+                                        Forms\Components\Repeater::make('options')
+                                            ->label('Варианты выбора')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('value')
+                                                    ->label('Текст варианта')
+                                                    ->required()
+                                                    ->columnSpanFull()
+                                                    ->helperText('Например: по электронной почте'),
+                                                Forms\Components\Select::make('input_type')
+                                                    ->label('Тип доп.поля')
+                                                    ->options([
+                                                        'none' => 'Без доп.поля',
+                                                        'email' => 'Электронная почта',
+                                                        'phone' => 'Телефон',
+                                                        'text' => 'Текст',
+                                                    ])
+                                                    ->default('none')
+                                                    ->live()
+                                                    ->helperText('Показать поле ввода при выборе этого варианта'),
+                                                Forms\Components\TextInput::make('input_label')
+                                                    ->label('Подпись поля ввода')
+                                                    ->visible(fn (callable $get) => $get('input_type') && $get('input_type') !== 'none')
+                                                    ->columnSpanFull(),
+                                            ])
+                                            ->reorderable(true)
+                                            ->columnSpanFull()
+                                            ->helperText('Каждый вариант может иметь связанное поле для ввода данных'),
+                                        Forms\Components\Select::make('visibility')
+                                            ->label('Показывать')
+                                            ->options([
+                                                'all' => 'Всем',
+                                                'individual' => 'Только физлицам',
+                                                'legal' => 'Только юрлицам',
+                                            ])->default('all')
+                                    ]),
+
                                 // Текстовое поле
                                 Forms\Components\Builder\Block::make('input_field')
                                     ->label('✏️ Текстовое поле')
@@ -110,7 +164,7 @@ class ApplicationTemplateResource extends Resource
                                                     ->required()
                                                     ->helperText('Например: Фамилия, Телефон'),
                                             ]),
-                                        Forms\Components\Grid::make(3)
+                                        Forms\Components\Grid::make(4)
                                             ->schema([
                                                 Forms\Components\Select::make('type')
                                                     ->label('Тип данных')
@@ -128,11 +182,23 @@ class ApplicationTemplateResource extends Resource
                                                         'passport' => 'Паспорт (0000 000000)',
                                                         'phone' => 'Телефон (+7)',
                                                         'snils' => 'СНИЛС',
+                                                        'range_numbers' => 'Диапазон чисел (0 - 0)',
+                                                        'range_date' => 'Диапазон дат (ДД.ММ.ГГГГ - ДД.ММ.ГГГГ)',
                                                     ])->default('none'),
                                                 Forms\Components\Toggle::make('is_required')
                                                     ->label('Обязательное')
                                                     ->default(false),
+                                                Forms\Components\Toggle::make('is_readonly')
+                                                    ->label('Только чтение')
+                                                    ->default(false)
+                                                    ->live()
+                                                    ->helperText('Пользователь не сможет редактировать это поле'),
                                             ]),
+                                        Forms\Components\TextInput::make('default_value')
+                                            ->label('Значение по умолчанию')
+                                            ->helperText('Значение для поля с правами на чтение')
+                                            ->columnSpanFull()
+                                            ->visible(fn (callable $get) => $get('is_readonly')),
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
@@ -205,6 +271,76 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Toggle::make('allow_multiple_custom')
                                             ->label('Разрешить добавлять свои варианты')
                                             ->helperText('Покажет кнопку "+" для добавления'),
+                                        Forms\Components\Toggle::make('is_required')
+                                            ->label('Обязательное')
+                                            ->default(false),
+                                        Forms\Components\Select::make('visibility')
+                                            ->label('Показывать')
+                                            ->options([
+                                                'all' => 'Всем',
+                                                'individual' => 'Только физлицам',
+                                                'legal' => 'Только юрлицам',
+                                            ])->default('all'),
+                                    ]),
+
+                                // Блок загрузки файлов
+                                Forms\Components\Builder\Block::make('file_upload')
+                                    ->label('📎 Загрузка файлов')
+                                    ->icon('heroicon-o-paper-clip')
+                                    ->schema([
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('key')
+                                                    ->label('Ключ поля (для PDF)')
+                                                    ->required()
+                                                    ->helperText('Например: documents, passport_scan')
+                                                    ->regex('/^[a-zA-Z0-9_а-яА-ЯёЁ\s]+$/'),
+                                                Forms\Components\TextInput::make('label')
+                                                    ->label('Заголовок для пользователя')
+                                                    ->required()
+                                                    ->helperText('Например: Документы, Скан паспорта'),
+                                            ]),
+                                        Forms\Components\Grid::make(2)
+                                            ->schema([
+                                                Forms\Components\Toggle::make('is_required')
+                                                    ->label('Обязательное')
+                                                    ->default(false),
+                                                Forms\Components\Toggle::make('allow_multiple')
+                                                    ->label('Разрешить несколько файлов')
+                                                    ->default(true)
+                                                    ->helperText('Покажет кнопку "+" для добавления'),
+                                            ]),
+                                        Forms\Components\KeyValue::make('accepted_types')
+                                            ->label('Разрешённые типы файлов')
+                                            ->keyLabel('Тип')
+                                            ->valueLabel('Описание')
+                                            ->default([
+                                                'pdf' => 'PDF документы',
+                                                'jpg' => 'Изображения JPG',
+                                                'png' => 'Изображения PNG',
+                                                'doc' => 'Word документы',
+                                                'docx' => 'Word документы',
+                                            ])
+                                            ->helperText('Оставьте пустым для разрешения всех типов')
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('max_size')
+                                            ->label('Макс. размер файла (МБ)')
+                                            ->numeric()
+                                            ->default(10)
+                                            ->minValue(1)
+                                            ->maxValue(50),
+                                        Forms\Components\TextInput::make('max_files')
+                                            ->label('Макс. количество файлов')
+                                            ->numeric()
+                                            ->default(5)
+                                            ->minValue(1)
+                                            ->maxValue(20)
+                                            ->visible(fn (callable $get) => $get('allow_multiple')),
+                                        Forms\Components\Textarea::make('helper_text')
+                                            ->label('Подсказка под полем')
+                                            ->rows(2)
+                                            ->placeholder('Например: Загрузите скан паспорта или фото документа')
+                                            ->columnSpanFull(),
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
@@ -232,9 +368,9 @@ class ApplicationTemplateResource extends Resource
                                         <code>first_name</code> - Имя<br>
                                         <code>middle_name</code> - Отчество<br>
                                         <code>phone</code> - Телефон<br>
-                                        <code>passport_series</code> - Серия паспорта<br>
-                                        <code>passport_number</code> - Номер паспорта<br>
-                                        <code>snils</code> - СНИЛС
+                                        <code>passport</code> - Серия и номер паспорта<br>
+                                        <code>passport_issue</code> - Кем выдан паспорт<br>
+                                        <code>passport_issue_date</code> - Дата выдачи
                                     </div>
                                     <div style="background: #f5f5f5; padding: 10px; border-radius: 8px;">
                                         <strong>🏢 Юрлицо:</strong><br>

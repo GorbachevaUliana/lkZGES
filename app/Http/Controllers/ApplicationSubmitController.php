@@ -22,6 +22,12 @@ class ApplicationSubmitController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        $user = auth()->user();
+        $existingClient = Client::where('user_id', $user->id)->first();
+
+        $existingClientType = $existingClient?->client_type;
+        $hasExistingClient = !empty($existingClientType);
+
         return Inertia::render('Applications/DynamicForm', [
             'template' => [
                 'id' => $template->id,
@@ -30,6 +36,8 @@ class ApplicationSubmitController extends Controller
                 'content' => $template->content,
             ],
             'clientTypes' => Client::getClientTypes(),
+            'existingClientType' => $existingClientType,
+            'hasExistingClient' => $hasExistingClient,
         ]);
     }
 
@@ -38,17 +46,18 @@ class ApplicationSubmitController extends Controller
         $template = ApplicationTemplate::where('slug', $slug)->firstOrFail();
         $clientType = $request->input('client_type', 'individual');
 
-        // Нормализуем данные
-        $validatedData = $this->normalizeData($request->all());
-        $validatedData['client_type'] = $clientType;
+        $user = auth()->user();
+        $existingClient = Client::where('user_id', $user->id)->first();
 
-        return DB::transaction(function () use ($validatedData, $template, $clientType, $request) {
-            $user = auth()->user();
+        if ($existingClient) {
+            $clientType = $existingClient->client_type;
+        }
 
-            // 1. Создаём/обновляем клиента
-            $client = $this->createClient($validatedData, $user);
+        $validatedData = $this->normalizeData($request->all(), $request);
 
-            // 2. Создаём объект (Property)
+        return DB::transaction(function () use ($validatedData, $template, $clientType, $request, $user, $existingClient) {
+            $client = $this->createClient($validatedData, $user, $existingClient);
+
             $fullAddress = $this->buildFullAddress($validatedData);
 
             $property = Property::create([
@@ -57,10 +66,10 @@ class ApplicationSubmitController extends Controller
                 'status' => 'pending',
             ]);
 
-            // 3. Обновляем роль пользователя
-            $user->update(['role' => 'applicant']);
+            if ($user->role === 'user') {
+                $user->update(['role' => 'applicant']);
+            }
 
-            // 4. Создаём заявку
             $application = Application::create([
                 'user_id' => $user->id,
                 'client_id' => $client->id,
@@ -72,13 +81,9 @@ class ApplicationSubmitController extends Controller
                 'generated_pdf_path' => '',
             ]);
 
-            // 5. Генерируем PDF
             $pdfPath = $this->generatePdf($validatedData, $client, $clientType, $application, $property);
-
-            // 6. Обновляем путь к PDF
             $application->update(['generated_pdf_path' => $pdfPath]);
 
-            // 7. Регистрируем документ
             Document::create([
                 'client_id' => $client->id,
                 'application_id' => $application->id,
@@ -88,7 +93,8 @@ class ApplicationSubmitController extends Controller
                 'description' => 'Автоматическая генерация заявки',
             ]);
 
-            $this->handleUploadedFiles($request, $client, $application->id);
+            // Обработка файлов из конструктора
+            $this->handleUploadedFilesFromForm($request, $client, $application->id, $template);
 
             return redirect()->route('client.dashboard')
                 ->with('success', 'Заявка успешно отправлена!');
@@ -96,13 +102,18 @@ class ApplicationSubmitController extends Controller
     }
 
     /**
-     * Нормализация данных формы
+     * Нормализация данных формы с обработкой файлов
      */
-    private function normalizeData(array $data): array
+    private function normalizeData(array $data, Request $request): array
     {
         $normalized = [];
 
         foreach ($data as $key => $value) {
+            // Пропускаем файлы - они обрабатываются отдельно
+            if ($request->hasFile($key)) {
+                continue;
+            }
+
             // Чекбоксы: { preset: [...], custom: [...] }
             if (is_array($value) && isset($value['preset'])) {
                 $presets = $value['preset'] ?? [];
@@ -123,7 +134,24 @@ class ApplicationSubmitController extends Controller
                 continue;
             }
 
-            // Остальные значения
+            //Динамические списки
+            if(is_array($value) && isset($value['selected'])) {
+                $selected = $value['selected'] ?? '';
+                $inputValue = $value['inputValue'] ?? '';
+
+                if ($selected && $inputValue) {
+                    $normalized[$key] = $selected . ': ' . $inputValue;
+                } else {
+                    $normalized[$key] = $selected? : 'Не указано';
+                }
+                continue;
+            }
+
+            // Массивы файлов (объекты File) пропускаем
+            if (is_array($value) && isset($value[0]) && is_object($value[0] ?? null)) {
+                continue;
+            }
+
             $normalized[$key] = $value;
         }
 
@@ -131,22 +159,67 @@ class ApplicationSubmitController extends Controller
     }
 
     /**
+     * Обработка загруженных файлов из полей конструктора
+     */
+    private function handleUploadedFilesFromForm(Request $request, Client $client, int $applicationId, ApplicationTemplate $template): void
+    {
+        $content = $template->content ?? [];
+
+        foreach ($content as $block) {
+            if ($block['type'] !== 'file_upload') {
+                continue;
+            }
+
+            $fieldKey = $block['data']['key'] ?? $block['data']['label'] ?? null;
+            if (!$fieldKey) {
+                continue;
+            }
+
+            $files = $request->file($fieldKey);
+            if (!$files) {
+                continue;
+            }
+
+            // Нормализуем в массив
+            $files = is_array($files) ? $files : [$files];
+
+            $fieldLabel = $block['data']['label'] ?? $fieldKey;
+
+            foreach ($files as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('client_documents/' . $applicationId, 'public');
+
+                    Document::create([
+                        'client_id' => $client->id,
+                        'application_id' => $applicationId,
+                        'name' => $file->getClientOriginalName(),
+                        'file_path' => $path,
+                        'type' => Document::TYPE_OTHER,
+                        'description' => $fieldLabel,
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
      * Создание/обновление клиента
      */
-    private function createClient(array $data, $user): Client
+    private function createClient(array $data, $user, ?Client $existingClient = null): Client
     {
-        // Ищем телефон в разных полях
+        if ($existingClient) {
+            return $existingClient;
+        }
+
         $phone = $data['phone']
             ?? $data['Телефон']
             ?? $data['Контактный телефон']
             ?? null;
 
-        // ФИО - поддерживаем разные ключи
         $lastName = $data['last_name'] ?? $data['Фамилия'] ?? null;
         $firstName = $data['first_name'] ?? $data['Имя'] ?? null;
         $middleName = $data['middle_name'] ?? $data['Отчество'] ?? null;
 
-        // Данные для юрлиц
         $companyName = $data['company_name'] ?? $data['Наименование организации'] ?? null;
         $inn = $data['inn'] ?? $data['ИНН'] ?? null;
 
@@ -170,38 +243,30 @@ class ApplicationSubmitController extends Controller
      */
     private function buildFullAddress(array $data): string
     {
-        // Если есть готовое поле address - используем его
         if (!empty($data['address'])) return $data['address'];
         if (!empty($data['Адрес'])) return $data['Адрес'];
 
         $parts = [];
 
-        // Регион (поддерживаем разные ключи, включая с пробелом)
         $region = $data['region'] ?? $data[' region'] ?? $data['Регион'] ?? null;
         if (!empty($region)) $parts[] = $region;
 
-        // Район
         if (!empty($data['district'])) $parts[] = $data['district'];
         elseif (!empty($data['Район'])) $parts[] = $data['Район'];
 
-        // Населенный пункт
         $locality = $data['locality'] ?? $data['Населенный пункт'] ?? $data['Город'] ?? $data['city'] ?? null;
         if (!empty($locality)) $parts[] = $locality;
 
-        // Улица
         if (!empty($data['street'])) $parts[] = 'ул. ' . $data['street'];
         elseif (!empty($data['Улица'])) $parts[] = 'ул. ' . $data['Улица'];
 
-        // Дом
         if (!empty($data['house'])) $parts[] = 'д. ' . $data['house'];
         elseif (!empty($data['Дом'])) $parts[] = 'д. ' . $data['Дом'];
 
-        // Корпус
         if (!empty($data['corpus'])) $parts[] = 'корп. ' . $data['corpus'];
         elseif (!empty($data['Корпус'])) $parts[] = 'корп. ' . $data['Корпус'];
         elseif (!empty($data['building'])) $parts[] = 'корп. ' . $data['building'];
 
-        // Квартира
         if (!empty($data['apartment'])) $parts[] = 'кв. ' . $data['apartment'];
         elseif (!empty($data['Квартира'])) $parts[] = 'кв. ' . $data['Квартира'];
 
@@ -219,7 +284,6 @@ class ApplicationSubmitController extends Controller
     {
         $pdfTemplate = PdfTemplate::getTemplate($clientType, PdfTemplate::DOC_APPLICATION);
 
-        // Основные данные (системные)
         $mainInfo = [
             'application_id' => $application->id,
             'full_name' => trim("{$client->last_name} {$client->first_name} {$client->middle_name}"),
@@ -228,14 +292,11 @@ class ApplicationSubmitController extends Controller
             'client_type_name' => Client::getClientTypes()[$clientType] ?? $clientType,
             'address' => $property->address,
             'phone' => $client->phone ?? 'Не указан',
-            // Для юрлиц
             'company_name' => $client->company_name,
             'inn' => $client->inn,
         ];
 
-        // Объединяем с данными из формы
         $templateData = array_merge($data, $mainInfo);
-        // Добавляем $data для доступа в шаблоне
         $templateData['data'] = $templateData;
 
         if ($pdfTemplate) {
@@ -253,24 +314,5 @@ class ApplicationSubmitController extends Controller
         Storage::disk('public')->put($filePath, $pdf->output());
 
         return $filePath;
-    }
-
-    /**
-     * Обработка загруженных файлов
-     */
-    private function handleUploadedFiles(Request $request, Client $client, $appId): void
-    {
-        foreach ($request->allFiles() as $file) {
-            if ($file && $file->isValid()) {
-                $path = $file->store('client_documents', 'public');
-                Document::create([
-                    'client_id' => $client->id,
-                    'application_id' => $appId,
-                    'name' => $file->getClientOriginalName(),
-                    'file_path' => $path,
-                    'type' => Document::TYPE_OTHER,
-                ]);
-            }
-        }
     }
 }

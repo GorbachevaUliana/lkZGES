@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ClientResource\Pages;
 use App\Models\Client;
 use App\Models\Property;
+use App\Models\Tariff;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -38,7 +39,9 @@ class ClientResource extends Resource
                             ])
                             ->default('individual')
                             ->required()
-                            ->live(),
+                            ->live()
+                            ->disabled(true)
+                            ->dehydrated(true),
 
                         Forms\Components\TextInput::make('last_name')
                             ->label('Фамилия')
@@ -73,29 +76,33 @@ class ClientResource extends Resource
                             ->email(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Тариф')
-                    ->schema([
-                        Forms\Components\Select::make('tariff_category')
-                            ->label('Категория тарифа')
-                            ->options(\App\Models\Tariff::pluck('name', 'name')->toArray())
-                            ->searchable()
-                            ->preload(),
-                    ]),
+                // УБРАНА секция "Тариф" - тарифы теперь на уровне объектов!
 
-                // Показываем связанные объекты (properties)
-                Forms\Components\Section::make('Объекты потребления (Лицевые счета)')
+                // Объекты потребления с тарифами
+                Forms\Components\Section::make('Объекты потребления')
+                    ->description('Каждый объект имеет свой лицевой счёт и тариф. Тарифы привязаны к объектам, а не к потребителю.')
                     ->schema([
                         Forms\Components\Repeater::make('properties')
                             ->relationship('properties')
                             ->schema([
                                 Forms\Components\TextInput::make('account_number')
                                     ->label('Лицевой счёт')
-                                    ->unique(ignoreRecord: true),
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(50),
 
                                 Forms\Components\Textarea::make('address')
-                                    ->label('Адрес')
+                                    ->label('Адрес объекта')
                                     ->rows(2)
-                                    ->columnSpan(2),
+                                    ->columnSpan(2)
+                                    ->required(),
+
+                                Forms\Components\Select::make('tariff_id')
+                                    ->label('Тариф')
+                                    ->options(Tariff::pluck('name', 'id')->toArray())
+                                    ->searchable()
+                                    ->preload()
+                                    ->nullable()
+                                    ->helperText('Тариф привязан к данному объекту'),
 
                                 Forms\Components\Select::make('status')
                                     ->label('Статус')
@@ -104,13 +111,19 @@ class ClientResource extends Resource
                                         'active' => 'Активен',
                                         'inactive' => 'Неактивен',
                                     ])
-                                    ->default('pending'),
+                                    ->default('pending')
+                                    ->required(),
                             ])
-                            ->columns(3)
+                            ->columns(4)
                             ->disabled() // Только для просмотра, редактирование через заявки
                             ->deletable(false)
                             ->addable(false),
                     ]),
+
+                // Предупреждение
+                Forms\Components\Placeholder::make('info')
+                    ->content('Внимание: тарифы привязаны к объектам энергоснабжения. Каждый объект может иметь свой тариф. Изменение тарифа возможно только через редактирование объекта выше.')
+                    ->visibleOn('edit'),
             ]);
     }
 
@@ -146,7 +159,7 @@ class ClientResource extends Resource
                         default => 'gray',
                     }),
 
-                // ИСПРАВЛЕНО: Адрес из properties
+                // Адрес из первого активного объекта
                 Tables\Columns\TextColumn::make('address')
                     ->label('Адрес')
                     ->getStateUsing(function (Client $record): string {
@@ -166,7 +179,7 @@ class ClientResource extends Resource
                     ->label('Телефон')
                     ->searchable(),
 
-                // ИСПРАВЛЕНО: Л/С из properties
+                // Лицевые счета из объектов
                 Tables\Columns\TextColumn::make('account_numbers')
                     ->label('Лицевые счета')
                     ->getStateUsing(function (Client $record): string {
@@ -178,7 +191,14 @@ class ClientResource extends Resource
                         return $accounts ?: 'Не присвоен';
                     }),
 
-                // ИСПРАВЛЕНО: Статус из properties
+                // Количество объектов
+                Tables\Columns\TextColumn::make('properties_count')
+                    ->label('Объектов')
+                    ->counts('properties')
+                    ->badge()
+                    ->color('primary'),
+
+                // Статус из объектов
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
                     ->badge()

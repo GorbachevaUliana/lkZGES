@@ -12,6 +12,9 @@ class MeterReadingController extends Controller
 {
     /**
      * Страница показаний
+     *
+     * ВАЖНО: Тариф берётся из объекта (property), а не из клиента!
+     * Каждый объект имеет свой тариф.
      */
     public function index(Request $request)
     {
@@ -27,16 +30,18 @@ class MeterReadingController extends Controller
         }
 
         $propertyId = $request->query('property');
-        
+
         if ($propertyId) {
             $property = Property::where('id', $propertyId)
                 ->where('client_id', $client->id)
+                ->with('tariff')
                 ->first();
         } else {
             $property = $client->properties()
                 ->where('status', 'active')
                 ->whereNotNull('account_number')
                 ->where('account_number', '!=', '')
+                ->with('tariff')
                 ->first();
         }
 
@@ -49,18 +54,20 @@ class MeterReadingController extends Controller
             ->where('status', 'active')
             ->whereNotNull('account_number')
             ->where('account_number', '!=', '')
+            ->with('tariff')
             ->get();
 
-        $currentTariff = Tariff::where('name', $client->tariff_category)
-            ->where('starts_at', '<=', now())
-            ->where(function ($query) {
-                $query->where('ends_at', '>=', now())
-                    ->orWhereNull('ends_at');
-            })
-            ->first();
+        // ИСПРАВЛЕНО: Тариф берётся из объекта (property), а не из клиента!
+        $currentTariff = $property->tariff;
+
+        // Если у объекта нет тарифа - пытаемся найти по названию (для обратной совместимости)
+        if (!$currentTariff && $property->tariff_id) {
+            $currentTariff = Tariff::find($property->tariff_id);
+        }
 
         $lastReadingValue = MeterReading::getLastValue($property->id);
 
+        // ИСПРАВЛЕНО: История показаний только для конкретного объекта!
         $history = MeterReading::where('property_id', $property->id)
             ->with('tariff')
             ->orderBy('reading_date', 'desc')
@@ -79,6 +86,8 @@ class MeterReadingController extends Controller
 
     /**
      * Сохранение показаний
+     *
+     * Показания привязаны к конкретному объекту (property)
      */
     public function storeReading(Request $request)
     {
@@ -107,9 +116,11 @@ class MeterReadingController extends Controller
             return back()->withErrors(['current_value' => "Показания не могут быть меньше предыдущих ($previousValue)"]);
         }
 
+        // Создаём показания с привязкой к объекту и его тарифу
         $property->readings()->create([
             'current_value' => $validated['current_value'],
             'reading_date' => $validated['reading_date'],
+            'tariff_id' => $property->tariff_id, // Тариф из объекта
             'created_by' => auth()->id(),
         ]);
 

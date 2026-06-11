@@ -23,6 +23,15 @@ class Document extends Model
         'description',
     ];
 
+    /**
+     * Атрибуты, которые добавляются при сериализации (accessor'ы)
+     */
+    protected $appends = [
+        'url',
+        'type_name',
+    ];
+
+
     // ==================== CONSTANTS ====================
 
     const TYPE_APPLICATION = 'application';
