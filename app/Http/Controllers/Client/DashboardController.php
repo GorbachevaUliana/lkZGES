@@ -14,6 +14,7 @@ class DashboardController extends Controller
     /**
      * Главная страница личного кабинета
      */
+
     public function index()
     {
         $user = auth()->user();
@@ -21,7 +22,8 @@ class DashboardController extends Controller
         $properties = Property::whereHas('client', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
-            ->with(['client.tariff', 'client.user'])
+            ->activeWithAccount()
+            ->with(['client.user', 'tariff'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($property) {
@@ -37,7 +39,6 @@ class DashboardController extends Controller
                     'client' => $property->client ? [
                         'id' => $property->client->id,
                         'address' => $property->client->address,
-                        'tariff' => $property->client->tariff,
                     ] : null,
                 ];
             });
@@ -70,14 +71,9 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         $client = $user->client;
-
-        // Если нет клиента - редирект
         if (!$client) {
             return redirect()->route('welcome.step');
         }
-
-        // Получаем все документы клиента
-        // Включая документы из всех заявок клиента
         $documents = Document::where('client_id', $client->id)
             ->with('application:id,status')
             ->orderBy('created_at', 'desc')
@@ -98,8 +94,6 @@ class DashboardController extends Controller
                     ] : null,
                 ];
             });
-
-        // Получаем последнюю заявку для отображения статуса
         $application = Application::where('user_id', $user->id)
             ->latest()
             ->first();
@@ -120,7 +114,8 @@ class DashboardController extends Controller
         $properties = Property::whereHas('client', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })
-            ->with(['client.tariff', 'meterReadings' => function ($query) {
+            ->activeWithAccount()
+            ->with(['tariff', 'meterReadings' => function ($query) {
                 $query->latest('reading_date')->limit(5);
             }])
             ->orderBy('created_at', 'desc')

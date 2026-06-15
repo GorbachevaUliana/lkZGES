@@ -14,7 +14,7 @@ class ApplicationTemplateSeeder extends Seeder
     public function run(): void
     {
         ApplicationTemplate::updateOrCreate(
-            ['slug' => 'application_individual'],
+            ['slug' => 'konstruktor'],
             [
                 'title' => 'Заявление на заключение договора энергоснабжения (физлицо)',
                 'is_active' => true,
@@ -826,7 +826,7 @@ class ApplicationTemplateSeeder extends Seeder
                             ],
                             'allow_multiple_custom' => false,
                             'visibility' => 'all',
-                            'is_required' => null
+                            'is_required' => true
                         ]
                     ],
                 ],

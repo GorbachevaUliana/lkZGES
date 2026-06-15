@@ -160,10 +160,20 @@ class ApplicationSubmitController extends Controller
 
     /**
      * Обработка загруженных файлов из полей конструктора
+     * Файлы автоматически переименовываются по шаблону:
+     * ТипДокумента_Фамилия_ИО_НомерЗаявки.расширение
      */
     private function handleUploadedFilesFromForm(Request $request, Client $client, int $applicationId, ApplicationTemplate $template): void
     {
         $content = $template->content ?? [];
+
+        // Получаем данные для имени файла
+        $lastName = $this->sanitizeFilename($client->last_name ?? 'Неизвестно');
+        $initials = $this->getInitials($client);
+        $appNumber = $applicationId;
+
+        // Счётчик для файлов одного типа (если их несколько)
+        $fileCounters = [];
 
         foreach ($content as $block) {
             if ($block['type'] !== 'file_upload') {
@@ -184,22 +194,86 @@ class ApplicationSubmitController extends Controller
             $files = is_array($files) ? $files : [$files];
 
             $fieldLabel = $block['data']['label'] ?? $fieldKey;
+            $docType = $this->sanitizeFilename($fieldLabel);
+
+            // Инициализируем счётчик для этого типа документа
+            if (!isset($fileCounters[$docType])) {
+                $fileCounters[$docType] = 1;
+            }
 
             foreach ($files as $file) {
                 if ($file && $file->isValid()) {
-                    $path = $file->store('client_documents/' . $applicationId, 'public');
+                    // Формируем новое имя файла
+                    $extension = $file->getClientOriginalExtension();
+                    $counter = $fileCounters[$docType];
+                    
+                    // Если файл один - без номера, если несколько - добавляем номер
+                    if (count($files) > 1) {
+                        $newFileName = "{$docType}_{$lastName}_{$initials}_{$appNumber}_{$counter}.{$extension}";
+                    } else {
+                        $newFileName = "{$docType}_{$lastName}_{$initials}_{$appNumber}.{$extension}";
+                    }
+
+                    // Сохраняем с новым именем
+                    $path = $file->storeAs(
+                        'client_documents/' . $applicationId,
+                        $newFileName,
+                        'public'
+                    );
 
                     Document::create([
                         'client_id' => $client->id,
                         'application_id' => $applicationId,
-                        'name' => $file->getClientOriginalName(),
+                        'name' => $newFileName,
+                        'original_name' => $file->getClientOriginalName(), // Сохраняем оригинальное имя
                         'file_path' => $path,
                         'type' => Document::TYPE_OTHER,
                         'description' => $fieldLabel,
                     ]);
+
+                    $fileCounters[$docType]++;
                 }
             }
         }
+    }
+
+    /**
+     * Получить инициалы клиента (ИО)
+     */
+    private function getInitials(Client $client): string
+    {
+        $firstInitial = mb_substr($client->first_name ?? '', 0, 1);
+        $middleInitial = mb_substr($client->middle_name ?? '', 0, 1);
+        
+        $initials = $firstInitial;
+        if ($middleInitial) {
+            $initials .= $middleInitial;
+        }
+        
+        return $initials ?: 'Н';
+    }
+
+    /**
+     * Очистка имени файла от недопустимых символов
+     */
+    private function sanitizeFilename(string $name): string
+    {
+        // Заменяем пробелы на подчёркивания
+        $name = str_replace(' ', '_', $name);
+        
+        // Заменяем точки на подчёркивания (кроме расширения)
+        $name = str_replace('.', '_', $name);
+        
+        // Убираем множественные подчёркивания
+        $name = preg_replace('/_+/', '_', $name);
+        
+        // Убираем недопустимые символы (оставляем буквы, цифры, подчёркивания, дефисы)
+        $name = preg_replace('/[^\p{L}\p{N}_-]/u', '', $name);
+        
+        // Убираем подчёркивания в начале и конце
+        $name = trim($name, '_-');
+        
+        return $name ?: 'Документ';
     }
 
     /**

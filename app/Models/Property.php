@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Property extends Model
 {
@@ -11,7 +12,7 @@ class Property extends Model
 
     protected $fillable = [
         'client_id',
-        'tariff_id',
+        'tariff_id',  // ДОБАВЛЕНО
         'account_number',
         'address',
         'property_type',
@@ -35,7 +36,7 @@ class Property extends Model
     /**
      * Связь с клиентом
      */
-    public function client()
+    public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
     }
@@ -43,7 +44,7 @@ class Property extends Model
     /**
      * Связь с тарифом
      */
-    public function tariff()
+    public function tariff(): BelongsTo
     {
         return $this->belongsTo(Tariff::class);
     }

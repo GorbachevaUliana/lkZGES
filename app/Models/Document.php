@@ -18,6 +18,7 @@ class Document extends Model
         'client_id',
         'application_id',
         'name',
+        'original_name',
         'file_path',
         'type',
         'description',
@@ -29,6 +30,7 @@ class Document extends Model
     protected $appends = [
         'url',
         'type_name',
+        'display_name',
     ];
 
 
@@ -76,6 +78,17 @@ class Document extends Model
         $types = self::getTypeOptions();
 
         return $types[$this->type] ?? $this->type;
+    }
+
+    /**
+     * Отображаемое имя документа (с оригинальным именем в скобках)
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->original_name && $this->original_name !== $this->name) {
+            return $this->name . ' (оригинал: ' . $this->original_name . ')';
+        }
+        return $this->name;
     }
 
     // ==================== STATIC METHODS ====================

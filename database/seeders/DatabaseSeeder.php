@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             TariffSeeder::class, //сидер тарифов
             PdfTemplateSeeder::class, //сидер шаблонов ПДФ
-            ApplicationTemplateSeeder::class
+            ApplicationTemplateSeeder::class 
         ]);
     }
 }
