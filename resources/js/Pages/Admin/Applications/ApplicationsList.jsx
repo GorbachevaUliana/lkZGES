@@ -53,7 +53,11 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                 app.user_email?.toLowerCase().includes(query) ||
                 app.user_email?.toLowerCase().includes(altQuery);
             
-            const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+            // const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+            let matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+            if (statusFilter === 'pending') {
+                matchesStatus = app.status === 'new' || app.status === 'pending';
+            }
             
             return matchesSearch && matchesStatus;
         });
@@ -74,18 +78,17 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
         approved: { bg: '#E8F5E9', color: '#2E7D32' },
         rejected: { bg: '#FFEBEE', color: '#C62828' },
     };
-
     const handleRowDoubleClick = async (params) => {
         try {
             const response = await fetch(`/admin/applications/${params.row.id}`);
             const data = await response.json();
-            setSelectedApplication(data);
+            setSelectedApplication(data.application);
             setCardOpen(true);
         } catch (error) {
+            console.error('Error loading application:', error);
             showToast('Ошибка при загрузке данных заявки', 'error');
         }
     };
-
     const handleTakeToWork = (id) => {
         setConfirmMeta({
             open: true,

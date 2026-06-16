@@ -20,9 +20,6 @@ class Application extends Model
         'admin_comment',
         'processed_at',
         'processed_by',
-        'admin_comment',
-        'processed_at',
-        'processed_by',
         'tariff_id',
         'property_id'
     ];
@@ -32,23 +29,29 @@ class Application extends Model
         'processed_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'applicant_name',
+        'user_email',
+        'account_number',
+        'status_name',
+        'generated_pdf_url',
+    ];
+
     // ==================== CONSTANTS ====================
 
+    const STATUS_NEW = 'new';
     const STATUS_PENDING = 'pending';
-
     const STATUS_PROCESSING = 'processing';
-
     const STATUS_APPROVED = 'approved';
-
     const STATUS_REJECTED = 'rejected';
 
     const TYPE_INDIVIDUAL = 'individual';
-
     const TYPE_LEGAL = 'legal';
 
     public static function getStatuses(): array
     {
         return [
+            self::STATUS_NEW => 'Новая',
             self::STATUS_PENDING => 'Ожидает рассмотрения',
             self::STATUS_PROCESSING => 'В работе',
             self::STATUS_APPROVED => 'Одобрена',
@@ -66,17 +69,11 @@ class Application extends Model
 
     // ==================== RELATIONSHIPS ====================
 
-    /**
-     * Пользователь, подавший заявку
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Клиент (создаётся при подаче заявки)
-     */
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
@@ -87,66 +84,58 @@ class Application extends Model
         return $this->belongsTo(Property::class);
     }
 
-    /**
-     * Шаблон заявки
-     */
     public function template(): BelongsTo
     {
         return $this->belongsTo(ApplicationTemplate::class, 'template_id');
     }
 
-    /**
-     * Сотрудник, обработавший заявку
-     */
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
     }
 
-    /**
-     * Документы, связанные с заявкой
-     */
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);
     }
 
+    public function tariff(): BelongsTo
+    {
+        return $this->belongsTo(Tariff::class);
+    }
+
     // ==================== ACCESSORS ====================
 
-    /**
-     * Название статуса на русском
-     */
     public function getStatusNameAttribute(): string
     {
         return self::getStatuses()[$this->status] ?? $this->status;
     }
 
-    /**
-     * Название типа клиента на русском
-     */
     public function getClientTypeNameAttribute(): string
     {
         return self::getClientTypes()[$this->client_type] ?? $this->client_type;
     }
 
-    /**
-     * ФИО заявителя
-     */
     public function getApplicantNameAttribute(): string
     {
         if ($this->client) {
             return $this->client->display_name;
         }
 
-        // Если клиент ещё не создан, берём из data
         $data = $this->data ?? [];
-
         return trim(($data['last_name'] ?? '').' '.($data['first_name'] ?? '').' '.($data['middle_name'] ?? ''));
     }
 
-    /**
-     * URL для скачивания сгенерированного PDF
-     */
+    public function getUserEmailAttribute(): string
+    {
+        return $this->user?->email ?? '';
+    }
+
+    public function getAccountNumberAttribute(): ?string
+    {
+        return $this->property?->account_number ?? null;
+    }
+
     public function getGeneratedPdfUrlAttribute(): ?string
     {
         return $this->generated_pdf_path
@@ -154,9 +143,6 @@ class Application extends Model
             : null;
     }
 
-    /**
-     * URL для скачивания договора
-     */
     public function getContractPdfUrlAttribute(): ?string
     {
         return $this->contract_pdf_path
@@ -164,27 +150,20 @@ class Application extends Model
             : null;
     }
 
-    /**
-     * Имя обработавшего сотрудника
-     * Использует full_name или name из модели User
-     */
     public function getProcessorNameAttribute(): string
     {
         if (! $this->processor) {
             return '';
         }
 
-        // Проверяем, есть ли accessor getFullNameAttribute или full_name
         if (isset($this->processor->full_name)) {
             return $this->processor->full_name;
         }
 
-        // Проверяем, есть ли accessor getNameAttribute или name
         if (isset($this->processor->name)) {
             return $this->processor->name;
         }
 
-        // Формируем из отдельных полей
         return trim(($this->processor->last_name ?? '').' '.
                     ($this->processor->first_name ?? '').' '.
                     ($this->processor->middle_name ?? ''));
@@ -224,17 +203,11 @@ class Application extends Model
 
     // ==================== METHODS ====================
 
-    /**
-     * Перевести в статус "В работе"
-     */
     public function markAsProcessing(): void
     {
         $this->update(['status' => self::STATUS_PROCESSING]);
     }
 
-    /**
-     * Одобрить заявку
-     */
     public function approve(int $processedBy, ?string $accountNumber = null): void
     {
         $this->update([
@@ -243,15 +216,11 @@ class Application extends Model
             'processed_by' => $processedBy,
         ]);
 
-        // Активируем клиента
         if ($this->client && $accountNumber) {
             $this->client->activate($accountNumber);
         }
     }
 
-    /**
-     * Отклонить заявку
-     */
     public function reject(int $processedBy, ?string $comment = null): void
     {
         $this->update([
@@ -262,32 +231,18 @@ class Application extends Model
         ]);
     }
 
-    /**
-     * Загрузить договор (путь к файлу)
-     */
     public function attachContract(string $path): void
     {
         $this->update(['contract_pdf_path' => $path]);
     }
 
-    /**
-     * Можно ли редактировать заявку
-     */
     public function isEditable(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_PROCESSING]);
     }
 
-    /**
-     * Завершена ли обработка заявки
-     */
     public function isProcessed(): bool
     {
         return in_array($this->status, [self::STATUS_APPROVED, self::STATUS_REJECTED]);
-    }
-
-    public function tariff(): BelongsTo
-    {
-        return $this->belongsTo(Tariff::class);
     }
 }

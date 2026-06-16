@@ -14,7 +14,7 @@ class ClientController extends Controller
 {
     public function index()
     {
-        $clients = Client::with(['documents', 'tariff', 'readings', 'properties'])
+        $clients = Client::with(['documents', 'properties.tariff'])
             ->whereHas('properties', function ($query) {
                 $query->where('status', 'active')
                     ->whereNotNull('account_number')
@@ -23,16 +23,24 @@ class ClientController extends Controller
             ->get()
             ->map(function ($client) {
                 $activeProperties = $client->properties->filter(function ($property) {
-                    return $property->status === 'active' 
+                    return $property->status === 'active'
                         && !empty($property->account_number);
                 })->values();
 
                 $statusName = $client->status_name;
                 $status = $activeProperties->count() > 0 ? 'active' : 'inactive';
-                
+
                 $propertyAddress = $activeProperties->first()?->address ?? $client->address;
                 $accountNumbersStr = $activeProperties->pluck('account_number')->implode(', ');
-                
+
+                // Получаем тарифы из активных объектов
+                $tariffs = $activeProperties->map(function ($property) {
+                    return $property->tariff ? [
+                        'id' => $property->tariff->id,
+                        'name' => $property->tariff->name,
+                    ] : null;
+                })->filter()->values();
+
                 return [
                     'id' => $client->id,
                     'user_id' => $client->user_id,
@@ -50,13 +58,10 @@ class ClientController extends Controller
                     'email' => $client->email,
                     'status' => $status,
                     'status_name' => $statusName,
-                    'tariff_id' => $client->tariff_id,
-                    'tariff' => $client->tariff,
-                    'tariff_category' => $client->tariff_category,
                     'documents' => $client->documents,
-                    'readings' => $client->readings,
                     'properties' => $activeProperties,
                     'properties_count' => $activeProperties->count(),
+                    'tariffs' => $tariffs,
                     'account_number' => $accountNumbersStr ?: null,
                     'account_numbers' => $accountNumbersStr,
                     'created_at' => $client->created_at,
@@ -72,7 +77,7 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'account_number' => 'required|unique:clients',
+            'account_number' => 'required|unique:properties,account_number',
             'client_type' => 'required|in:individual,legal',
             'last_name' => 'nullable|string',
             'first_name' => 'nullable|string',
@@ -84,7 +89,26 @@ class ClientController extends Controller
             'tariff_id' => 'required|exists:tariffs,id',
         ]);
 
-        Client::create($validated);
+        // Создаём клиента без tariff_id (он теперь на уровне Property)
+        $client = Client::create([
+            'client_type' => $validated['client_type'],
+            'last_name' => $validated['last_name'] ?? null,
+            'first_name' => $validated['first_name'] ?? null,
+            'middle_name' => $validated['middle_name'] ?? null,
+            'company_name' => $validated['company_name'] ?? null,
+            'address' => $validated['address'],
+            'phone' => $validated['phone'] ?? null,
+            'email' => $validated['email'] ?? null,
+        ]);
+
+        // Создаём объект недвижимости с тарифом и лицевым счётом
+        Property::create([
+            'client_id' => $client->id,
+            'tariff_id' => $validated['tariff_id'],
+            'account_number' => $validated['account_number'],
+            'address' => $validated['address'],
+            'status' => 'active',
+        ]);
 
         return back()->with('success', 'Потребитель успешно создан');
     }
@@ -102,7 +126,6 @@ class ClientController extends Controller
             'address' => 'required',
             'phone' => 'nullable',
             'email' => 'nullable|email',
-            'tariff_id' => 'required|exists:tariffs,id',
         ]);
 
         $client->update($validated);

@@ -294,9 +294,11 @@ export default function Index({
                         border: '1px solid #E0E5F2'
                     }}>
                         <CardContent>
-                            <Typography variant="h6" fontWeight="bold">
-                                Ваш тариф: {client.tariff_category}
-                            </Typography>
+                            {property.tariff && (
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                    Тариф: {property.tariff.name}
+                                </Typography>
+                            )}
                             <Divider sx={{ my: 1 }} />
                             <Grid container spacing={2} sx={{ mt: 1 }}>
                                 <Grid item xs={4}>

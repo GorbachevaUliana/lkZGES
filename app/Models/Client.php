@@ -31,6 +31,13 @@ class Client extends Model
         'updated_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'display_name',
+        'full_name',
+        'client_type_name',
+        'status_name',
+    ];
+
     // ==================== CONSTANTS ====================
 
     const TYPE_INDIVIDUAL = 'individual';

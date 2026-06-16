@@ -27,8 +27,11 @@ class ApplicationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return Inertia::render('Admin/ApplicationsList', [
+        return Inertia::render('Admin/Applications/ApplicationsList', [
             'applications' => $applications,
+            'statuses' => Application::getStatuses(),
+            'clientTypes' => Application::getClientTypes(),
+            'tariffs' => Tariff::all(),
         ]);
     }
 
@@ -42,14 +45,14 @@ class ApplicationController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return Inertia::render('Admin/ApplicationsList', [
+        return Inertia::render('Admin/Applications/ApplicationsList', [
             'applications' => $applications,
             'mode' => 'pending',
         ]);
     }
 
     /**
-     * Просмотр одной заявки
+     * Просмотр одной заявки (API для модального окна)
      */
     public function show(Application $application)
     {
@@ -57,11 +60,11 @@ class ApplicationController extends Controller
             'user',
             'client.properties',
             'property',
-            'documents', // Документы, загруженные пользователем
-            'client.documents', // Документы клиента (загруженные админом)
+            'documents',
+            'client.documents',
         ]);
 
-        return Inertia::render('Admin/ApplicationsList', [
+        return response()->json([
             'application' => $application,
             'tariffs' => Tariff::all(),
         ]);
@@ -117,7 +120,6 @@ class ApplicationController extends Controller
             'contract_pdf_path' => $path,
         ]);
 
-        // Также сохраняем в документы
         \App\Models\Document::create([
             'client_id' => $application->client_id,
             'application_id' => $application->id,
