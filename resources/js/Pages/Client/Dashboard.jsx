@@ -242,7 +242,7 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                     </Grid>
                 </Grid>
 
-                {/* Быстрые действия */}
+                {/* Быстрые действия
                 <Grid item xs={12} md={6}>
                     <Paper sx={{ p: 3, borderRadius: '20px' }}>
                         <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Быстрые действия</Typography>
@@ -267,7 +267,7 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                             </Button>
                         </Box>
                     </Paper>
-                </Grid>
+                </Grid> */}
 
                 {/* QR-код блок */}
                 <Grid item xs={12} md={6}>

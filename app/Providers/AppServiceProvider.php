@@ -22,12 +22,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // Определение права "создавать тикеты"
+        // Определение права "создавать тикеты".
+        // Раньше тут была отдельная, более мягкая копия правила (роль client
+        // ИЛИ есть одобренная заявка), а настоящая, более строгая версия с
+        // проверкой активного объекта жила в User::canCreateTickets() и
+        // реально нигде не вызывалась (только из неподключённого middleware).
+        // Теперь источник правды один — этот Gate просто делегирует методу модели.
         Gate::define('create-tickets', function (User $user) {
-            // Проверяем: либо у юзера роль клиента,
-            // либо у него есть хотя бы одна одобренная заявка
-            return $user->role === 'client' ||
-                $user->applications()->where('status', 'approved')->exists();
+            return $user->canCreateTickets();
         });
 
         // Твой текущий Inertia Share (оставляем как есть)

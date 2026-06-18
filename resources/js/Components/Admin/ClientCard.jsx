@@ -2,29 +2,24 @@ import React, { useState } from 'react';
 import { 
     Typography, Box, Dialog, DialogContent, TextField, 
     DialogActions, Tabs, Tab, Table, TableBody, TableCell, 
-    TableContainer, TableRow, IconButton, Button, Paper,
-    FormControl, InputLabel, Select, MenuItem, Grid,
-    Divider, List, ListItem, ListItemIcon, ListItemText,
-    TableHead, Chip
+    TableContainer, TableHead, TableRow, IconButton, Button, 
+    Paper, FormControl, InputLabel, Select, MenuItem, Grid,
+    Divider, Chip, Card, CardContent
 } from '@mui/material';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import { 
     Description as DescriptionIcon, 
     Delete as DeleteIcon, 
     Save as SaveIcon, 
-    CloudUpload as CloudUploadIcon 
+    CloudUpload as CloudUploadIcon,
+    Home as HomeIcon
 } from '@mui/icons-material';
 import SpeedIcon from '@mui/icons-material/Speed';
-import { AddressSuggestions } from 'react-dadata';
 import { router } from '@inertiajs/react';
 import ClientAvatar from './ClientAvatar';
 
 function TabPanel({ children, value, index }) {
     return value === index ? <Box sx={{ py: 3 }}>{children}</Box> : null;
 }
-
-const DADATA_API_KEY = "cd4b88f14527df99bbafecb1c09789391eb6f2ff";
 
 export default function ClientCard({ 
     open, 
@@ -46,10 +41,8 @@ export default function ClientCard({
             first_name: data.first_name,
             middle_name: data.middle_name,
             company_name: data.company_name,
-            address: data.address,
             phone: data.phone,
             email: data.email,
-            tariff_id: data.tariff_id,
             _method: 'PUT',
         }, {
             onSuccess: () => showToast('Данные успешно обновлены'),
@@ -61,16 +54,16 @@ export default function ClientCard({
         if (!file) return;
 
         router.post(route('admin.clients.upload', data.id), { file }, {
-            forceFormData: true, // Здесь он нужен, так как загружается файл
+            forceFormData: true,
             onSuccess: (page) => {
-                const updated = page.props.clients.find(c => c.id === data.id);
+                const updated = page.props.clients?.find(c => c.id === data.id);
                 if (updated) setData('documents', updated.documents);
                 showToast('Файл загружен');
             }
         });
     };
 
-    // ИСПРАВЛЕНИЕ №2: Надежное вычисление ФИО и отображаемого имени с подстраховками
+    // Вычисление ФИО и отображаемого имени
     const fullName = [data.last_name, data.first_name, data.middle_name]
         .map(str => str?.trim())
         .filter(Boolean)
@@ -84,6 +77,9 @@ export default function ClientCard({
         ? (data.company_name || data.last_name || 'Ю') 
         : (data.last_name || 'Ф');
 
+    // Получаем массив properties
+    const properties = data.properties || [];
+
     const inputSx = {
         '& .MuiOutlinedInput-root': {
             borderRadius: '12px',
@@ -96,22 +92,25 @@ export default function ClientCard({
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: '24px' } }}>
+        <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: '24px' } }}>
             {/* Шапка карточки */}
             <Box sx={{ bgcolor: '#0B1437', color: 'white', p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box display="flex" alignItems="center" gap={2}>
-                    {/* Исправлен нейминг для аватара */}
                     <ClientAvatar name={avatarName} sx={{ width: 56, height: 56 }} />
                     <Box>
                         <Typography variant="h5" fontWeight="bold">
                             {displayName}
                         </Typography>
                         <Box display="flex" gap={2} sx={{ opacity: 0.7 }}>
-                            <Typography variant="body2">Л/С: {data.account_number}</Typography>
-                            <Typography variant="body2">•</Typography>
                             <Typography variant="body2">
                                 {data.client_type === 'legal' ? 'Юр. лицо' : 'Физ. лицо'}
                             </Typography>
+                            {properties.length > 0 && (
+                                <>
+                                    <Typography variant="body2">•</Typography>
+                                    <Typography variant="body2">{properties.length} объект(ов)</Typography>
+                                </>
+                            )}
                         </Box>
                     </Box>
                 </Box>
@@ -122,14 +121,15 @@ export default function ClientCard({
             
             <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}>
                 <Tab label="Профиль" />
+                <Tab label="Объекты" />
                 <Tab label="Документы" />
                 <Tab label="Показания" />
             </Tabs>
 
             <DialogContent sx={{ minHeight: '400px', bgcolor: '#fafbfd' }}>
+                {/* TAB 0: Профиль */}
                 <TabPanel value={tabValue} index={0}>
                     <Grid container spacing={2}>
-                        {/* Тип клиента и Тариф */}
                         <Grid item xs={12}>
                             <FormControl fullWidth sx={inputSx}>
                                 <InputLabel>Тип клиента</InputLabel>
@@ -141,54 +141,31 @@ export default function ClientCard({
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item xs={12}>
-                            <FormControl fullWidth sx={inputSx}>
-                                <InputLabel>Тариф</InputLabel>
-                                <Select
-                                    value={data.tariff_id || ''}
-                                    onChange={e => setData('tariff_id', e.target.value)}>
-                                    {tariffs?.map(t => (
-                                        <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
 
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Адрес регистрации"
-                                value={data.address || ''}
-                                onChange={(e) => setData('address', e.target.value)}
-                                sx={inputSx}
-                                InputProps={{
-                                    inputComponent: ({ inputRef, ...props }) => (
-                                        <AddressSuggestions
-                                            token={DADATA_API_KEY}
-                                            {...props}
-                                            inputRef={inputRef}
-                                            onChange={(s) => setData('address', s.value)}
-                                        />
-                                    ),
-                                }}
-                            />
-                        </Grid>
-
-                        {/* Условные поля: Компания или ФИО */}
                         {data.client_type === 'legal' ? (
                             <Grid item xs={12}>
                                 <TextField fullWidth label="Название компании" variant="outlined" value={data.company_name || ''} onChange={e => setData('company_name', e.target.value)} sx={inputSx} />
                             </Grid>
                         ) : (
                             <>
-                                <Grid item xs={12}><TextField fullWidth label="Фамилия" variant="outlined" value={data.last_name || ''} onChange={e => setData('last_name', e.target.value)} sx={inputSx} /></Grid>
-                                <Grid item xs={12}><TextField fullWidth label="Имя" variant="outlined" value={data.first_name || ''} onChange={e => setData('first_name', e.target.value)} sx={inputSx} /></Grid>
-                                <Grid item xs={12}><TextField fullWidth label="Отчество" variant="outlined" value={data.middle_name || ''} onChange={e => setData('middle_name', e.target.value)} sx={inputSx} /></Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField fullWidth label="Фамилия" variant="outlined" value={data.last_name || ''} onChange={e => setData('last_name', e.target.value)} sx={inputSx} />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField fullWidth label="Имя" variant="outlined" value={data.first_name || ''} onChange={e => setData('first_name', e.target.value)} sx={inputSx} />
+                                </Grid>
+                                <Grid item xs={12} md={4}>
+                                    <TextField fullWidth label="Отчество" variant="outlined" value={data.middle_name || ''} onChange={e => setData('middle_name', e.target.value)} sx={inputSx} />
+                                </Grid>
                             </>
                         )}
 
-                        <Grid item xs={12}><TextField fullWidth label="Телефон" variant="outlined" value={data.phone || ''} onChange={e => setData('phone', e.target.value)} sx={inputSx} /></Grid>
-                        <Grid item xs={12}><TextField fullWidth label="Email" variant="outlined" value={data.email || ''} onChange={e => setData('email', e.target.value)} sx={inputSx} /></Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField fullWidth label="Телефон" variant="outlined" value={data.phone || ''} onChange={e => setData('phone', e.target.value)} sx={inputSx} />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField fullWidth label="Email" variant="outlined" value={data.email || ''} onChange={e => setData('email', e.target.value)} sx={inputSx} />
+                        </Grid>
                     </Grid>
 
                     <Box display="flex" justifyContent="flex-end" mt={3}>
@@ -198,8 +175,69 @@ export default function ClientCard({
                     </Box>
                 </TabPanel>
 
-                {/* TAB 1: Документы */}
+                {/* TAB 1: Объекты */}
                 <TabPanel value={tabValue} index={1}>
+                    {properties.length > 0 ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {properties.map((prop, index) => (
+                                <Card key={prop.id || index} sx={{ borderRadius: '16px', border: '1px solid #E0E5F2' }}>
+                                    <CardContent>
+                                        <Box display="flex" alignItems="center" gap={2} mb={2}>
+                                            <Box sx={{ p: 1.5, bgcolor: '#F4F7FE', borderRadius: '12px', color: '#4318FF' }}>
+                                                <HomeIcon />
+                                            </Box>
+                                            <Box sx={{ flexGrow: 1 }}>
+                                                <Typography variant="subtitle1" fontWeight="bold">
+                                                    Объект #{index + 1}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Л/С: {prop.account_number || 'Не указан'}
+                                                </Typography>
+                                            </Box>
+                                            <Chip 
+                                                label={prop.status === 'active' ? 'Активен' : prop.status === 'pending' ? 'Ожидает' : 'Неактивен'}
+                                                color={prop.status === 'active' ? 'success' : prop.status === 'pending' ? 'warning' : 'default'}
+                                                size="small"
+                                            />
+                                        </Box>
+
+                                        <Divider sx={{ mb: 2 }} />
+
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={12} md={6}>
+                                                <Typography variant="caption" color="text.secondary">Адрес</Typography>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    {prop.address || 'Не указан'}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={12} md={3}>
+                                                <Typography variant="caption" color="text.secondary">Тариф</Typography>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    {prop.tariff?.name || 'Не указан'}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={12} md={3}>
+                                                <Typography variant="caption" color="text.secondary">Цена тарифа</Typography>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    {prop.tariff?.price_1 ? `${prop.tariff.price_1} руб.` : '—'}
+                                                </Typography>
+                                            </Grid>
+                                        </Grid>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </Box>
+                    ) : (
+                        <Box textAlign="center" py={6}>
+                            <Typography color="text.secondary">
+                                У клиента нет привязанных объектов
+                            </Typography>
+                        </Box>
+                    )}
+                </TabPanel>
+
+                {/* TAB 2: Документы */}
+                <TabPanel value={tabValue} index={2}>
                     <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
                         <Typography variant="h6" fontWeight="bold" color="#2B3674">Файлы</Typography>
                         <Button variant="outlined" startIcon={<CloudUploadIcon />} component="label">
@@ -216,9 +254,11 @@ export default function ClientCard({
                                             <IconButton href={`/storage/${doc.file_path}`} target="_blank" color="primary">
                                                 <DescriptionIcon />
                                             </IconButton>
-                                            <IconButton onClick={() => onDeleteDocument(doc.id)} color="error">
-                                                <DeleteIcon />
-                                            </IconButton>
+                                            {onDeleteDocument && (
+                                                <IconButton onClick={() => onDeleteDocument(doc.id)} color="error">
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 )) : (
@@ -231,7 +271,8 @@ export default function ClientCard({
                     </TableContainer>
                 </TabPanel>
                 
-                <TabPanel value={tabValue} index={2}>
+                {/* TAB 3: Показания */}
+                <TabPanel value={tabValue} index={3}>
                     <Grid container spacing={3}>
                         {/* Мини-статистика сверху */}
                         <Grid item xs={12} md={4}>
@@ -246,7 +287,7 @@ export default function ClientCard({
                             <Paper variant="outlined" sx={{ p: 2, borderRadius: '15px', textAlign: 'center', bgcolor: '#F4F7FE' }}>
                                 <Typography variant="caption" color="text.secondary">Среднее в месяц</Typography>
                                 <Typography variant="h5" fontWeight="bold" color="#2B3674">
-                                    {data.readings?.length > 0 ? (data.readings.reduce((acc, curr) => acc + curr.consumed, 0) / data.readings.length).toFixed(1) : 0} кВт
+                                    {data.readings?.length > 0 ? (data.readings.reduce((acc, curr) => acc + (curr.consumed || 0), 0) / data.readings.length).toFixed(1) : 0} кВт
                                 </Typography>
                             </Paper>
                         </Grid>
@@ -259,7 +300,7 @@ export default function ClientCard({
                             </Paper>
                         </Grid>
 
-                        {/* График или Таблица истории */}
+                        {/* Таблица истории */}
                         <Grid item xs={12}>
                             <Typography variant="h6" fontWeight="bold" color="#2B3674" mb={2}>
                                 История потребления
@@ -279,16 +320,17 @@ export default function ClientCard({
                                     <TableBody>
                                         {data.readings?.length > 0 ? data.readings.map((reading) => (
                                             <TableRow key={reading.id}>
-                                                <TableCell>{new Date(reading.reading_date).toLocaleDateString('ru-RU', {month: 'long', year: 'numeric'})}</TableCell>
+                                                <TableCell>
+                                                    {new Date(reading.reading_date).toLocaleDateString('ru-RU', {month: 'long', year: 'numeric'})}
+                                                </TableCell>
                                                 <TableCell>{reading.current_value}</TableCell>
-                                                <TableCell>{reading.current_value - reading.previous_value} кВт</TableCell>
+                                                <TableCell>{(reading.current_value || 0) - (reading.previous_value || 0)} кВт</TableCell>
                                                 <TableCell><b>{reading.total_sum} ₽</b></TableCell>
                                                 <TableCell>
                                                     <Chip 
                                                         label={reading.is_paid ? "Оплачено" : "Долг"} 
                                                         size="small" 
                                                         color={reading.is_paid ? "success" : "error"}
-                                                        variant="soft"
                                                         sx={{ borderRadius: '6px', fontSize: '11px' }}
                                                     />
                                                 </TableCell>
@@ -305,13 +347,12 @@ export default function ClientCard({
                             </TableContainer>
                         </Grid>
 
-                        {/* Кнопка ручной корректировки для админа */}
+                        {/* Кнопка ручной корректировки */}
                         <Grid item xs={12}>
                             <Button 
                                 variant="text" 
                                 startIcon={<SpeedIcon />} 
                                 sx={{ textTransform: 'none', color: '#4318FF' }}
-                                onClick={() => {/* Логика добавления показания админом */}}
                             >
                                 Внести показание вручную
                             </Button>

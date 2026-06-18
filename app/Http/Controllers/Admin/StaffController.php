@@ -25,9 +25,16 @@ class StaffController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|min:8',
-            'role' => 'required',
+            'role' => 'required|in:admin,staff',
             'permissions' => 'nullable|array',
         ]);
+
+        // Назначать роль "администратор" может только сам администратор.
+        // Без этой проверки оператор со включённым доступом к разделу
+        // "Сотрудники" мог создать себе (или кому угодно) полноценный admin-аккаунт.
+        if ($request->role === 'admin' && auth()->user()->role !== 'admin') {
+            abort(403, 'Только администратор может назначать роль администратора.');
+        }
 
         User::create([
             'name' => $request->name,
@@ -73,6 +80,13 @@ class StaffController extends Controller
 
     public function destroy(User $staff)
     {
+        // Операторы (не-админы) могут удалять других операторов,
+        // но не администраторов — иначе доступ к разделу "Сотрудники"
+        // фактически давал возможность удалить самого администратора.
+        if ($staff->role === 'admin' && auth()->user()->role !== 'admin') {
+            abort(403, 'Только администратор может удалить учётную запись администратора.');
+        }
+
         $staff->delete();
 
         return back();

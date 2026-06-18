@@ -66,6 +66,14 @@ class Property extends Model
     }
 
     /**
+     * Алиас для meterReadings
+     */
+    public function readings()
+    {
+        return $this->hasMany(MeterReading::class);
+    }
+
+    /**
      * Связь с платежами
      */
     // public function payments()

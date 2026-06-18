@@ -49,27 +49,24 @@ class MeterReading extends Model
     protected static function booted()
     {
         static::creating(function ($reading) {
-            $property = Property::with('client')->find($reading->property_id);
-            $client = $property?->client;
+            // Тариф закреплён за объектом (property->tariff_id) при одобрении заявки,
+            // см. ApplicationService::updateStatus(). У клиента поля tariff_category
+            // больше нет (см. Client::$fillable), поэтому искать тариф через клиента
+            // нельзя — раньше это приводило к тому, что тариф никогда не находился
+            // и total_sum всегда уходил в 0.
+            $property = Property::with('tariff')->find($reading->property_id);
+            $tariff = $property?->tariff;
 
-            if ($client) {
-                $tariff = Tariff::where('name', $client->tariff_category)
-                    ->where('starts_at', '<=', now())
-                    ->where(function ($query) {
-                        $query->where('ends_at', '>=', now())
-                            ->orWhereNull('ends_at');
-                    })
-                    ->first();
+            $reading->previous_value = self::getLastValue($reading->property_id);
 
-                if ($tariff) {
-                    $reading->tariff_id = $tariff->id;
-                    $reading->previous_value = self::getLastValue($reading->property_id);
-                    $consumed = $reading->current_value - $reading->previous_value;
-                    $reading->total_sum = $tariff->calculateCost($consumed);
-                } else {
-                    $reading->previous_value = self::getLastValue($reading->property_id);
-                    $reading->total_sum = 0;
-                }
+            if ($tariff) {
+                $reading->tariff_id = $tariff->id;
+                $consumed = $reading->current_value - $reading->previous_value;
+                $reading->total_sum = $tariff->calculateCost($consumed);
+            } else {
+                // У объекта нет назначенного тарифа — явно фиксируем как "не посчитано",
+                // а не молча списываем 0 руб. См. отдельный пункт про эту проблему ниже.
+                $reading->total_sum = 0;
             }
         });
     }

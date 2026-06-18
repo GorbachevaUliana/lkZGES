@@ -22,6 +22,8 @@ class Client extends Model
         'address',
         'phone',
         'email',
+        'tariff_id',
+        'tariff_category'
         // УБРАНО: tariff_id - тарифы теперь на уровне объектов (properties)
         // УБРАНО: tariff_category - не используется
     ];

@@ -56,10 +56,15 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
     ->group(function () {
 
         // Главная админки
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        // can_access:dashboard — раньше пункт меню скрывался на фронте, если
+        // у сотрудника не стоит галочка "Главная", но сам урл был открыт для
+        // любого admin/staff. Теперь это реально проверяется и на бэкенде.
+        Route::middleware('can_access:dashboard')->group(function () {
+            Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        });
 
         // Потребители
-        Route::prefix('clients')->name('clients.')->group(function () {
+        Route::middleware('can_access:clients')->prefix('clients')->name('clients.')->group(function () {
             Route::get('/', [AdminClientController::class, 'index'])->name('index');
             Route::post('/', [AdminClientController::class, 'store'])->name('store');
             Route::put('/{id}', [AdminClientController::class, 'update'])->name('update');
@@ -67,36 +72,37 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
             Route::post('/{id}/upload', [AdminClientController::class, 'upload'])->name('upload');
         });
 
-        // Документы (удаление конкретного файла)
-        Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+        // Документы (удаление конкретного файла) — сейчас используется только
+        // со страницы "Обращения", поэтому привязано к праву tickets
+        Route::middleware('can_access:tickets')->group(function () {
+            Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+        });
 
         // Обращения
-        Route::prefix('tickets')->name('tickets.')->group(function () {
+        Route::middleware('can_access:tickets')->prefix('tickets')->name('tickets.')->group(function () {
             Route::get('/', [AdminTicketController::class, 'index'])->name('index');
             Route::put('/{id}', [AdminTicketController::class, 'update'])->name('update');
         });
 
         // Сотрудники
-        Route::prefix('staff')->name('staff.')->group(function () {
+        Route::middleware('can_access:staff')->prefix('staff')->name('staff.')->group(function () {
             Route::get('/', [StaffController::class, 'index'])->name('index');
             Route::post('/', [StaffController::class, 'store'])->name('store');
             Route::put('/{staff}', [StaffController::class, 'update'])->name('update');
             Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('destroy');
         });
 
-        Route::get('/readings', [AdminMeterReadingController::class, 'index'])->name('readings.index');
-        // Метод для подтверждения оплаты админом
-        Route::patch('/readings/{id}/verify', [AdminMeterReadingController::class, 'verifyPayment'])->name('readings.verify');
-
-        // Показания
-        //
-        Route::get('/readings', [AdminMeterReadingController::class, 'index'])->name('readings.index');
-        Route::patch('/readings/{id}/verify', [AdminMeterReadingController::class, 'verifyPayment'])->name('readings.verify');
+        // Показания (дубль роутов убран — раньше тут было два одинаковых GET и PATCH)
+        Route::middleware('can_access:readings')->group(function () {
+            Route::get('/readings', [AdminMeterReadingController::class, 'index'])->name('readings.index');
+            // Метод для подтверждения оплаты админом
+            Route::patch('/readings/{id}/verify', [AdminMeterReadingController::class, 'verifyPayment'])->name('readings.verify');
+        });
 
         // ========================================
         // ЗАЯВКИ НА ЗАКЛЮЧЕНИЕ ДОГОВОРА (НОВОЕ)
         // ========================================
-        Route::prefix('applications')->name('applications.')->group(function () {
+        Route::middleware('can_access:applications')->prefix('applications')->name('applications.')->group(function () {
             Route::get('/', [AdminApplicationController::class, 'index'])->name('index');
             Route::get('/{application}', [AdminApplicationController::class, 'show'])->name('show');
             Route::post('/{application}/status', [AdminApplicationController::class, 'updateStatus'])->name('status');
