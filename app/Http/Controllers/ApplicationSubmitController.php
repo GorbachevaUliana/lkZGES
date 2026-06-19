@@ -44,6 +44,13 @@ class ApplicationSubmitController extends Controller
     public function submit(Request $request, $slug)
     {
         $template = ApplicationTemplate::where('slug', $slug)->firstOrFail();
+
+        // Серверная валидация файлов — до транзакции, чтобы при ошибке
+        // ничего не сохранялось в БД и хранилище.
+        // Правила строятся динамически из конфига шаблона (те же поля
+        // accepted_types / max_size / max_files, что читает фронтенд).
+        $this->validateFileUploads($request, $template);
+
         $clientType = $request->input('client_type', 'individual');
 
         $user = auth()->user();
@@ -66,7 +73,10 @@ class ApplicationSubmitController extends Controller
                 'status' => 'pending',
             ]);
 
-            if ($user->role === 'user') {
+            // При регистрации роль выставляется 'guest' (см. RegisteredUserController).
+            // Раньше тут стояло 'user' — такой роли в системе нет, поэтому
+            // переход в 'applicant' никогда не срабатывал.
+            if ($user->role === 'guest') {
                 $user->update(['role' => 'applicant']);
             }
 
@@ -156,6 +166,87 @@ class ApplicationSubmitController extends Controller
         }
 
         return $normalized;
+    }
+
+    /**
+     * Серверная валидация файлов из полей конструктора.
+     *
+     * Правила строятся из конфига каждого блока file_upload в шаблоне:
+     * — accepted_types  { "pdf": true, "jpg": true, ... }  → mimes:pdf,jpg,...
+     * — max_size        (МБ)                                → max:<КБ>
+     * — max_files       (шт.)                               → array|max:X для множественных
+     * — is_required                                         → required / nullable
+     *
+     * Вызывается ДО транзакции: если валидация упала — ни файлы, ни запись
+     * в БД не создаются, Inertia автоматически вернёт ошибки на фронт.
+     */
+    private function validateFileUploads(Request $request, ApplicationTemplate $template): void
+    {
+        $rules    = [];
+        $messages = [];
+
+        foreach ($template->content ?? [] as $block) {
+            if ($block['type'] !== 'file_upload') {
+                continue;
+            }
+
+            $key = $block['data']['key'] ?? $block['data']['label'] ?? null;
+            if (!$key) {
+                continue;
+            }
+
+            $label         = $block['data']['label'] ?? $key;
+            $isRequired    = (bool) ($block['data']['is_required']   ?? false);
+            $acceptedTypes = (array) ($block['data']['accepted_types'] ?? []);
+            $maxSizeMb     = (int)  ($block['data']['max_size']       ?? 10);
+            $maxFiles      = (int)  ($block['data']['max_files']      ?? 5);
+            $allowMultiple = (bool) ($block['data']['allow_multiple'] ?? false);
+
+            // Расширения, для которых явно стоит true (остальные — отключены в конструкторе)
+            $extensions = array_keys(array_filter($acceptedTypes));
+            $maxSizeKb  = $maxSizeMb * 1024;
+
+            if ($allowMultiple) {
+                // Сначала валидируем сам массив (количество файлов)
+                $arrayRules   = $isRequired ? ['required', 'array'] : ['nullable', 'array'];
+                $arrayRules[] = "max:{$maxFiles}";
+                $rules[$key]  = $arrayRules;
+
+                if ($isRequired) {
+                    $messages["{$key}.required"] = "Поле «{$label}» обязательно для заполнения.";
+                }
+                $messages["{$key}.max"] = "Поле «{$label}»: можно прикрепить не более {$maxFiles} файлов.";
+
+                // Затем валидируем каждый файл внутри массива
+                $fileRules = ['file', "max:{$maxSizeKb}"];
+                if (!empty($extensions)) {
+                    $fileRules[] = 'mimes:' . implode(',', $extensions);
+                    $messages["{$key}.*.mimes"] = "Каждый файл в «{$label}» должен быть одного из форматов: "
+                        . implode(', ', array_map('strtoupper', $extensions)) . '.';
+                }
+                $messages["{$key}.*.max"] = "Каждый файл в «{$label}» не должен превышать {$maxSizeMb} МБ.";
+                $rules["{$key}.*"] = $fileRules;
+
+            } else {
+                // Одиночный файл
+                $fileRules   = $isRequired ? ['required', 'file'] : ['nullable', 'file'];
+                $fileRules[] = "max:{$maxSizeKb}";
+                if (!empty($extensions)) {
+                    $fileRules[] = 'mimes:' . implode(',', $extensions);
+                    $messages["{$key}.mimes"] = "Файл «{$label}» должен быть одного из форматов: "
+                        . implode(', ', array_map('strtoupper', $extensions)) . '.';
+                }
+                if ($isRequired) {
+                    $messages["{$key}.required"] = "Поле «{$label}» обязательно для заполнения.";
+                }
+                $messages["{$key}.max"] = "Файл «{$label}» не должен превышать {$maxSizeMb} МБ.";
+                $rules[$key] = $fileRules;
+            }
+        }
+
+        if (!empty($rules)) {
+            $request->validate($rules, $messages);
+        }
     }
 
     /**

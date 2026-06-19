@@ -49,20 +49,58 @@ class TicketController extends Controller
     {
         $ticket = Ticket::findOrFail($id);
 
+        // $request->validate([
+        //     'status' => 'required|string',
+        //     'staff_id' => 'nullable|exists:users,id',
+        //     'admin_reply' => 'nullable|string',
+        //     'admin_files.*' => 'nullable|file|max:10240',
+        // ]);
+
+        // $ticket->update([
+        //     'status' => $request->status,
+        //     'staff_id' => $request->staff_id,
+        //     'admin_reply' => $request->admin_reply,
+        //     'replied_at' => $request->admin_reply ? now() : $ticket->replied_at,
+        //     'replied_by' => $request->admin_reply ? auth()->id() : $ticket->replied_by,
+        // ]);
+
+
+        $user = auth()->user();
+        if ($user->role !== 'admin' && $ticket->staff_id !== $user->id){
+            abort(403, 'Вы можете изменять только обращения, назначенные вам');
+        }
+
         $request->validate([
-            'status' => 'required|string',
-            'staff_id' => 'nullable|exists:users,id',
-            'admin_reply' => 'nullable|string',
-            'admin_files.*' => 'nullable|file|max:10240',
+            'status' => 'required|string|in:new, open, pending, closed',
+            'staff_id'=> [
+                'nullable',
+                'exists:user,id',
+                function ($attribute, $value, $fail) {
+                    if ($value === null) return;
+                    $assignee = User::find($value);
+                    if (!$assignee) return;
+                    $isStaff = in_array($assignee->role, ['admin', 'staff']);
+                    $hasTicketAccess = $assignee->role === 'admin'
+                        || (is_array($assignee->permissions) && in_array('tickets', $assignee->permissions));
+                    if (!$isStaff || $hasTicketAccess) {
+                        $fail('Нельзя назначить обращение на пользователя без доступа к обращениям');
+                    }
+                },
+            ],
+            'admin_reply' => 'nullable|string|max:10000',
+            'admin_files.*' => 'nullable|file|mimes:jpg, jpeg, png, pdf, doc, docx|max:10240',
         ]);
 
         $ticket->update([
-            'status' => $request->status,
-            'staff_id' => $request->staff_id,
-            'admin_reply' => $request->admin_reply,
-            'replied_at' => $request->admin_reply ? now() : $ticket->replied_at,
-            'replied_by' => $request->admin_reply ? auth()->id() : $ticket->replied_by,
+            'status'=> $request->status,
+            'staff_id'=> $request->staff_id,
+            'admin_reply'=> $request->admin_reply,
+            'reptied_at'=> $request->admin_reply ? now() : $ticket->replied_at,
         ]);
+
+        if ($request->admin_reply) {
+            Ticket::whereKey($ticket->id)->update(['replied_by'=> auth()->id()]);
+        }
 
         if ($request->hasFile('admin_files')) {
             foreach ($request->file('admin_files') as $file) {

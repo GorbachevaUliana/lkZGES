@@ -14,6 +14,7 @@ class Ticket extends Model
         'status',
         'admin_reply',
         'replied_at',
+        'replied_by',
     ];
 
     public function user()
