@@ -65,10 +65,12 @@ class PdfTemplateResource extends Resource
                 Forms\Components\Section::make('Содержимое шаблона')
                     ->schema([
                         Forms\Components\Textarea::make('content')
-                            ->label('HTML/Blade код шаблона')
+                            // ->label('HTML/Blade код шаблона')
+                            ->label('HTML/Twig код шаблона')
                             ->rows(25)
                             ->required()
-                            ->helperText('Используйте {{ $переменная }} и Blade-директивы (@if, @foreach, @php)')
+                            // ->helperText('Используйте {{ $переменная }} и Blade-директивы (@if, @foreach, @php)')
+                            ->helperText('Используйте синтаксис Twig: {{ переменная }} для вывода, {% if %}...{% endif %} для условий. Исполнение PHP-кода (@php, eval, system) в шаблонах запрещено')
                             ->columnSpanFull()
                             ->extraAttributes(['style' => 'font-family: monospace; font-size: 12px;']),
                     ]),
@@ -83,30 +85,25 @@ class PdfTemplateResource extends Resource
                                             ->label('Автоматически заполняемые поля:')
                                             ->content(new \Illuminate\Support\HtmlString('
                                                 <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 11px;">
-                                                    <code style="display: block; margin: 5px 0;"><b>{{ $application_id }}</b> - номер заявки</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>{{ $full_name }}</b> - ФИО (из клиента)</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>{{ $phone }}</b> - телефон (из клиента)</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>{{ $user_email }}</b> - email</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>{{ $created_at }}</b> - дата подачи</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>{{ $address }}</b> - полный адрес (собирается автоматически)</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>{{ $client_type_name }}</b> - тип клиента</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ application_id }}</b> - номер заявки</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ full_name }}</b> - ФИО (из клиента)</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ phone }}</b> - телефон (из клиента)</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ user_email }}</b> - email</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ created_at }}</b> - дата подачи</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ client_type_name }}</b> - тип клиента</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ object_address }}</b> - полный адрес объекта ( из property )</code>
                                                 </div>
                                             ')),
                                     ]),
-                                Forms\Components\Tabs\Tab::make('Адрес')
+                                Forms\Components\Tabs\Tab::make('Адреса')
                                     ->schema([
                                         Forms\Components\Placeholder::make('address_vars')
-                                            ->label('Составные части адреса (через $data[\'ключ\']):')
+                                            ->label('Собранные адреса:')
                                             ->content(new \Illuminate\Support\HtmlString('
                                                 <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 11px;">
-                                                    <p style="margin-bottom: 10px; color: #666;">Если в форме есть поля адреса с такими ключами:</p>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'Регион\']</b> - регион</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'Район\']</b> - район</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'Населенный пункт\']</b> - город/село</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'Улица\']</b> - улица</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'Дом\']</b> - номер дома</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'Корпус\']</b> - корпус</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'Квартира\']</b> - квартира</code>
+                                                    <code style="display:block; margin: 5px 0;"><b>{{ registration_address }}</b> - адрес регистрации</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ actual_address }}</b> - адрес фактического проживания</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ object_address_full }}</b> - адрес объекта энергоснабжения</code>
                                                 </div>
                                             ')),
                                     ]),
@@ -116,12 +113,24 @@ class PdfTemplateResource extends Resource
                                             ->label('Поля для физических лиц:')
                                             ->content(new \Illuminate\Support\HtmlString('
                                                 <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 11px;">
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'last_name\']</b> - Фамилия</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'first_name\']</b> - Имя</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'middle_name\']</b> - Отчество</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'passport_series\']</b> - Серия паспорта</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'passport_number\']</b> - Номер паспорта</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'snils\']</b> - СНИЛС</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ last_name }}</b> - Фамилия</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ first_name }}</b> - Имя</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ middle_name }}</b> - Отчество</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ passport }}</b> - Серия и номер паспорта</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ passport_issue }}</b> - Кем выдан</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ passport_issue_date }}</b> - Дата выдачи</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ power_object }}</b> - Тип объекта</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ area }}</b> - Площадь помещения</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ max_power }}</b> - Максимальная мощность (кВт)</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ residents_count }}</b> - Кол-во проживающих</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ voltage_level }}</b> - Уровень напряжения</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ consumption_purpose }}</b> - Направления потребления</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ has_meter }}</b> - Приборы учета</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ tariff_choice }}</b> - Тариф</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ appeal_reason }}</b> - Причина обращения</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ payment_delivery }}</b> - Способ доставки платежек</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ notification_delivery }}</b> - Способ доставки уведомлений</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ consent }}</b> - Согласие на ПДн (Да/Нет)</code>
                                                 </div>
                                             ')),
                                     ]),
@@ -138,39 +147,32 @@ class PdfTemplateResource extends Resource
                                                     <code style="display: block; margin: 5px 0;"><b>$data[\'legal_address\']</b> - юридический адрес</code>
                                                     <code style="display: block; margin: 5px 0;"><b>$data[\'actual_address\']</b> - фактический адрес</code>
                                                     <code style="display: block; margin: 5px 0;"><b>$data[\'contact_person\']</b> - контактное лицо</code>
-                                                </div>
-                                            ')),
-                                    ]),
-                                Forms\Components\Tabs\Tab::make('Доп. поля')
-                                    ->schema([
-                                        Forms\Components\Placeholder::make('custom_vars')
-                                            ->label('Пользовательские поля из формы:')
-                                            ->content(new \Illuminate\Support\HtmlString('
-                                                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 11px;">
-                                                    <p style="margin-bottom: 10px;">Любые поля, добавленные в конструкторе формы с ключом <b>key</b>:</p>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'ваш_ключ\']</b> - значение поля</code>
-                                                    <p style="margin-top: 15px; color: #666;">Примеры:</p>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'object_type\']</b> - Тип объекта</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'power_capacity\']</b> - Мощность</code>
-                                                    <code style="display: block; margin: 5px 0;"><b>$data[\'square\']</b> - Площадь</code>
-                                                </div>
-                                            ')),
-                                    ]),
-                                Forms\Components\Tabs\Tab::make('Blade')
-                                    ->schema([
-                                        Forms\Components\Placeholder::make('blade_syntax')
-                                            ->label('Примеры Blade-синтаксиса:')
-                                            ->content(new \Illuminate\Support\HtmlString('
-                                                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 11px;">
-                                                    <p><b>Условие:</b></p>
-                                                    <code style="display: block; margin: 5px 0; white-space: pre;">@if(!empty($data[\'snils\']))
-    &lt;tr&gt;&lt;td&gt;СНИЛС&lt;/td&gt;&lt;td&gt;{{ $data[\'snils\'] }}&lt;/td&gt;&lt;/tr&gt;
-@endif</code>
 
-                                                    <p style="margin-top: 15px;"><b>Цикл по всем полям:</b></p>
-                                                    <code style="display: block; margin: 5px 0; white-space: pre;">@foreach($data as $key => $value)
-    &lt;p&gt;{{ $key }}: {{ $value }}&lt;/p&gt;
-@endforeach</code>
+
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ company_name }}</b> - название организации</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ inn }}</b> - ИНН</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ kpp }}</b> - КПП</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ ogrn }}</b> - ОГРН</code>
+                                                    <code style="display: block; margin: 5px 0;"><b>{{ contact_person }}</b> - контактное лицо</code>
+                                                </div>
+                                            ')),
+                                    ]),
+                                Forms\Components\Tabs\Tab::make('Twig синтаксис')
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('twig-syntax')
+                                            ->label('Примеры Twig синтаксиса:')
+                                            ->content(new \Illuminate\Support\HtmlString('
+                                                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 11px;">
+                                                    <p><b>Вывод переменной (по умолчанию прочерк):</b></p>
+                                                    <code style="display: block; margin: 5px 0; white-space: pre;">{{ passport|default(\'___\') }}</code>@endif</code>
+
+                                                    <p style="margin-top: 15px;"><b>Условие (показать, если заполнено):</b></p>
+                                                    <code style="display: block; margin: 5px 0; white-space: pre;">{% if snils %}СНИЛС: {{ snils }}{% endif %}</code>
+
+                                                    <p style="margin-top: 15px;"><b>Текущая дата:</b></p>
+                                                    <code style="display: block; margin: 5px 0;">{{ "now"|date("d.m.Y") }}</code>
+
+                                                    <p style="margin-top: 15px; color: #666;">Весь HTML/CSS работает как обычно. Переменные экранируются автоматически; используйте |raw только для доверенного текста (адреса).</p>
                                                 </div>
                                             ')),
                                     ]),

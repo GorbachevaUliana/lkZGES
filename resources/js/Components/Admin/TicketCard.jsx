@@ -77,9 +77,9 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                                 <Select
                                     value={data.status || ''}
                                     onChange={(e) => setData('status', e.target.value)}>
-                                    <MenuItem value="open">Новое</MenuItem>
-                                    <MenuItem value="closed">Решено</MenuItem>
+                                    <MenuItem value="new">Новое</MenuItem>
                                     <MenuItem value="pending">В работе</MenuItem>
+                                    <MenuItem value="closed">Решено</MenuItem>
                                 </Select>
                             </FormControl>
                         </Box>

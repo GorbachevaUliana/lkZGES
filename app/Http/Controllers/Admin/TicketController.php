@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Inertia\Inertia;    
 
 class TicketController extends Controller
 {
@@ -49,57 +49,52 @@ class TicketController extends Controller
     {
         $ticket = Ticket::findOrFail($id);
 
-        // $request->validate([
-        //     'status' => 'required|string',
-        //     'staff_id' => 'nullable|exists:users,id',
-        //     'admin_reply' => 'nullable|string',
-        //     'admin_files.*' => 'nullable|file|max:10240',
-        // ]);
-
-        // $ticket->update([
-        //     'status' => $request->status,
-        //     'staff_id' => $request->staff_id,
-        //     'admin_reply' => $request->admin_reply,
-        //     'replied_at' => $request->admin_reply ? now() : $ticket->replied_at,
-        //     'replied_by' => $request->admin_reply ? auth()->id() : $ticket->replied_by,
-        // ]);
-
-
+        // IDOR-защита: сотрудник (не admin) может изменять только тикеты,
+        // назначенные на него. Без этой проверки любой staff мог отправить
+        // PUT на /admin/tickets/{любой_id} и изменить чужой тикет.
         $user = auth()->user();
-        if ($user->role !== 'admin' && $ticket->staff_id !== $user->id){
-            abort(403, 'Вы можете изменять только обращения, назначенные вам');
+        if ($user->role !== 'admin' && $ticket->staff_id !== $user->id) {
+            abort(403, 'Вы можете изменять только обращения, назначенные вам.');
         }
 
         $request->validate([
-            'status' => 'required|string|in:new, open, pending, closed',
-            'staff_id'=> [
+            // Явный список допустимых статусов — раньше принималась любая строка.
+            // 'new' — начальный статус при создании (см. миграцию).
+            'status'        => 'required|string|in:new,pending,closed',
+            // Назначать можно только реальных сотрудников с доступом к тикетам,
+            // а не любого пользователя из таблицы users.
+            'staff_id'      => [
                 'nullable',
-                'exists:user,id',
+                'exists:users,id',
                 function ($attribute, $value, $fail) {
                     if ($value === null) return;
                     $assignee = User::find($value);
                     if (!$assignee) return;
                     $isStaff = in_array($assignee->role, ['admin', 'staff']);
-                    $hasTicketAccess = $assignee->role === 'admin'
+                    $hasTicketsAccess = $assignee->role === 'admin'
                         || (is_array($assignee->permissions) && in_array('tickets', $assignee->permissions));
-                    if (!$isStaff || $hasTicketAccess) {
-                        $fail('Нельзя назначить обращение на пользователя без доступа к обращениям');
+                    if (!$isStaff || !$hasTicketsAccess) {
+                        $fail('Нельзя назначить тикет на пользователя без доступа к обращениям.');
                     }
                 },
             ],
-            'admin_reply' => 'nullable|string|max:10000',
-            'admin_files.*' => 'nullable|file|mimes:jpg, jpeg, png, pdf, doc, docx|max:10240',
+            'admin_reply'   => 'nullable|string|max:10000',
+            'admin_files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
+        // Обновляем основные поля через массовое присвоение.
+        // replied_by НЕ входит в $fillable модели Ticket, поэтому обновляем
+        // его отдельно через whereKey()->update() — иначе поле молча игнорируется
+        // и на фронте никогда не показывается "кто ответил".
         $ticket->update([
-            'status'=> $request->status,
-            'staff_id'=> $request->staff_id,
-            'admin_reply'=> $request->admin_reply,
-            'reptied_at'=> $request->admin_reply ? now() : $ticket->replied_at,
+            'status'      => $request->status,
+            'staff_id'    => $request->staff_id,
+            'admin_reply' => $request->admin_reply,
+            'replied_at'  => $request->admin_reply ? now() : $ticket->replied_at,
         ]);
 
         if ($request->admin_reply) {
-            Ticket::whereKey($ticket->id)->update(['replied_by'=> auth()->id()]);
+            Ticket::whereKey($ticket->id)->update(['replied_by' => auth()->id()]);
         }
 
         if ($request->hasFile('admin_files')) {

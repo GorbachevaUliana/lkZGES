@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Document;
 use App\Models\PdfTemplate;
 use App\Models\Property;
+use App\Services\PdfDataPreparator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -461,8 +462,9 @@ class ApplicationSubmitController extends Controller
             'inn' => $client->inn,
         ];
 
-        $templateData = array_merge($data, $mainInfo);
-        $templateData['data'] = $templateData;
+        // $templateData = array_merge($data, $mainInfo);
+        // $templateData['data'] = $templateData;
+        $templateData = app(PdfDataPreparator::class)->prepare($data, $mainInfo);
 
         if ($pdfTemplate) {
             $htmlContent = $pdfTemplate->render($templateData);

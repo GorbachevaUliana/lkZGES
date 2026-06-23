@@ -3,17 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Log;
+use Twig\Environment;
+use Twig\Loader\ArrayLoader;
+use Twig\Sandbox\SecurityPolicy;
+use Twig\Source;
 
-/**
- * Модель PDF-шаблона
- *
- * Хранит HTML/Blade шаблоны для генерации PDF-документов.
- * Администраторы могут редактировать шаблоны через Filament.
- *
- * client_type: individual | legal
- * document_type: application | contract | other
- */
 class PdfTemplate extends Model
 {
     protected $fillable = [
@@ -118,49 +113,96 @@ class PdfTemplate extends Model
     {
         $content = $this->content;
 
-        // Подготавливаем данные - все значения должны быть scalar или иметь __toString
         $preparedData = [];
         foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $preparedData[$key] = $value; // Сохраняем массивы для $data['ключ']
-            } elseif (is_object($value) && method_exists($value, '__toString')) {
-                $preparedData[$key] = (string) $value;
-            } else {
-                $preparedData[$key] = $value ?? '';
-            }
+            $preparedData[$key] = $this->normalizeValue($value);
         }
 
-        // Добавляем $data как массив для доступа $data['ключ']
         $preparedData['data'] = $preparedData;
 
-        // Проверяем, есть ли Blade-директивы в шаблоне
-        $hasBladeDirectives = preg_match('/@\w+|{{.*?}}/', $content);
-
-        if ($hasBladeDirectives) {
-            try {
-                // Компилируем Blade-шаблон
-                $compiled = Blade::compileString($content);
-
-                // Создаем замыкание для рендеринга
-                $render = function ($__compiled, $__data) {
-                    ob_start();
-                    extract($__data, EXTR_SKIP);
-                    eval('?>' . $__compiled);
-                    return ob_get_clean();
-                };
-
-                return $render($compiled, $preparedData);
-            } catch (\Exception $e) {
-                // Если Blade рендеринг не удался - используем простую замену
-                \Log::warning('Blade render failed for template ' . $this->slug . ': ' . $e->getMessage());
-                return $this->simpleRender($content, $data);
-            }
+        try {
+            return $this->renderWithTwigSandbox($content, $preparedData);
+        } catch (\Throwable $e) {
+            Log::warning('Twig render failed for template ' . $this->slug . ': ' . $e->getMessage());
+            return $this->simpleRender($content, $data);
         }
-
-        // Простая замена переменных
-        return $this->simpleRender($content, $data);
     }
 
+    private function renderWithTwigSandbox(string $content, array $data): string
+    {
+        $loader = new ArrayLoader([
+            // Имя шаблона = slug, чтобы ошибки были читаемыми.
+            (string) ($this->slug ?? 'template') => $content,
+        ]);
+
+        $twig = new Environment($loader, [
+            // autoescape включён: HTML-символы в данных экранируются автоматически,
+            // защита от поломки вёрстки. Шаблон сам использует |raw там, где нужно.
+            'autoescape' => 'html',
+            'strict_variables' => false,
+            'cache' => false,
+        ]);
+ 
+        // Whitelist: только безопасные конструкции. methods/properties пустые —
+        // вызов методов любых объектов и доступ к их свойствам запрещён.
+        $policy = new SecurityPolicy(
+            // Разрешённые теги.
+            ['if', 'for', 'set', 'block'],
+            // Разрешённые фильтры.
+            [
+                'escape', 'e', 'default', 'upper', 'lower', 'length', 'date',
+                'trim', 'join', 'replace', 'split', 'first', 'last', 'abs',
+                'number_format', 'round', 'title', 'striptags', 'merge',
+                'slice', 'reverse', 'raw', 'format', 'spaceless',
+            ],
+            // Разрешённые методы (нет).
+            [],
+            // Разрешённые свойства (нет).
+            [],
+            // Разрешённые функции.
+            ['range', 'min', 'max', 'cycle', 'random', 'date']
+        );
+ 
+        $sandbox = new \Twig\Extension\SandboxExtension($policy, true);
+        $twig->addExtension($sandbox);
+ 
+        // Source нужен для читаемых ошибок (указывается имя шаблона).
+        $twig->parse($twig->tokenize(new Source($content, (string) ($this->slug ?? 'template'))));
+ 
+        return $twig->render((string) ($this->slug ?? 'template'), $data);
+    }
+ 
+    /**
+     * Привести значение к типу, безопасному для Twig: scalar или массив scalar.
+     */
+    private function normalizeValue($value)
+    {
+        if (is_array($value)) {
+            return array_map([$this, 'normalizeScalar'], $value);
+
+        }
+
+        return $this->normalizeScalar($value);
+    }
+
+    /**
+     * Скаляр → строка, объекты с __toString → строка, остальное → ''.
+     */
+    private function normalizeScalar($value)
+    {
+        if ($value === null) {
+            return '';
+        }
+        if (is_scalar($value)) {
+            return $value;
+        }
+        if ($value instanceof \Stringable) {
+            return (string) $value;
+        }
+ 
+        return '';
+    }
+ 
     /**
      * Простая замена переменных вида {{ variable }}
      */

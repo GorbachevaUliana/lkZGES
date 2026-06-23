@@ -14,8 +14,11 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
+    // role, status, permissions намеренно НЕ в fillable —
+    // защита от mass-assignment privilege escalation.
+    // Эти поля выставляются только явно (User::query()->update / ->forceFill).
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'status', 'permissions',
+        'name', 'email', 'password',
     ];
     protected $hidden = [
         'password', 'remember_token',

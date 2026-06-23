@@ -36,14 +36,18 @@ class StaffController extends Controller
             abort(403, 'Только администратор может назначать роль администратора.');
         }
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'status' => 'active',
+        // role/status/permissions убраны из User::$fillable (защита от mass-assignment).
+        // Создаём через forceFill, который намеренно обходит $fillable —
+        // здесь это безопасно, потому что данные уже прошли валидацию выше.
+        $user = new User();
+        $user->forceFill([
+            'name'        => $request->name,
+            'email'       => $request->email,
+            'password'    => Hash::make($request->password),
+            'role'        => $request->role,
+            'status'      => 'active',
             'permissions' => $request->permissions ?? [],
-        ]);
+        ])->save();
 
         return back();
     }

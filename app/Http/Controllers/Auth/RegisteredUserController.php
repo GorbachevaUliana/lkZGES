@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -41,44 +40,27 @@ class RegisteredUserController extends Controller
 
         // 1. Создаем пользователя с ролью 'guest' (новый пользователь)
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'guest', // Новый пользователь - ещё не привязал ЛС и не подал заявку
         ]);
+        // role убрана из $fillable — выставляем явно через forceFill.
+        $user->forceFill(['role' => 'guest'])->save();
 
-        // 2. Ищем, создал ли уже админ запись для этого email в таблице clients
-        $client = Client::where('email', $request->email)->first();
-
-        if ($client) {
-            // Привязываем клиента к пользователю (client.user_id = user.id)
-            $client->update(['user_id' => $user->id]);
-            
-            // Обновляем роль пользователя
-            $user->update(['role' => 'client']);
-
-            event(new Registered($user));
-            Auth::login($user);
-
-            // Проверяем наличие активных объектов
-            $hasActiveProperties = $client->properties()
-                ->where('status', 'active')
-                ->whereNotNull('account_number')
-                ->where('account_number', '!=', '')
-                ->exists();
-            
-            if ($hasActiveProperties) {
-                return redirect(route('client.dashboard'));
-            }
-
-            // Есть клиент, но нет активных объектов - в профиль
-            return redirect(route('client.profile'));
-        }
+        // Намеренно НЕ делаем автопривязку клиента по email.
+        // Раньше здесь был блок: Client::where('email', $email)->first()
+        // с автоматическим $client->update(['user_id' => $user->id]).
+        // Это позволяло любому, знающему email клиента, зарегистрироваться
+        // и сразу получить доступ к чужим данным, минуя верификацию.
+        //
+        // Теперь все пользователи — включая тех, кого администратор завёл
+        // заранее — проходят через WelcomePage: вводят ЛС + ФИО + код на email.
+        // Если у клиента нет email или утерян доступ — сотрудник привязывает
+        // аккаунт вручную через админку (AdminClientController::update).
 
         event(new Registered($user));
         Auth::login($user);
 
-        // Если в таблице clients записи нет — отправляем на ввод лицевого счета
         return redirect(route('welcome.step'));
     }
 }

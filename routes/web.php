@@ -30,7 +30,11 @@ Route::redirect('/', '/login');
 // Доступна сразу после регистрации (без требования верификации)
 Route::middleware(['auth'])->group(function () {
     Route::get('/welcome-step', [AccountController::class, 'index'])->name('welcome.step');
-    Route::post('/account/link', [AccountController::class, 'link'])->name('account.link');
+    // throttle:10,1 — не более 10 попыток привязки ЛС в минуту с одного IP.
+    // Без этого возможен брутфорс пар «лицевой счёт + фамилия».
+    Route::post('/account/link', [AccountController::class, 'link'])
+        ->middleware('throttle:10,1')
+        ->name('account.link');
 });
 
 /*
@@ -39,10 +43,12 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Показ формы заявки
     Route::get('/new-application/{slug}', [ApplicationSubmitController::class, 'show'])->name('application.show');
-    // Отправка заявки
-    Route::post('/new-application/{slug}', [ApplicationSubmitController::class, 'submit'])->name('application.store');
+    // throttle:5,1 — не более 5 отправок заявки в минуту.
+    // Каждая заявка порождает транзакцию, PDF и загрузку файлов — флуд дорог.
+    Route::post('/new-application/{slug}', [ApplicationSubmitController::class, 'submit'])
+        ->middleware('throttle:5,1')
+        ->name('application.store');
 });
 
 /*
