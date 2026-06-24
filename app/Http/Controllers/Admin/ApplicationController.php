@@ -114,7 +114,7 @@ class ApplicationController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('contracts', 'public');
+        $path = $file->store('contracts', 'local');
 
         $application->update([
             'contract_pdf_path' => $path,
@@ -143,7 +143,7 @@ class ApplicationController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('client_documents', 'public');
+        $path = $file->store('client_documents', 'local');
 
         \App\Models\Document::create([
             'client_id' => $application->client_id,

@@ -1,40 +1,54 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
-    public function uploadDocument(Request $request, $clientId)
+    /**
+     * Защищённая раздача документов.
+     *
+     * Клиент видит только свои документы.
+     * Сотрудник/админ — любые (для работы с заявками).
+     * Файл отдаётся потоком с правильным Content-Type —
+     * браузер откроет PDF/изображение во вкладке, остальное скачает.
+     */
+    public function serve(Request $request, Document $document)
     {
-        $request->validate([
-            'file' => 'required|mimes:pdf,doc,docx,jpg,png|max:10240',
-        ]);
+        $user = auth()->user();
 
-        $file = $request->file('file');
-        $path = $file->store('documents', 'public');
+        // Клиент видит только документы своего клиентского профиля.
+        if ($user->role === 'client' || $user->role === 'guest' || $user->role === 'applicant') {
+            $client = $user->client;
+            if (! $client || $document->client_id !== $client->id) {
+                abort(403, 'Нет доступа к этому документу.');
+            }
+        }
+        // Сотрудники и администраторы имеют доступ ко всем документам —
+        // они работают с заявками и договорами клиентов.
 
-        Document::create([
-            'client_id' => $clientId,
-            'name' => $file->getClientOriginalName(),
-            'file_path' => $path,
-            'type' => $file->getClientOriginalExtension(),
-        ]);
+        if (! Storage::disk('local')->exists($document->file_path)) {
+            abort(404, 'Файл не найден.');
+        }
 
-        return back();
+        return Storage::disk('local')->response($document->file_path, $document->name);
     }
 
+    /**
+     * Удаление документа (только для сотрудников).
+     * Метод уже используется в роуте admin.documents.destroy.
+     */
     public function destroy(Document $document)
     {
-        if (Storage::disk('public')->exists($document->file_path)) {
-            Storage::disk('public')->delete($document->file_path);
+        if (Storage::disk('local')->exists($document->file_path)) {
+            Storage::disk('local')->delete($document->file_path);
         }
+
         $document->delete();
 
-        return back()->with('message', 'Документ удален');
+        return back();
     }
 }

@@ -16,8 +16,7 @@ export default function Documents({ auth, documents, application }) {
                     <Typography color="text.secondary">Администратор еще не загрузил документы для вашего аккаунта.</Typography>
                 </Box>
             ) : (
-                // <Grid container spacing={3}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap:2}}>
+                <Grid container spacing={3}>
                     {documents.map((doc) => (
                         <Grid item xs={12} sm={6} md={4} key={doc.id}>
                             <Paper sx={{ 
@@ -37,14 +36,13 @@ export default function Documents({ auth, documents, application }) {
                                     <Typography variant="body1" fontWeight="bold" noWrap>{doc.name}</Typography>
                                     <Typography variant="caption" color="text.secondary">Файл системы</Typography>
                                 </Box>
-                                <IconButton href={`/storage/${doc.file_path}`} target="_blank" color="primary">
+                                <IconButton href={doc.url} target="_blank" color="primary">
                                     <DownloadIcon />
                                 </IconButton>
                             </Paper>
                         </Grid>
                     ))}
-                </Box>
-                // </Grid>
+                </Grid>
             )}
         </ClientLayout>
     );

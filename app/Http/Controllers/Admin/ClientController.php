@@ -189,7 +189,7 @@ class ClientController extends Controller
 
         $client = Client::findOrFail($id);
         $file = $request->file('file');
-        $path = $file->store('documents', 'public');
+        $path = $file->store('documents', 'local');
 
         $client->documents()->create([
             'name' => $file->getClientOriginalName(),
@@ -203,8 +203,8 @@ class ClientController extends Controller
     public function destroy(Client $client)
     {
         foreach ($client->documents as $document) {
-            if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
-                Storage::disk('public')->delete($document->file_path);
+            if ($document->file_path && Storage::disk('local')->exists($document->file_path)) {
+                Storage::disk('local')->delete($document->file_path);
             }
         }
         $client->documents()->delete();

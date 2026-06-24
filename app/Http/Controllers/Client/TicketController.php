@@ -26,7 +26,7 @@ class TicketController extends Controller
 
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
-                $path = $file->store('tickets_attachments', 'public');
+                $path = $file->store('tickets_attachments', 'local');
                 TicketAttachment::create([
                     'ticket_id' => $ticket->id,
                     'file_path' => $path,
@@ -46,7 +46,7 @@ class TicketController extends Controller
             ->get()
             ->map(function ($ticket) {
                 $ticket->attachments->map(function ($attachment) {
-                    $attachment->url = asset('storage/'.$attachment->file_path);
+                    $attachment->url = route('attachments.serve', $attachment->id);
 
                     return $attachment;
                 });

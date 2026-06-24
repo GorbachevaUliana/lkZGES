@@ -63,11 +63,13 @@ class Document extends Model
     // ==================== ACCESSORS ====================
 
     /**
-     * URL для скачивания документа
+     * Защищённый URL для скачивания документа.
+     * Файл отдаётся через DocumentController::serve() с проверкой прав,
+     * а не напрямую из /storage/ (там файлы больше не лежат).
      */
     public function getUrlAttribute(): string
     {
-        return asset('storage/'.$this->file_path);
+        return route('documents.serve', $this->id);
     }
 
     /**

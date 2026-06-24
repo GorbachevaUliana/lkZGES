@@ -310,7 +310,7 @@ class ApplicationSubmitController extends Controller
                     $path = $file->storeAs(
                         'client_documents/' . $applicationId,
                         $newFileName,
-                        'public'
+                        'local'
                     );
 
                     Document::create([
@@ -478,7 +478,7 @@ class ApplicationSubmitController extends Controller
         $fileName = 'app_no_'.$application->id.'_'.time().'.pdf';
         $filePath = 'applications/'.$fileName;
 
-        Storage::disk('public')->put($filePath, $pdf->output());
+        Storage::disk('local')->put($filePath, $pdf->output());
 
         return $filePath;
     }

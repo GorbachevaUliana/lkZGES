@@ -138,16 +138,17 @@ class Application extends Model
 
     public function getGeneratedPdfUrlAttribute(): ?string
     {
-        return $this->generated_pdf_path
-            ? asset('storage/'.$this->generated_pdf_path)
-            : null;
+        // PDF заявки сохраняется также как Document (TYPE_APPLICATION),
+        // поэтому отдаём через защищённый роут documents.serve по document_id.
+        $doc = $this->documents()->where('type', 'application_pdf')->first();
+        return $doc ? route('documents.serve', $doc->id) : null;
     }
 
     public function getContractPdfUrlAttribute(): ?string
     {
-        return $this->contract_pdf_path
-            ? asset('storage/'.$this->contract_pdf_path)
-            : null;
+        // Договор тоже сохраняется как Document (TYPE_CONTRACT).
+        $doc = $this->documents()->where('type', 'contract')->first();
+        return $doc ? route('documents.serve', $doc->id) : null;
     }
 
     public function getProcessorNameAttribute(): string

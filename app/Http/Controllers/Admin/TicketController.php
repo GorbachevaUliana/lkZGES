@@ -26,7 +26,7 @@ class TicketController extends Controller
 
         $tickets = $query->latest()->get()->map(function ($ticket) {
             $ticket->attachments->map(function ($attachment) {
-                $attachment->url = asset('storage/'.$attachment->file_path);
+                $attachment->url = route('attachments.serve', $attachment->id);
 
                 return $attachment;
             });
@@ -99,7 +99,7 @@ class TicketController extends Controller
 
         if ($request->hasFile('admin_files')) {
             foreach ($request->file('admin_files') as $file) {
-                $path = $file->store('tickets/replies', 'public');
+                $path = $file->store('tickets/replies', 'local');
                 $ticket->attachments()->create([
                     'file_path' => $path,
                     'file_name' => $file->getClientOriginalName(),

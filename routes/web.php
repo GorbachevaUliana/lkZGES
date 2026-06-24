@@ -28,6 +28,15 @@ Route::redirect('/', '/login');
 |--------------------------------------------------------------------------
 */
 // Доступна сразу после регистрации (без требования верификации)
+// Защищённая раздача файлов — только авторизованным пользователям,
+// с проверкой владельца. Файлы хранятся на 'local' диске (не public).
+Route::middleware(['auth'])->group(function () {
+    Route::get('/secure/documents/{document}', [\App\Http\Controllers\DocumentController::class, 'serve'])
+        ->name('documents.serve');
+    Route::get('/secure/attachments/{attachment}', [\App\Http\Controllers\AttachmentController::class, 'serve'])
+        ->name('attachments.serve');
+});
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/welcome-step', [AccountController::class, 'index'])->name('welcome.step');
     // throttle:10,1 — не более 10 попыток привязки ЛС в минуту с одного IP.
@@ -35,6 +44,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/account/link', [AccountController::class, 'link'])
         ->middleware('throttle:10,1')
         ->name('account.link');
+    // Шаг 2: проверка кода. throttle:5,1 — жёстче, чтобы не перебирали коды.
+    Route::post('/account/verify', [AccountController::class, 'verify'])
+        ->middleware('throttle:5,1')
+        ->name('account.verify');
 });
 
 /*
