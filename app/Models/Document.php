@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Модель документа
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Document extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'client_id',
         'application_id',

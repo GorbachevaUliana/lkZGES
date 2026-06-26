@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'user_id',
         'account_number',
@@ -24,8 +26,8 @@ class Client extends Model
         'email',
         'tariff_id',
         'tariff_category'
-        // УБРАНО: tariff_id - тарифы теперь на уровне объектов (properties)
-        // УБРАНО: tariff_category - не используется
+        //tariff_id - тарифы теперь на уровне объектов (properties)
+        //tariff_category - не используется
     ];
 
     protected $casts = [
@@ -231,6 +233,9 @@ class Client extends Model
     /**
      * Физические лица
      */
+
+
+    
     public function scopeIndividuals($query)
     {
         return $query->where('client_type', self::TYPE_INDIVIDUAL);

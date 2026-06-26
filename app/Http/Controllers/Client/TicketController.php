@@ -6,18 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use Illuminate\Http\Request;
+use App\Http\Requests\Client\StoreTicketRequest;
 use Inertia\Inertia;
 
 class TicketController extends Controller
 {
-    public function storeTicket(Request $request)
+    public function storeTicket(StoreTicketRequest $request)
     {
-        $request->validate([
-            'subject' => 'required|string|max:255',
-            'message' => 'required|string',
-            'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', // до 5МБ
-        ]);
-
         $ticket = Ticket::create([
             'user_id' => auth()->id(),
             'subject' => $request->subject,

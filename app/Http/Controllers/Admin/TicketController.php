@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\UpdateTicketRequest;
 use Inertia\Inertia;    
 
 class TicketController extends Controller
@@ -45,43 +46,9 @@ class TicketController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateTicketRequest $request, $id)
     {
         $ticket = Ticket::findOrFail($id);
-
-        // IDOR-защита: сотрудник (не admin) может изменять только тикеты,
-        // назначенные на него. Без этой проверки любой staff мог отправить
-        // PUT на /admin/tickets/{любой_id} и изменить чужой тикет.
-        $user = auth()->user();
-        if ($user->role !== 'admin' && $ticket->staff_id !== $user->id) {
-            abort(403, 'Вы можете изменять только обращения, назначенные вам.');
-        }
-
-        $request->validate([
-            // Явный список допустимых статусов — раньше принималась любая строка.
-            // 'new' — начальный статус при создании (см. миграцию).
-            'status'        => 'required|string|in:new,pending,closed',
-            // Назначать можно только реальных сотрудников с доступом к тикетам,
-            // а не любого пользователя из таблицы users.
-            'staff_id'      => [
-                'nullable',
-                'exists:users,id',
-                function ($attribute, $value, $fail) {
-                    if ($value === null) return;
-                    $assignee = User::find($value);
-                    if (!$assignee) return;
-                    $isStaff = in_array($assignee->role, ['admin', 'staff']);
-                    $hasTicketsAccess = $assignee->role === 'admin'
-                        || (is_array($assignee->permissions) && in_array('tickets', $assignee->permissions));
-                    if (!$isStaff || !$hasTicketsAccess) {
-                        $fail('Нельзя назначить тикет на пользователя без доступа к обращениям.');
-                    }
-                },
-            ],
-            'admin_reply'   => 'nullable|string|max:10000',
-            'admin_files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
-        ]);
-
         // Обновляем основные поля через массовое присвоение.
         // replied_by НЕ входит в $fillable модели Ticket, поэтому обновляем
         // его отдельно через whereKey()->update() — иначе поле молча игнорируется

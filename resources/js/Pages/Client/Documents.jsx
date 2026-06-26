@@ -21,9 +21,9 @@ export default function Documents({ auth, documents, application }) {
                         <Grid item xs={12} sm={6} md={4} key={doc.id}>
                             <Paper sx={{ 
                                 p: 2, 
-                                borderRadius: '16px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
+                                borderRadius: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
                                 gap: 2,
                                 border: '1px solid #E0E5F2',
                                 transition: '0.3s',

@@ -6,6 +6,7 @@ use App\Models\MeterReading;
 use App\Models\Property;
 use App\Models\Tariff;
 use Illuminate\Http\Request;
+use App\Http\Requests\Client\StoreMeterReadingRequest;
 use Inertia\Inertia;
 
 class MeterReadingController extends Controller
@@ -89,7 +90,7 @@ class MeterReadingController extends Controller
      *
      * Показания привязаны к конкретному объекту (property)
      */
-    public function storeReading(Request $request)
+    public function storeReading(StoreMeterReadingRequest $request)
     {
         $client = auth()->user()->client;
 
@@ -97,11 +98,7 @@ class MeterReadingController extends Controller
             return back()->withErrors(['error' => 'Профиль клиента не связан с вашим аккаунтом.']);
         }
 
-        $validated = $request->validate([
-            'current_value' => 'required|integer|min:0',
-            'reading_date' => 'required|date',
-            'property_id' => 'required|integer|exists:properties,id',
-        ]);
+        $validated = $request->validated();
 
         $property = Property::where('id', $validated['property_id'])
             ->where('client_id', $client->id)

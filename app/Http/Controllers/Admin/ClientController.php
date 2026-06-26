@@ -7,6 +7,9 @@ use App\Models\Client;
 use App\Models\Property;
 use App\Models\Tariff;
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StoreClientRequest;
+use App\Http\Requests\Admin\UpdateClientRequest;
+use App\Http\Requests\Admin\UploadClientFileRequest;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -89,36 +92,9 @@ class ClientController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreClientRequest $request)
     {
-        $validated = $request->validate([
-            'client_type' => 'required|in:individual,legal',
-            'last_name' => 'nullable|string',
-            'first_name' => 'nullable|string',
-            'middle_name' => 'nullable|string',
-            'company_name' => 'nullable|string',
-            'phone' => 'nullable',
-            'email' => 'nullable|email',
-            'properties' => 'required|array|min:1',
-            'properties.*.account_number' => 'required|string|distinct',
-            'properties.*.tariff_id' => 'required|exists:tariffs,id',
-            'properties.*.region' => 'nullable|string',
-            'properties.*.district' => 'nullable|string',
-            'properties.*.locality' => 'required|string',
-            'properties.*.street' => 'required|string',
-            'properties.*.house' => 'required|string',
-            'properties.*.building' => 'nullable|string',
-            'properties.*.apartment' => 'nullable|string',
-        ]);
-
-        // Проверка уникальности лицевых счетов в БД
-        foreach ($validated['properties'] as $prop) {
-            if (Property::where('account_number', $prop['account_number'])->exists()) {
-                return back()->withErrors([
-                    'properties' => "Лицевой счет {$prop['account_number']} уже существует в базе данных."
-                ]);
-            }
-        }
+        $validated = $request->validated();
 
         // Создаём клиента
         $client = Client::create([
@@ -162,31 +138,18 @@ class ClientController extends Controller
         return back()->with('success', 'Потребитель успешно создан');
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateClientRequest $request, $id)
     {
         $client = Client::findOrFail($id);
-
-        $validated = $request->validate([
-            'client_type' => 'required|in:individual,legal',
-            'last_name' => 'nullable|string',
-            'first_name' => 'nullable|string',
-            'middle_name' => 'nullable|string',
-            'company_name' => 'nullable|string',
-            'phone' => 'nullable',
-            'email' => 'nullable|email',
-        ]);
+        $validated = $request->validated();
 
         $client->update($validated);
 
         return back()->with('success', 'Данные обновлены');
     }
 
-    public function upload(Request $request, $id)
+    public function upload(UploadClientFileRequest $request, $id)
     {
-        $request->validate([
-            'file' => 'required|mimes:pdf,jpg,png|max:10240',
-        ]);
-
         $client = Client::findOrFail($id);
         $file = $request->file('file');
         $path = $file->store('documents', 'local');

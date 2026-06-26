@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\AccountLinkCode;
 use App\Models\Client;
 use Illuminate\Http\Request;
+use App\Http\Requests\Account\LinkAccountRequest;
+use App\Http\Requests\Account\VerifyAccountRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -50,15 +52,8 @@ class AccountController extends Controller
      * Намеренно не сообщаем, найден ли клиент — защита от перебора.
      * После обработки ВСЕГДА делаем redirect на GET /welcome-step (PRG-паттерн).
      */
-    public function link(Request $request)
+    public function link(LinkAccountRequest $request)
     {
-        $request->validate([
-            'account_number' => 'required|string',
-            'last_name'      => 'required|string|max:100',
-            'first_name'     => 'required|string|max:100',
-            'middle_name'    => 'required|string|max:100',
-        ]);
-
         $user = auth()->user();
 
         $client = Client::whereHas('properties', function ($q) use ($request) {
@@ -109,12 +104,8 @@ class AccountController extends Controller
      * шага 'verify' в сессии — иначе браузер при обновлении страницы
      * делает GET /account/verify и получает 405 Method Not Allowed.
      */
-    public function verify(Request $request)
+    public function verify(VerifyAccountRequest $request)
     {
-        $request->validate([
-            'code' => 'required|string|size:6',
-        ]);
-
         $user = auth()->user();
 
         // Код просрочен или не запрашивался.

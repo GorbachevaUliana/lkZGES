@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\StoreStaffRequest;
+use App\Http\Requests\Admin\UpdateStaffRequest;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
@@ -19,26 +21,11 @@ class StaffController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    // public function store(Request $request)
+    public function store(StoreStaffRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|unique:users',
-            'password' => 'required|min:8',
-            'role' => 'required|in:admin,staff',
-            'permissions' => 'nullable|array',
-        ]);
-
-        // Назначать роль "администратор" может только сам администратор.
-        // Без этой проверки оператор со включённым доступом к разделу
-        // "Сотрудники" мог создать себе (или кому угодно) полноценный admin-аккаунт.
-        if ($request->role === 'admin' && auth()->user()->role !== 'admin') {
-            abort(403, 'Только администратор может назначать роль администратора.');
-        }
-
-        // role/status/permissions убраны из User::$fillable (защита от mass-assignment).
         // Создаём через forceFill, который намеренно обходит $fillable —
-        // здесь это безопасно, потому что данные уже прошли валидацию выше.
+        // здесь это безопасно, потому что данные уже прошли валидацию.
         $user = new User();
         $user->forceFill([
             'name'        => $request->name,
@@ -52,7 +39,7 @@ class StaffController extends Controller
         return back();
     }
 
-    public function update(Request $request, User $staff)
+    public function update(UpdateStaffRequest $request, User $staff)
     {
         if (auth()->user()->role !== 'admin') {
             abort(403, 'Только администратор может редактировать сотрудников');

@@ -7,6 +7,8 @@ use App\Models\Application;
 use App\Models\Tariff;
 use App\Services\ApplicationService;
 use Illuminate\Http\Request;
+use App\Http\Requests\Admin\UploadApplicationDocumentRequest;
+use App\Http\Requests\Admin\UploadContractRequest;
 use Inertia\Inertia;
 
 class ApplicationController extends Controller
@@ -65,8 +67,11 @@ class ApplicationController extends Controller
         ]);
 
         return response()->json([
-            'application' => $application,
-            'tariffs' => Tariff::all(),
+            'application'         => $application,
+            'tariffs'             => Tariff::all(),
+            // Только допустимые следующие статусы — фронт показывает
+            // в Select лишь их, а не все пять статусов подряд.
+            'allowedNextStatuses' => $this->applicationService->getAllowedNextStatuses($application->status),
         ]);
     }
 
@@ -75,16 +80,23 @@ class ApplicationController extends Controller
      */
     public function updateStatus(Request $request, Application $application)
     {
+        // Разрешаем только статусы, допустимые из текущего состояния заявки.
+        // Полная проверка логики переходов — в ApplicationService::updateStatus().
+        $allowedNext = array_column(
+            $this->applicationService->getAllowedNextStatuses($application->status),
+            'value'
+        );
+
         $validated = $request->validate([
-            'status' => 'required|in:new,processing,pending,approved,rejected',
+            'status'         => ['required', 'string', 'in:' . implode(',', $allowedNext)],
             'account_number' => 'required_if:status,approved|string|nullable|unique:properties,account_number,' . ($application->property_id ?? 'NULL'),
-            'admin_comment' => 'nullable|string',
-            'tariff_id' => 'required_if:status,approved|integer|nullable|exists:tariffs,id',
+            'admin_comment'  => 'nullable|string|max:2000',
+            'tariff_id'      => 'required_if:status,approved|integer|nullable|exists:tariffs,id',
         ]);
 
         $this->applicationService->updateStatus($application, $validated);
 
-        return back()->with('success', 'Статус заявки обновлен');
+        return back()->with('success', 'Статус заявки обновлён');
     }
 
     /**
@@ -107,7 +119,7 @@ class ApplicationController extends Controller
     /**
      * Загрузка договора админом
      */
-    public function uploadContract(Request $request, Application $application)
+    public function uploadContract(UploadContractRequest $request, Application $application)
     {
         $request->validate([
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
@@ -135,7 +147,7 @@ class ApplicationController extends Controller
     /**
      * Загрузка дополнительного документа админом
      */
-    public function uploadDocument(Request $request, Application $application)
+    public function uploadDocument(UploadApplicationDocumentRequest $request, Application $application)
     {
         $request->validate([
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
