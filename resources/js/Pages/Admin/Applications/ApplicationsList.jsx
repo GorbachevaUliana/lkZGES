@@ -63,14 +63,14 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
         });
     }, [searchQuery, statusFilter, appData]);
 
-    const stats = useMemo(() => {
-        return {
-            all: appData.length,
-            pending: appData.filter(a => a.status === 'pending').length,
-            processing: appData.filter(a => a.status === 'processing').length,
-            approved: appData.filter(a => a.status === 'approved').length,
-        };
-    }, [appData]);
+    // const stats = useMemo(() => {
+    //     return {
+    //         all: appData.length,
+    //         pending: appData.filter(a => a.status === 'pending').length,
+    //         processing: appData.filter(a => a.status === 'processing').length,
+    //         approved: appData.filter(a => a.status === 'approved').length,
+    //     };
+    // }, [appData]);
 
     const statusColors = {
         pending: { bg: '#FFF3E0', color: '#F57C00' },

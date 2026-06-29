@@ -50,8 +50,8 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
     };
 
     const handleOpenClientCard = (userId) => {
-        const ticket = tickets.find(t => t.user_id === userId);
-        const clientData = ticket?.user?.client;
+        const ticketsData = Array.isArray(tickets) ? tickets : (tickets?.data || []);
+        const ticket = ticketsData.find(t => t.user_id === userId);        const clientData = ticket?.user?.client;
 
         if (clientData) {
             setSelectedClient(clientData);
@@ -64,7 +64,7 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
     const filteredTickets = useMemo(() => {
         const query = searchQuery.toLowerCase();
         const altQuery = fixKeyboardLayout(query);
-        return (tickets || []).filter(t => {
+        return (Array.isArray(tickets) ? tickets : (tickets?.data || [])).filter(t => {
             const s = `${t.subject} ${t.message} ${t.status}`.toLowerCase();
             return s.includes(query) || s.includes(altQuery);
         });

@@ -17,77 +17,61 @@ class ClientController extends Controller
 {
     public function index()
     {
-        $clients = Client::with(['documents', 'properties.tariff'])
+        $clientsPaginator = Client::with(['documents', 'properties.tariff'])
             ->whereHas('properties', function ($query) {
                 $query->where('status', 'active')
                     ->whereNotNull('account_number')
                     ->where('account_number', '!=', '');
             })
-            ->get()
-            ->map(function ($client) {
-                $activeProperties = $client->properties->filter(function ($property) {
-                    return $property->status === 'active'
-                        && !empty($property->account_number);
-                })->values();
+            ->paginate(50);
 
-                $statusName = $client->status_name;
-                $status = $activeProperties->count() > 0 ? 'active' : 'inactive';
+        $clientsPaginator->getCollection()->transform(function ($client) {
+            $activeProperties = $client->properties->filter(function ($property) {
+                return $property->status === 'active' && !empty($property->account_number);
+            })->values();
 
-                // $propertyAddress = $activeProperties->first()?->address ?? $client->address;
-                $propertyAddress = $activeProperties->first()?->address ?? null;
-                $accountNumbersStr = $activeProperties->pluck('account_number')->implode(', ');
-
-                // Получаем тарифы из активных объектов
-                // $tariffs = $activeProperties->map(function ($property) {
-                //     return $property->tariff ? [
-                //         'id' => $property->tariff->id,
-                //         'name' => $property->tariff->name,
-                //     ] : null;
-                // })->filter()->values();
-                $propertiesData = $activeProperties->map(function($property) {
-                    return [
-                        'id' => $property->id,
-                        'account_number' => $property->account_number,
-                        'address' => $property->address,
-                        'status' => $property->status,
-                        'tariff' => $property->tariff ? [
-                            'id' => $property->tariff->id,
-                            'name' => $property->tariff->name,
-                            'price_1' => $property->tariff->price_1, 
-                        ] : null,
-                    ];
-                })->values();
-
+            $propertiesData = $activeProperties->map(function ($property) {
                 return [
-                    'id' => $client->id,
-                    'user_id' => $client->user_id,
-                    'client_type' => $client->client_type,
-                    'client_type_name' => $client->client_type_name,
-                    'last_name' => $client->last_name,
-                    'first_name' => $client->first_name,
-                    'middle_name' => $client->middle_name,
-                    'full_name' => $client->full_name,
-                    'display_name' => $client->display_name,
-                    'company_name' => $client->company_name,
-                    'inn' => $client->inn,
-                    'address' => $propertyAddress,
-                    'phone' => $client->phone,
-                    'email' => $client->email,
-                    'status' => $status,
-                    'status_name' => $statusName,
-                    'documents' => $client->documents,
-                    // 'properties' => $activeProperties,
-                    'properties' => $propertiesData,
-                    'properties_count' => $activeProperties->count(),
-                    // 'tariffs' => $tariffs,
-                    'account_number' => $accountNumbersStr ?: null,
-                    'account_numbers' => $accountNumbersStr,
-                    'created_at' => $client->created_at,
+                    'id'             => $property->id,
+                    'account_number' => $property->account_number,
+                    'address'        => $property->address,
+                    'status'         => $property->status,
+                    'tariff'         => $property->tariff ? [
+                        'id'      => $property->tariff->id,
+                        'name'    => $property->tariff->name,
+                        'price_1' => $property->tariff->price_1,
+                    ] : null,
                 ];
-            });
+            })->values();
+
+            return [
+                'id'               => $client->id,
+                'user_id'          => $client->user_id,
+                'client_type'      => $client->client_type,
+                'client_type_name' => $client->client_type_name,
+                'last_name'        => $client->last_name,
+                'first_name'       => $client->first_name,
+                'middle_name'      => $client->middle_name,
+                'full_name'        => $client->full_name,
+                'display_name'     => $client->display_name,
+                'company_name'     => $client->company_name,
+                'inn'              => $client->inn,
+                'address'          => $activeProperties->first()?->address ?? null,
+                'phone'            => $client->phone,
+                'email'            => $client->email,
+                'status'           => $activeProperties->count() > 0 ? 'active' : 'inactive',
+                'status_name'      => $client->status_name,
+                'documents'        => $client->documents,
+                'properties'       => $propertiesData,
+                'properties_count' => $activeProperties->count(),
+                'account_number'   => $activeProperties->pluck('account_number')->implode(', ') ?: null,
+                'account_numbers'  => $activeProperties->pluck('account_number')->implode(', '),
+                'created_at'       => $client->created_at,
+            ];
+        });
 
         return Inertia::render('Admin/ClientsList', [
-            'clients' => $clients,
+            'clients' => $clientsPaginator,
             'tariffs' => Tariff::all(),
         ]);
     }

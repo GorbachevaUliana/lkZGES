@@ -15,31 +15,33 @@ class AdminMeterReadingController extends Controller
     {
         $allReadings = MeterReading::with(['property.client.user', 'tariff'])
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($reading) {
-                return [
-                    'id' => $reading->id,
-                    'reading_date' => $reading->reading_date,
-                    'current_value' => $reading->current_value,
-                    'previous_value' => $reading->previous_value,
-                    'total_sum' => $reading->total_sum,
-                    'is_paid' => $reading->is_paid,
-                    'tariff' => $reading->tariff,
-                    'property' => $reading->property ? [
-                        'id' => $reading->property->id,
-                        'address' => $reading->property->address,
-                        'account_number' => $reading->property->account_number,
+            ->paginate(50);
+
+        // map() нельзя вызвать напрямую на paginator — делаем через getCollection()
+        $allReadings->getCollection()->transform(function ($reading) {
+            return [
+                'id'             => $reading->id,
+                'reading_date'   => $reading->reading_date,
+                'current_value'  => $reading->current_value,
+                'previous_value' => $reading->previous_value,
+                'total_sum'      => $reading->total_sum,
+                'is_paid'        => $reading->is_paid,
+                'tariff'         => $reading->tariff,
+                'property'       => $reading->property ? [
+                    'id'             => $reading->property->id,
+                    'address'        => $reading->property->address,
+                    'account_number' => $reading->property->account_number,
+                ] : null,
+                'client' => $reading->property?->client ? [
+                    'id'        => $reading->property->client->id,
+                    'full_name' => $reading->property->client->full_name,
+                    'user'      => $reading->property->client->user ? [
+                        'id'   => $reading->property->client->user->id,
+                        'name' => $reading->property->client->user->name,
                     ] : null,
-                    'client' => $reading->property?->client ? [
-                        'id' => $reading->property->client->id,
-                        'full_name' => $reading->property->client->full_name,
-                        'user' => $reading->property->client->user ? [
-                            'id' => $reading->property->client->user->id,
-                            'name' => $reading->property->client->user->name,
-                        ] : null,
-                    ] : null,
-                ];
-            });
+                ] : null,
+            ];
+        });
 
         return Inertia::render('Admin/Readings/Readings', [
             'readings' => $allReadings,

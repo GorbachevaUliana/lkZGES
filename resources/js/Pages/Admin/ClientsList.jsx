@@ -155,10 +155,12 @@ export default function ClientsList({ auth, clients, tariffs }) {
         });
     };
 
+    const clientsData = Array.isArray(clients) ? clients : (clients?.data || []);
+
     const filteredClients = useMemo(() => {
         const query = searchQuery.toLowerCase();
         const altQuery = fixKeyboardLayout(query);
-        return (clients || []).filter(c => {
+        return clientsData.filter(c => {
             const s = `${c.last_name} ${c.first_name} ${c.middle_name} ${c.company_name} ${c.account_number} ${c.address} ${c.phone}`.toLowerCase();
             return s.includes(query) || s.includes(altQuery);
         });

@@ -27,13 +27,19 @@ class ApplicationController extends Controller
     {
         $applications = Application::with(['user', 'client', 'property'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(50);
 
         return Inertia::render('Admin/Applications/ApplicationsList', [
             'applications' => $applications,
-            'statuses' => Application::getStatuses(),
-            'clientTypes' => Application::getClientTypes(),
-            'tariffs' => Tariff::all(),
+            'statuses'     => Application::getStatuses(),
+            'clientTypes'  => Application::getClientTypes(),
+            'tariffs'      => Tariff::all(),
+            'stats' => [
+                'all'        => Application::count(),
+                'pending'    => Application::whereIn('status', ['new', 'pending'])->count(),
+                'processing' => Application::where('status', 'processing')->count(),
+                'approved'   => Application::where('status', 'approved')->count(),
+            ],
         ]);
     }
 

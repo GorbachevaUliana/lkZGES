@@ -25,13 +25,13 @@ class TicketController extends Controller
             $query->where('staff_id', $user->id);
         }
 
-        $tickets = $query->latest()->get()->map(function ($ticket) {
+        $tickets = $query->latest()->paginate(50);
+
+        $tickets->getCollection()->transform(function ($ticket) {
             $ticket->attachments->map(function ($attachment) {
                 $attachment->url = route('attachments.serve', $attachment->id);
-
                 return $attachment;
             });
-
             return $ticket;
         });
 

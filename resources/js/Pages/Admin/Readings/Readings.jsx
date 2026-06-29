@@ -93,7 +93,7 @@ export default function Index({ auth, readings, data, id}) {
 
                     <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 20px 50px rgba(112, 144, 176, 0.15)' }}>
                         <DataGrid 
-                            rows={readings} 
+                            rows={readings.data ?? readings} 
                             columns={columns} 
                             autoHeight
                             initialState={{
