@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('meter_readings', function (Blueprint $table) {
-            // Один объект — одно показание в месяц
             $table->unique(['property_id', 'reading_date'], 'unique_reading_per_property_month');
         });
     }
