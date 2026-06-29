@@ -29,7 +29,7 @@ const fixKeyboardLayout = (text) => {
     return text.toLowerCase().split('').map(char => map[char] || char).join('');
 };
 
-export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs }) {
+export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs, stats }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedApplication, setSelectedApplication] = useState(null);
