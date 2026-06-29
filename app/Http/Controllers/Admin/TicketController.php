@@ -49,20 +49,14 @@ class TicketController extends Controller
     public function update(UpdateTicketRequest $request, $id)
     {
         $ticket = Ticket::findOrFail($id);
-        // Обновляем основные поля через массовое присвоение.
-        // replied_by НЕ входит в $fillable модели Ticket, поэтому обновляем
-        // его отдельно через whereKey()->update() — иначе поле молча игнорируется
-        // и на фронте никогда не показывается "кто ответил".
+
         $ticket->update([
             'status'      => $request->status,
             'staff_id'    => $request->staff_id,
             'admin_reply' => $request->admin_reply,
             'replied_at'  => $request->admin_reply ? now() : $ticket->replied_at,
+            'replied_by'  => $request->admin_reply ? auth()->id() : $ticket->replied_by,
         ]);
-
-        if ($request->admin_reply) {
-            Ticket::whereKey($ticket->id)->update(['replied_by' => auth()->id()]);
-        }
 
         if ($request->hasFile('admin_files')) {
             foreach ($request->file('admin_files') as $file) {
@@ -70,7 +64,7 @@ class TicketController extends Controller
                 $ticket->attachments()->create([
                     'file_path' => $path,
                     'file_name' => $file->getClientOriginalName(),
-                    'is_admin' => true,
+                    'is_admin'  => true,
                 ]);
             }
         }

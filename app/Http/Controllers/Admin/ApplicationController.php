@@ -25,7 +25,7 @@ class ApplicationController extends Controller
      */
     public function index()
     {
-        $applications = Application::with(['user', 'client', 'property'])
+        $applications = Application::with(['user', 'client', 'property', 'documents'])
             ->orderBy('created_at', 'desc')
             ->paginate(50);
 
