@@ -34,7 +34,7 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {   
         if ($panel->getId() === 'manager') {
-            return $this->role === 'admin';
+            return $this->role === UserRole::Admin;
         }
 
         return false;
@@ -124,7 +124,7 @@ class User extends Authenticatable implements FilamentUser
     public function canCreateTickets(): bool
     {
         // Проверяем роль client И наличие хотя бы одного активного объекта с ЛС
-        if ($this->role !== 'client') {
+        if ($this->role !== UserRole::Client) {
             return false;
         }
 
