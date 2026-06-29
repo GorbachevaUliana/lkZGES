@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class StaffController extends Controller
 {
     public function index()
     {
-        $staff = User::whereIn('role', ['admin', 'staff'])->get();
+        $staff = User::whereIn('role', [UserRole::Admin->value, UserRole::Staff->value])->get();
 
         return Inertia::render('Admin/Staff/StaffList', [
             'staff' => $staff,
@@ -62,7 +63,7 @@ class StaffController extends Controller
         // Операторы (не-админы) могут удалять других операторов,
         // но не администраторов — иначе доступ к разделу "Сотрудники"
         // фактически давал возможность удалить самого администратора.
-        if ($staff->role === 'admin' && auth()->user()->role !== 'admin') {
+        if ($staff->role === UserRole::Admin && auth()->user()->role !== UserRole::Admin) {
             abort(403, 'Только администратор может удалить учётную запись администратора.');
         }
 

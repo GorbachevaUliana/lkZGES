@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\User;
@@ -21,7 +22,7 @@ class TicketController extends Controller
             'repliedBy',
         ]);
 
-        if ($user->role !== 'admin') {
+        if ($user->role !== UserRole::Admin) {
             $query->where('staff_id', $user->id);
         }
 
@@ -37,9 +38,9 @@ class TicketController extends Controller
 
         return Inertia::render('Admin/Tickets/TicketsIndex', [
             'tickets' => $tickets,
-            'staff_members' => User::whereIn('role', ['staff', 'admin'])
+            'staff_members' => User::whereIn('role', [UserRole::Staff->value, UserRole::Admin->value])
                 ->where(function ($query) {
-                    $query->where('role', 'admin')
+                    $query->where('role', UserRole::Admin->value)
                         ->orWhereJsonContains('permissions', 'tickets');
                 })
                 ->get(['id', 'name']),

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Client;
@@ -18,11 +19,11 @@ class AdminDashboardController extends Controller
         $stats = [];
 
         // 1. Общая статистика
-        if ($user->role === 'admin' || collect($user->permissions)->contains('clients')) {
+        if ($user->role === UserRole::Admin || collect($user->permissions)->contains('clients')) {
             $stats['clients_count'] = Client::count();
         }
 
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             $stats['tickets_count'] = Ticket::where('status', 'new')->count();
             $stats['applications_pending'] = Application::where('status', 'pending')->count();
         } else {

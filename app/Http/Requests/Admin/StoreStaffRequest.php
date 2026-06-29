@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStaffRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return in_array(auth()->user()->role, ['admin', 'staff']);
+        return in_array(auth()->user()->role, [UserRole::Admin, UserRole::Staff]);
     }
 
     public function rules(): array
@@ -25,8 +26,7 @@ class StoreStaffRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Назначать роль "администратор" может только сам администратор.
-            if ($this->role === 'admin' && auth()->user()->role !== 'admin') {
+            if ($this->role === UserRole::Admin->value && auth()->user()->role !== UserRole::Admin) {
                 $validator->errors()->add('role', 'Только администратор может назначать роль администратора.');
             }
         });

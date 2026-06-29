@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,6 +28,7 @@ class User extends Authenticatable implements FilamentUser
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'permissions' => 'array',
+        'role' => UserRole::class,
     ];
 
     public function canAccessPanel(Panel $panel): bool
@@ -72,7 +74,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function isGuest(): bool
     {
-        return $this->role === 'guest';
+        return $this->role === UserRole::Guest;
     }
 
     /**
@@ -80,7 +82,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function isApplicant(): bool
     {
-        return $this->role === 'applicant';
+        return $this->role === UserRole::Applicant;
     }
 
     /**
@@ -88,7 +90,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function isClient(): bool
     {
-        return $this->role === 'client';
+        return $this->role === UserRole::Client;
     }
 
     /**
@@ -96,7 +98,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function isStaff(): bool
     {
-        return $this->role === 'staff';
+        return $this->role === UserRole::Staff;
     }
 
     /**
@@ -104,7 +106,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === UserRole::Admin;
     }
 
     /**
@@ -112,7 +114,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessAdmin(): bool
     {
-        return in_array($this->role, ['staff', 'admin']);
+        return in_array($this->role, [UserRole::Staff, UserRole::Admin]);
     }
 
     /**
@@ -159,7 +161,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessClientArea(): bool
     {
-        return in_array($this->role, ['applicant', 'client']);
+        return in_array($this->role, [UserRole::Applicant, UserRole::Client]);
     }
 
     // ==================== PERMISSION CHECKS ====================
@@ -169,7 +171,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function hasPermission(string $permission): bool
     {
-        if ($this->role === 'admin') {
+        if ($this->role === UserRole::Admin) {
             return true;
         }
 
@@ -180,21 +182,21 @@ class User extends Authenticatable implements FilamentUser
 
     public function scopeGuests($query)
     {
-        return $query->where('role', 'guest');
+        return $query->where('role', UserRole::Guest);
     }
 
     public function scopeApplicants($query)
     {
-        return $query->where('role', 'applicant');
+        return $query->where('role', UserRole::Applicant);
     }
 
     public function scopeClients($query)
     {
-        return $query->where('role', 'client');
+        return $query->where('role', UserRole::Client);
     }
 
     public function scopeStaff($query)
     {
-        return $query->where('role', 'staff');
+        return $query->where('role', UserRole::Staff);
     }
 }

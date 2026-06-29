@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class CheckPermission
     {
         $user = auth()->user();
 
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return $next($request);
         }
 

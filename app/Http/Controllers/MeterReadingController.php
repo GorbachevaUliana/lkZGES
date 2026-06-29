@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\MeterReading;
 use App\Models\Property;
 use App\Models\Tariff;
@@ -23,7 +24,7 @@ class MeterReadingController extends Controller
         $client = $user->client;
 
         if (! $client) {
-            if ($user->role === 'admin' || $user->role === 'staff') {
+            if ($user->role === UserRole::Admin || $user->role === UserRole::Staff) {
                 return redirect()->route('admin.dashboard')
                     ->with('error', 'У сотрудников нет личного кабинета потребителя.');
             }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,11 @@ class DocumentController extends Controller
         $user = auth()->user();
 
         // Клиент видит только документы своего клиентского профиля.
-        if ($user->role === 'client' || $user->role === 'guest' || $user->role === 'applicant') {
+        if (
+            $user->role === UserRole::Client || 
+            $user->role === UserRole::Guest || 
+            $user->role === UserRole::Applicant
+            ) {
             $client = $user->client;
             if (! $client || $document->client_id !== $client->id) {
                 abort(403, 'Нет доступа к этому документу.');

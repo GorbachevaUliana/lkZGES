@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateStaffRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->user()->role === 'admin';
+        return auth()->user()->role === UserRole::Admin;
     }
 
     public function rules(): array

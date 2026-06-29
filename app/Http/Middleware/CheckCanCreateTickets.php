@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +23,7 @@ class CheckCanCreateTickets
         }
 
         if (! $user->canCreateTickets()) {
-            if ($user->role === 'applicant') {
+            if ($user->role === UserRole::Applicant) {
                 return redirect()->route('client.dashboard')
                     ->with('error', 'Функция обращений станет доступна после одобрения вашей заявки на заключение договора.');
             }

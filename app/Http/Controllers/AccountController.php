@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Mail\AccountLinkCode;
 use App\Models\Client;
 use Illuminate\Http\Request;
@@ -134,7 +135,7 @@ class AccountController extends Controller
 
         // Всё верно — привязываем и чистим временные поля.
         $client->update(['user_id' => $user->id]);
-        $user->forceFill(['role' => 'client'])->save();
+        $user->forceFill(['role' => UserRole::Client->value])->save();
         $this->clearLinkCode($user);
 
         return redirect()->route('client.dashboard');

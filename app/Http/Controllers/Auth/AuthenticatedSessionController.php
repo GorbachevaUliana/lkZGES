@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Enums\UserRole;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -29,7 +30,7 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         
         // Админы и сотрудники идут в админ-панель
-        if ($user->role === 'admin' || $user->role === 'staff') {
+        if ($user->role === UserRole::Admin || $user->role === UserRole::Staff) {
             return redirect()->intended(route('admin.clients.index', absolute: false));
         }
 

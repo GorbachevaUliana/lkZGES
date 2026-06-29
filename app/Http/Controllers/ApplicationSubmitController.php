@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Application;
 use App\Models\ApplicationTemplate;
 use App\Models\Client;
@@ -52,7 +53,7 @@ class ApplicationSubmitController extends Controller
         // accepted_types / max_size / max_files, что читает фронтенд).
         $this->validateFileUploads($request, $template);
 
-        $clientType = in_array($request->input('client_type'), ['induvidual' ,'legal'])
+        $clientType = in_array($request->input('client_type'), ['individual' ,'legal'])
             ? $request->input('client_type')
             : 'individual';
 
@@ -76,8 +77,8 @@ class ApplicationSubmitController extends Controller
                 'status' => 'pending',
             ]);
 
-            if ($user->role === 'guest') {
-                $user->update(['role' => 'applicant']);
+            if ($user->role === UserRole::Guest) {
+                $user->update(['role' => UserRole::Applicant->value]);
             }
 
             $application = Application::create([
