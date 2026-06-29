@@ -52,7 +52,10 @@ class ApplicationSubmitController extends Controller
         // accepted_types / max_size / max_files, что читает фронтенд).
         $this->validateFileUploads($request, $template);
 
-        $clientType = $request->input('client_type', 'individual');
+        // $clientType = $request->input('client_type', 'individual');
+        $clientType = in_array($request->input('client_type'), ['induvidual' ,'legal'])
+            ? $request->input('client_type')
+            : 'individual';
 
         $user = auth()->user();
         $existingClient = Client::where('user_id', $user->id)->first();
