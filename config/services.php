@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'invoice_api' => [
+        'url' => env('INVOICE_API_URL'),
+    ],
+
 ];

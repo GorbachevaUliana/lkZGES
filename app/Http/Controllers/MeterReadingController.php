@@ -137,4 +137,39 @@ class MeterReadingController extends Controller
 
         return back()->with('success', 'Счет успешно оплачен!');
     }
+
+    public function downloadInvoice(Request $request, string $month, string $account)
+    {
+        $user = auth()->user();
+        $client = $user->client;
+
+        if (! $client) {
+            abort(403, 'Профиль клиента не найден.');
+        }
+
+        // Проверяем что этот лицевой счёт принадлежит текущему пользователю
+        $property = Property::where('account_number', $account)
+            ->where('client_id', $client->id)
+            ->first();
+
+        if (! $property) {
+            abort(403, 'Нет доступа к этому лицевому счёту.');
+        }
+
+        // Идём на сервер коллеги (только с бэка, не из браузера)
+        $invoiceApiUrl = config('services.invoice_api.url');
+        $url = "{$invoiceApiUrl}/api/reports/invoiceone/month/{$month}/dgvnumber/{$account}";
+
+        $response = \Illuminate\Support\Facades\Http::timeout(30)->get($url);
+
+        if (! $response->successful()) {
+            abort(502, 'Сервис формирования квитанций временно недоступен.');
+        }
+
+        // Получили PDF — отдаём клиенту
+        return response($response->body(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"invoice_{$account}_{$month}.pdf\"",
+        ]);
+    }
 }

@@ -41,30 +41,18 @@ class StaffController extends Controller
 
     public function update(UpdateStaffRequest $request, User $staff)
     {
-        if (auth()->user()->role !== 'admin') {
-            abort(403, 'Только администратор может редактировать сотрудников');
-        }
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$staff->id,
-            'role' => 'required|in:admin,staff',
-            'permissions' => 'nullable|array',
-            'password' => 'nullable|confirmed|min:8',
-        ]);
-
         $updateData = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => $request->role,
-            'permissions' => $request->permissions ?? [],
+            'name' => $request->validated()['name'],
+            'email' => $request->validated()['email'],
+            'role' => $request->validated()['role'],
+            'permissions' => $request->validated()['permissions'] ?? [],
         ];
 
         if ($request->filled('password')) {
-            $updateData['password'] = Hash::make($request->password);
+            $updateData['password'] = Hash::make($request->validated()['password']);
         }
 
-        $staff->update($updateData);
+        $staff->forceFill($updateData)->save();
 
         return back();
     }

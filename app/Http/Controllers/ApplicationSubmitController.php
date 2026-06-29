@@ -52,7 +52,6 @@ class ApplicationSubmitController extends Controller
         // accepted_types / max_size / max_files, что читает фронтенд).
         $this->validateFileUploads($request, $template);
 
-        // $clientType = $request->input('client_type', 'individual');
         $clientType = in_array($request->input('client_type'), ['induvidual' ,'legal'])
             ? $request->input('client_type')
             : 'individual';
@@ -77,9 +76,6 @@ class ApplicationSubmitController extends Controller
                 'status' => 'pending',
             ]);
 
-            // При регистрации роль выставляется 'guest' (см. RegisteredUserController).
-            // Раньше тут стояло 'user' — такой роли в системе нет, поэтому
-            // переход в 'applicant' никогда не срабатывал.
             if ($user->role === 'guest') {
                 $user->update(['role' => 'applicant']);
             }
