@@ -17,17 +17,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import AdminLayout from '@/Layouts/AdminLayout';
 import ApplicationCard from '@/Components/Admin/ApplicationCard';
 import ConfirmDialog from '@/Components/Admin/ConfirmDialog';
-
-const fixKeyboardLayout = (text) => {
-    if (!text) return '';
-    const map = {
-        'q':'й', 'w':'ц', 'e':'у', 'r':'к', 't':'е', 'y':'н', 'u':'г', 'i':'ш', 'o':'щ', 'p':'з',
-        '[':'х', ']':'ъ', 'a':'ф', 's':'ы', 'd':'в', 'f':'а', 'g':'п', 'h':'р', 'j':'о', 'k':'л',
-        'l':'д', ';':'ж', "'":'э', 'z':'я', 'x':'ч', 'c':'с', 'v':'м', 'b':'и', 'n':'т', 'm':'ь',
-        ',':'б', '.':'ю'
-    };
-    return text.toLowerCase().split('').map(char => map[char] || char).join('');
-};
+import { fixKeyboardLayout } from '@/utils/keyboard';
 
 export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs, stats }) {
     const [searchQuery, setSearchQuery] = useState('');
