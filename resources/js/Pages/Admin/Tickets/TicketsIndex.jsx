@@ -9,6 +9,7 @@ import { useForm } from '@inertiajs/react';
 import ClientCard from '@/Components/Admin/ClientCard';
 import { router } from '@inertiajs/react';
 import { fixKeyboardLayout } from '@/utils/keyboard';
+import { TICKET_STATUS_MAP } from '@/constants/statuses';
 
 export default function TicketsIndex({ auth, tickets, staff_members }) {
     const [editOpen, setEditOpen] = useState(false);
@@ -102,11 +103,6 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
             headerName: 'Статус', 
             width: 150,
             renderCell: (params) => {
-                const statusMap = {
-                    'new': { label: 'Новое', color: 'primary' },
-                    'closed': { label: 'Решено', color: 'success' },
-                    'pending': { label: 'В работе', color: 'warning' }
-                };
                 const current = statusMap[params.value] || { label: params.value, color: 'default' };
                 return <Chip label={current.label} color={current.color} size="small" variant="outlined" />;
             }

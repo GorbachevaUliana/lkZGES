@@ -18,6 +18,7 @@ import AdminLayout from '@/Layouts/AdminLayout';
 import ApplicationCard from '@/Components/Admin/ApplicationCard';
 import ConfirmDialog from '@/Components/Admin/ConfirmDialog';
 import { fixKeyboardLayout } from '@/utils/keyboard';
+import { APPLICATION_STATUS_COLORS } from '@/constants/statuses';
 
 export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs, stats }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -53,21 +54,6 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
         });
     }, [searchQuery, statusFilter, appData]);
 
-    // const stats = useMemo(() => {
-    //     return {
-    //         all: appData.length,
-    //         pending: appData.filter(a => a.status === 'pending').length,
-    //         processing: appData.filter(a => a.status === 'processing').length,
-    //         approved: appData.filter(a => a.status === 'approved').length,
-    //     };
-    // }, [appData]);
-
-    const statusColors = {
-        pending: { bg: '#FFF3E0', color: '#F57C00' },
-        processing: { bg: '#E3F2FD', color: '#1976D2' },
-        approved: { bg: '#E8F5E9', color: '#2E7D32' },
-        rejected: { bg: '#FFEBEE', color: '#C62828' },
-    };
     const handleRowDoubleClick = async (params) => {
         try {
             const response = await fetch(`/admin/applications/${params.row.id}`);

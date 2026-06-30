@@ -16,17 +16,11 @@ import {
     Description as DescriptionIcon,
     CheckCircle as CheckIcon
 } from '@mui/icons-material';
+import { APPLICATION_STATUS_COLORS } from '@/constants/statuses';
 
 function TabPanel({ children, value, index }) {
     return value === index ? <Box sx={{ py: 3 }}>{children}</Box> : null;
 }
-
-const statusColors = {
-    pending: { bg: '#FFF3E0', color: '#F57C00', label: 'Ожидает' },
-    processing: { bg: '#E3F2FD', color: '#1976D2', label: 'В работе' },
-    approved: { bg: '#E8F5E9', color: '#2E7D32', label: 'Одобрена' },
-    rejected: { bg: '#FFEBEE', color: '#C62828', label: 'Отклонена' },
-};
 
 export default function ApplicationCard({ open, onClose, application, statuses, showToast, tariffs }) {
     const [tabValue, setTabValue] = useState(0);
