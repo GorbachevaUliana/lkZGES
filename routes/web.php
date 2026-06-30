@@ -27,24 +27,16 @@ Route::redirect('/', '/login');
 | Страница приветствия (для новых пользователей)
 |--------------------------------------------------------------------------
 */
-// Доступна сразу после регистрации (без требования верификации)
-// Защищённая раздача файлов — только авторизованным пользователям,
-// с проверкой владельца. Файлы хранятся на 'local' диске (не public).
 Route::middleware(['auth'])->group(function () {
     Route::get('/secure/documents/{document}', [\App\Http\Controllers\DocumentController::class, 'serve'])
         ->name('documents.serve');
     Route::get('/secure/attachments/{attachment}', [\App\Http\Controllers\AttachmentController::class, 'serve'])
         ->name('attachments.serve');
-});
 
-Route::middleware(['auth'])->group(function () {
     Route::get('/welcome-step', [AccountController::class, 'index'])->name('welcome.step');
-    // throttle:10,1 — не более 10 попыток привязки ЛС в минуту с одного IP.
-    // Без этого возможен брутфорс пар «лицевой счёт + фамилия».
     Route::post('/account/link', [AccountController::class, 'link'])
         ->middleware('throttle:10,1')
         ->name('account.link');
-    // Шаг 2: проверка кода. throttle:5,1 — жёстче, чтобы не перебирали коды.
     Route::post('/account/verify', [AccountController::class, 'verify'])
         ->middleware('throttle:5,1')
         ->name('account.verify');
@@ -133,26 +125,6 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
 
 /*
 |--------------------------------------------------------------------------
-| ПОКАЗАНИЯ (meter reading)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth', 'verified'])
-    ->prefix('client')
-    ->name('client.')
-    ->group(function () {
-        Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/readings', [MeterReadingController::class, 'index'])->name('readings');
-        Route::post('/readings', [MeterReadingController::class, 'storeReading'])->name('readings.store');
-        Route::get('/invoice/{month}/{account}', [MeterReadingController::class, 'downloadInvoice'])->name('invoice.download');
-        Route::post('/readings/{id}/pay', [MeterReadingController::class, 'pay'])->name('readings.pay');
-    });
-
-// Route::prefix('admin')->name('admin.')->group(function () {
-// });
-
-/*
-|--------------------------------------------------------------------------
 | ЛИЧНЫЙ КАБИНЕТ (applicant и client)
 |--------------------------------------------------------------------------
 */
@@ -160,14 +132,15 @@ Route::middleware(['auth', 'verified'])
     ->prefix('client')
     ->name('client.')
     ->group(function () {
-        // Главная личного кабинета
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
-
-        // Профиль и документы
         Route::get('/profile', [ClientDashboardController::class, 'profile'])->name('profile');
         Route::get('/documents', [ClientDashboardController::class, 'documents'])->name('documents');
 
-        // Обращения (только для полноценных клиентов!)
+        Route::get('/readings', [MeterReadingController::class, 'index'])->name('readings');
+        Route::post('/readings', [MeterReadingController::class, 'storeReading'])->name('readings.store');
+        Route::post('/readings/{id}/pay', [MeterReadingController::class, 'pay'])->name('readings.pay');
+        Route::get('/invoice/{month}/{account}', [MeterReadingController::class, 'downloadInvoice'])->name('invoice.download');
+
         Route::middleware(['can:create-tickets'])->group(function () {
             Route::get('/tickets', [ClientTicketController::class, 'ticketsIndex'])->name('tickets.index');
             Route::post('/tickets', [ClientTicketController::class, 'storeTicket'])->name('tickets.store');

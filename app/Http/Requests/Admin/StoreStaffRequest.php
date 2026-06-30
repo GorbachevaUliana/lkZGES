@@ -15,10 +15,10 @@ class StoreStaffRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|string|email|unique:users',
-            'password'    => 'required|min:8',
-            'role'        => 'required|in:admin,staff',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|unique:users',
+            'password' => 'required|min:8',
+            'role' => 'required|in:admin,staff',
             'permissions' => 'nullable|array',
         ];
     }
@@ -37,7 +37,7 @@ class StoreStaffRequest extends FormRequest
         return [
             'email.unique' => 'Пользователь с таким email уже существует.',
             'password.min' => 'Пароль должен быть не менее 8 символов.',
-            'role.in'      => 'Недопустимая роль.',
+            'role.in' => 'Недопустимая роль.',
         ];
     }
 }
