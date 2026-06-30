@@ -79,22 +79,6 @@ class Client extends Model
         ];
     }
 
-    /**
-     * Получить типы для выпадающего списка
-     */
-    public static function getClientTypesForSelect(): array
-    {
-        return self::getClientTypes();
-    }
-
-    /**
-     * Получить статусы для выпадающего списка
-     */
-    public static function getStatusesForSelect(): array
-    {
-        return self::getStatuses();
-    }
-
     // ==================== RELATIONSHIPS ====================
 
     /**
