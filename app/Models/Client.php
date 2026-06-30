@@ -12,7 +12,6 @@ class Client extends Model
     use SoftDeletes;
     protected $fillable = [
         'user_id',
-        'account_number',
         'client_type',
         'last_name',
         'first_name',
@@ -24,10 +23,6 @@ class Client extends Model
         'address',
         'phone',
         'email',
-        'tariff_id',
-        'tariff_category'
-        //tariff_id - тарифы теперь на уровне объектов (properties)
-        //tariff_category - не используется
     ];
 
     protected $casts = [
