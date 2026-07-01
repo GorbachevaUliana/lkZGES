@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+Use App\Enums\UserRole;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
@@ -17,7 +18,7 @@ class UpdateTicketRequest extends FormRequest
         $user = auth()->user();
 
         // Сотрудник может изменять только назначенные ему тикеты.
-        if ($user->role !== 'admin' && $ticket->staff_id !== $user->id) {
+        if ($user->role !== UserRole::Admin && $ticket->staff_id !== $user->id) {
             return false;
         }
 
@@ -35,8 +36,8 @@ class UpdateTicketRequest extends FormRequest
                     if ($value === null) return;
                     $assignee = User::find($value);
                     if (! $assignee) return;
-                    $isStaff = in_array($assignee->role, ['admin', 'staff']);
-                    $hasAccess = $assignee->role === 'admin'
+                    $isStaff = in_array($assignee->role, [UserRole::Admin, UserRole::Staff]);
+                    $hasAccess = $assignee->role === UserRole::Admin
                         || (is_array($assignee->permissions) && in_array('tickets', $assignee->permissions));
                     if (! $isStaff || ! $hasAccess) {
                         $fail('Нельзя назначить тикет на пользователя без доступа к обращениям.');
