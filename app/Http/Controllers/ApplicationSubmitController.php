@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PdfDocumentType;
+use App\Enums\ClientType;
 use App\Enums\UserRole;
 use App\Models\Application;
 use App\Models\ApplicationTemplate;
@@ -53,9 +55,9 @@ class ApplicationSubmitController extends Controller
         // accepted_types / max_size / max_files, что читает фронтенд).
         $this->validateFileUploads($request, $template);
 
-        $clientType = in_array($request->input('client_type'), ['individual' ,'legal'])
+        $clientType = in_array($request->input('client_type'), [ ClientType::Individual->value, ClientType::Legal->value])
             ? $request->input('client_type')
-            : 'individual';
+            : ClientType::Individual->value;
 
         $user = auth()->user();
         $existingClient = Client::where('user_id', $user->id)->first();
@@ -319,7 +321,7 @@ class ApplicationSubmitController extends Controller
                         'name' => $newFileName,
                         'original_name' => $file->getClientOriginalName(), // Сохраняем оригинальное имя
                         'file_path' => $path,
-                        'type' => Document::TYPE_OTHER,
+                        'type' => PdfDocumentType::Other->value,
                         'description' => $fieldLabel,
                     ]);
 
@@ -392,7 +394,7 @@ class ApplicationSubmitController extends Controller
         return Client::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'client_type' => $data['client_type'] ?? 'individual',
+                'client_type' => $data['client_type'] ?? ClientType::Individual->value,
                 'last_name' => $lastName ?? 'Не указано',
                 'first_name' => $firstName ?? 'Не указано',
                 'middle_name' => $middleName ?? '',
@@ -448,7 +450,7 @@ class ApplicationSubmitController extends Controller
      */
     private function generatePdf(array $data, Client $client, string $clientType, $application, $property): string
     {
-        $pdfTemplate = PdfTemplate::getTemplate($clientType, PdfTemplate::DOC_APPLICATION);
+        $pdfTemplate = PdfTemplate::getTemplate($clientType, PdfDocumentType::Application->value);
 
         $mainInfo = [
             'application_id' => $application->id,
@@ -469,7 +471,7 @@ class ApplicationSubmitController extends Controller
         if ($pdfTemplate) {
             $htmlContent = $pdfTemplate->render($templateData);
         } else {
-            $viewName = $clientType === 'legal' ? 'pdf.application_legal' : 'pdf.application_individual';
+            $viewName = $clientType === ClientType::Legal->value ? 'pdf.application_legal' : 'pdf.application_individual';
             $htmlContent = view($viewName, ['data' => $templateData])->render();
         }
 

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStatus;
+use App\Enums\ClientType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,32 +43,14 @@ class Application extends Model
 
     // ==================== CONSTANTS ====================
 
-    const STATUS_NEW = 'new';
-    const STATUS_PENDING = 'pending';
-    const STATUS_PROCESSING = 'processing';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_REJECTED = 'rejected';
-
-    const TYPE_INDIVIDUAL = 'individual';
-    const TYPE_LEGAL = 'legal';
-
     public static function getStatuses(): array
     {
-        return [
-            self::STATUS_NEW => 'Новая',
-            self::STATUS_PENDING => 'Ожидает рассмотрения',
-            self::STATUS_PROCESSING => 'В работе',
-            self::STATUS_APPROVED => 'Одобрена',
-            self::STATUS_REJECTED => 'Отклонена',
-        ];
+        return ApplicationStatus::labels();
     }
 
     public static function getClientTypes(): array
     {
-        return [
-            self::TYPE_INDIVIDUAL => 'Физическое лицо',
-            self::TYPE_LEGAL => 'Юридическое лицо',
-        ];
+        return ClientType::labels();
     }
 
     // ==================== RELATIONSHIPS ====================
@@ -181,45 +165,45 @@ class Application extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', self::STATUS_PENDING);
+        return $query->where('status', ApplicationStatus::Pending->value);
     }
 
     public function scopeProcessing($query)
     {
-        return $query->where('status', self::STATUS_PROCESSING);
+        return $query->where('status', ApplicationStatus::Processing->value);
     }
 
     public function scopeApproved($query)
     {
-        return $query->where('status', self::STATUS_APPROVED);
+        return $query->where('status', ApplicationStatus::Approved->value);
     }
 
     public function scopeRejected($query)
     {
-        return $query->where('status', self::STATUS_REJECTED);
+        return $query->where('status', ApplicationStatus::Rejected->value);
     }
 
     public function scopeIndividuals($query)
     {
-        return $query->where('client_type', self::TYPE_INDIVIDUAL);
+        return $query->where('client_type', ClientType::Individual->value);
     }
 
     public function scopeLegal($query)
     {
-        return $query->where('client_type', self::TYPE_LEGAL);
+        return $query->where('client_type', ClientType::Legal->value);
     }
 
     // ==================== METHODS ====================
 
     public function markAsProcessing(): void
     {
-        $this->update(['status' => self::STATUS_PROCESSING]);
+        $this->update(['status' => ApplicationStatus::Processing->value]);
     }
 
     public function approve(int $processedBy, ?string $accountNumber = null): void
     {
         $this->update([
-            'status' => self::STATUS_APPROVED,
+            'status' => ApplicationStatus::Approved->value,
             'processed_at' => now(),
             'processed_by' => $processedBy,
         ]);
@@ -232,7 +216,7 @@ class Application extends Model
     public function reject(int $processedBy, ?string $comment = null): void
     {
         $this->update([
-            'status' => self::STATUS_REJECTED,
+            'status' => ApplicationStatus::Rejected->value,
             'processed_at' => now(),
             'processed_by' => $processedBy,
             'admin_comment' => $comment,
@@ -246,11 +230,15 @@ class Application extends Model
 
     public function isEditable(): bool
     {
-        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_PROCESSING]);
+        return in_array($this->status, [
+            ApplicationStatus::Pending->value,
+            ApplicationStatus::Processing->value,]);
     }
 
     public function isProcessed(): bool
     {
-        return in_array($this->status, [self::STATUS_APPROVED, self::STATUS_REJECTED]);
+        return in_array($this->status, [
+            ApplicationStatus::Approved->value,
+            ApplicationStatus::Rejected->value,]);
     }
 }

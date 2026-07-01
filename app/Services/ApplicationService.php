@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStatus;
+use App\Enums\PropertyStatus;
 use App\Models\Application;
 use App\Models\Property;
 use App\Models\Tariff;
@@ -19,11 +21,11 @@ class ApplicationService
      * лицевой счёт уже активного объекта (бизнес-логическая уязвимость).
      */
     private const ALLOWED_TRANSITIONS = [
-        Application::STATUS_NEW        => [Application::STATUS_PENDING],
-        Application::STATUS_PENDING    => [Application::STATUS_PROCESSING, Application::STATUS_REJECTED],
-        Application::STATUS_PROCESSING => [Application::STATUS_APPROVED, Application::STATUS_REJECTED],
-        Application::STATUS_APPROVED   => [], // конечный статус — переходов нет
-        Application::STATUS_REJECTED   => [], // конечный статус — переходов нет
+        ApplicationStatus::New->value => [ApplicationStatus::Pending->value],
+        ApplicationStatus::Pending->value => [ApplicationStatus::Processing->value, ApplicationStatus::Rejected->value],
+        ApplicationStatus::Processing->value => [ApplicationStatus::Approved->value, ApplicationStatus::Rejected->value],
+        ApplicationStatus::Approved->value => [],
+        ApplicationStatus::Rejected->value => [],
     ];
 
     /**
@@ -58,7 +60,7 @@ class ApplicationService
         }
 
         DB::transaction(function () use ($application, $data, $newStatus, $currentStatus) {
-            if ($newStatus === Application::STATUS_APPROVED && $application->client) {
+            if ($newStatus === ApplicationStatus::Approved->value && $application->client) {
                 // Дополнительная защита: если объект уже активен — запрещаем
                 // менять его лицевой счёт повторным approved (даже если переход
                 // формально допустим по state machine).
@@ -66,7 +68,7 @@ class ApplicationService
                     ? Property::find($application->property_id)
                     : $application->client->properties()->latest()->first();
 
-                if ($property && $property->status === 'active' && $property->account_number) {
+                if ($property && $property->status === PropertyStatus::Active->value && $property->account_number) {
                     throw ValidationException::withMessages([
                         'account_number' => 'Объект уже активен с лицевым счётом '
                             . $property->account_number
@@ -78,9 +80,9 @@ class ApplicationService
 
                 if ($property) {
                     $property->update([
-                        'status'         => 'active',
+                        'status' => PropertyStatus::Active->value,
                         'account_number' => $data['account_number'],
-                        'tariff_id'      => $tariff?->id,
+                        'tariff_id' => $tariff?->id,
                     ]);
                 }
 
@@ -90,11 +92,11 @@ class ApplicationService
             }
 
             $application->update([
-                'status'        => $newStatus,
-                'tariff_id'     => $data['tariff_id']     ?? $application->tariff_id,
+                'status' => $newStatus,
+                'tariff_id' => $data['tariff_id']     ?? $application->tariff_id,
                 'admin_comment' => $data['admin_comment'] ?? null,
-                'processed_at'  => $currentStatus !== $newStatus ? now() : $application->processed_at,
-                'processed_by'  => auth()->id(),
+                'processed_at' => $currentStatus !== $newStatus ? now() : $application->processed_at,
+                'processed_by' => auth()->id(),
             ]);
         });
     }

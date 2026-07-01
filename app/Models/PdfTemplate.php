@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ClientType;
+use App\Enums\PdfDocumentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Twig\Environment;
@@ -26,33 +28,14 @@ class PdfTemplate extends Model
         'is_active' => 'boolean',
     ];
 
-    // ==================== CONSTANTS ====================
-
-    const TYPE_INDIVIDUAL = 'individual';
-
-    const TYPE_LEGAL = 'legal';
-
-    const DOC_APPLICATION = 'application';
-
-    const DOC_CONTRACT = 'contract';
-
-    const DOC_OTHER = 'other';
-
     public static function getClientTypes(): array
     {
-        return [
-            self::TYPE_INDIVIDUAL => 'Физическое лицо',
-            self::TYPE_LEGAL => 'Юридическое лицо',
-        ];
+        return ClientType::labels();
     }
 
     public static function getDocumentTypes(): array
     {
-        return [
-            self::DOC_APPLICATION => 'Заявка',
-            self::DOC_CONTRACT => 'Договор',
-            self::DOC_OTHER => 'Другое',
-        ];
+        return PdfDocumentType::labels();
     }
 
     // ==================== RELATIONSHIPS ====================
@@ -74,22 +57,22 @@ class PdfTemplate extends Model
 
     public function scopeForIndividuals($query)
     {
-        return $query->where('client_type', self::TYPE_INDIVIDUAL);
+        return $query->where('client_type', ClientType::Individual->value);
     }
 
     public function scopeForLegal($query)
     {
-        return $query->where('client_type', self::TYPE_LEGAL);
+        return $query->where('client_type', ClientType::Legal->value);
     }
 
     public function scopeApplications($query)
     {
-        return $query->where('document_type', self::DOC_APPLICATION);
+        return $query->where('document_type', PdfDocumentType::Application->value);
     }
 
     public function scopeContracts($query)
     {
-        return $query->where('document_type', self::DOC_CONTRACT);
+        return $query->where('document_type', PdfDocumentType::Contract->value);
     }
 
     // ==================== METHODS ====================
@@ -237,7 +220,7 @@ class PdfTemplate extends Model
      */
     public static function getDefaultTemplate(string $clientType): ?string
     {
-        $viewName = $clientType === 'legal' ? 'pdf.application_legal' : 'pdf.application_individual';
+        $viewName = $clientType === ClientType::Legal->value ? 'pdf.application_legal' : 'pdf.application_individual';
 
         try {
             return view($viewName, ['data' => []])->render();

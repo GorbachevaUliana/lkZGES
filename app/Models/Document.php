@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PdfDocumentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -34,15 +35,6 @@ class Document extends Model
         'type_name',
         'display_name',
     ];
-
-
-    // ==================== CONSTANTS ====================
-
-    const TYPE_APPLICATION = 'application';
-
-    const TYPE_CONTRACT = 'contract';
-
-    const TYPE_OTHER = 'other';
 
     // ==================== RELATIONSHIPS ====================
 
@@ -102,11 +94,7 @@ class Document extends Model
      */
     public static function getTypeOptions(): array
     {
-        return [
-            self::TYPE_APPLICATION => 'Заявка',
-            self::TYPE_CONTRACT => 'Договор',
-            self::TYPE_OTHER => 'Другое',
-        ];
+        return PdfDocumentType::labels();
     }
 
     /**
@@ -124,7 +112,7 @@ class Document extends Model
      */
     public function scopeApplications($query)
     {
-        return $query->where('type', self::TYPE_APPLICATION);
+        return $query->where('type', PdfDocumentType::Application->value);
     }
 
     /**
@@ -132,7 +120,7 @@ class Document extends Model
      */
     public function scopeContracts($query)
     {
-        return $query->where('type', self::TYPE_CONTRACT);
+        return $query->where('type', PdfDocumentType::Contract->value);
     }
 
     /**
@@ -140,7 +128,7 @@ class Document extends Model
      */
     public function scopeOther($query)
     {
-        return $query->where('type', self::TYPE_OTHER);
+        return $query->where('type', PdfDocumentType::Other->value);
     }
 
     // ==================== METHODS ====================
@@ -150,7 +138,7 @@ class Document extends Model
      */
     public function isApplication(): bool
     {
-        return $this->type === self::TYPE_APPLICATION;
+        return $this->type === PdfDocumentType::Application->value;
     }
 
     /**
@@ -158,7 +146,7 @@ class Document extends Model
      */
     public function isContract(): bool
     {
-        return $this->type === self::TYPE_CONTRACT;
+        return $this->type === PdfDocumentType::Contract->value;
     }
 
     /**
@@ -166,6 +154,6 @@ class Document extends Model
      */
     public function isOther(): bool
     {
-        return $this->type === self::TYPE_OTHER;
+        return $this->type === PdfDocumentType::Other->value;
     }
 }

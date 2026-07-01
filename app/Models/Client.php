@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PropertyStatus;
+use App\Enums\ClientType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,18 +39,6 @@ class Client extends Model
         'status_name',
     ];
 
-    // ==================== CONSTANTS ====================
-
-    const TYPE_INDIVIDUAL = 'individual';
-
-    const TYPE_LEGAL = 'legal';
-
-    const STATUS_ACTIVE = 'active';
-
-    const STATUS_INACTIVE = 'inactive';
-
-    const STATUS_PENDING = 'pending';
-
     // ==================== STATIC METHODS ====================
 
     /**
@@ -56,10 +46,7 @@ class Client extends Model
      */
     public static function getClientTypes(): array
     {
-        return [
-            self::TYPE_INDIVIDUAL => 'Физическое лицо',
-            self::TYPE_LEGAL => 'Юридическое лицо',
-        ];
+        return ClientType::labels();
     }
 
     /**
@@ -67,11 +54,7 @@ class Client extends Model
      */
     public static function getStatuses(): array
     {
-        return [
-            self::STATUS_ACTIVE => 'Активен',
-            self::STATUS_INACTIVE => 'Неактивен',
-            self::STATUS_PENDING => 'Ожидает активации',
-        ];
+        return PropertyStatus::labels();
     }
 
     // ==================== RELATIONSHIPS ====================
@@ -123,7 +106,7 @@ class Client extends Model
      */
     public function getDisplayNameAttribute(): string
     {
-        if ($this->client_type === self::TYPE_LEGAL) {
+        if ($this->client_type === ClientType::Legal->value) {
             return !empty($this->company_name) ? $this->company_name : ($this->full_name ?: 'Название не указано');
         }
 
@@ -181,7 +164,7 @@ class Client extends Model
     public function scopeActive($query)
     {
         return $query->whereHas('properties', function ($q) {
-            $q->where('status', self::STATUS_ACTIVE)
+            $q->where('status', PropertyStatus::Active->value)
                 ->whereNotNull('account_number')
                 ->where('account_number', '!=', '');
         });
@@ -193,7 +176,7 @@ class Client extends Model
     public function scopeInactive($query)
     {
         return $query->whereDoesntHave('properties', function ($q) {
-            $q->where('status', self::STATUS_ACTIVE)
+            $q->where('status', PropertyStatus::Active->value)
                 ->whereNotNull('account_number')
                 ->where('account_number', '!=', '');
         });
@@ -205,7 +188,7 @@ class Client extends Model
     public function scopePending($query)
     {
         return $query->whereHas('properties', function ($q) {
-            $q->where('status', self::STATUS_PENDING);
+            $q->where('status', PropertyStatus::Pending->value);
         });
     }
 
@@ -217,7 +200,7 @@ class Client extends Model
     
     public function scopeIndividuals($query)
     {
-        return $query->where('client_type', self::TYPE_INDIVIDUAL);
+        return $query->where('client_type', ClientType::Individual->value);
     }
 
     /**
@@ -225,7 +208,7 @@ class Client extends Model
      */
     public function scopeLegal($query)
     {
-        return $query->where('client_type', self::TYPE_LEGAL);
+        return $query->where('client_type', ClientType::Legal->value);
     }
 
     // ==================== METHODS ====================
@@ -235,7 +218,7 @@ class Client extends Model
      */
     public function isIndividual(): bool
     {
-        return $this->client_type === self::TYPE_INDIVIDUAL;
+        return $this->client_type === ClientType::Individual->value;
     }
 
     /**
@@ -243,7 +226,7 @@ class Client extends Model
      */
     public function isLegal(): bool
     {
-        return $this->client_type === self::TYPE_LEGAL;
+        return $this->client_type === ClientType::Legal->value;
     }
 
     /**
@@ -252,7 +235,7 @@ class Client extends Model
     public function isActive(): bool
     {
         return $this->properties()
-            ->where('status', self::STATUS_ACTIVE)
+            ->where('status', PropertyStatus::Active->value)
             ->whereNotNull('account_number')
             ->where('account_number', '!=', '')
             ->exists();
@@ -270,7 +253,7 @@ class Client extends Model
 
         if ($property) {
             $property->update([
-                'status' => self::STATUS_ACTIVE,
+                'status' => PropertyStatus::Active->value,
                 'account_number' => $accountNumber
             ]);
         }
@@ -286,7 +269,7 @@ class Client extends Model
      */
     public function deactivate(): void
     {
-        $this->properties()->update(['status' => self::STATUS_INACTIVE]);
+        $this->properties()->update(['status' => PropertyStatus::Inactive->value]);
     }
 
     /**

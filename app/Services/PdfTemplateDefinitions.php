@@ -1,6 +1,8 @@
 <?php
  
 namespace App\Services;
+
+use App\Enums\ClientType;
  
 /**
  * Единый источник Twig-содержимого для PDF-шаблонов.
@@ -36,7 +38,7 @@ class PdfTemplateDefinitions
                 'actual_address' => 'Адрес фактического проживания (собран)',
                 'object_address_full' => 'Адрес объекта энергоснабжения (собран)',
             ],
-            'individual' => [
+            ClientType::Individual->value => [
                 'last_name' => 'Фамилия',
                 'first_name' => 'Имя',
                 'middle_name' => 'Отчество',
@@ -68,7 +70,7 @@ class PdfTemplateDefinitions
                 'region_object', 'district_object', 'locality_object', 'street_object',
                 'house_object', 'corpus_object', 'apartment_object',
             ],
-            'legal' => [
+            ClientType::Legal->value => [
                 'company_name' => 'Наименование организации',
                 'inn' => 'ИНН',
                 'kpp' => 'КПП',
