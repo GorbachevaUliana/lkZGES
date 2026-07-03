@@ -248,20 +248,15 @@ class Client extends Model
      */
     public function activate(string $accountNumber): void
     {
-        // Находим свойство, которое нужно активировать
         $property = $this->properties()->latest()->first();
 
         if ($property) {
             $property->update([
-                'status' => PropertyStatus::Active->value,
-                'account_number' => $accountNumber
+                'status'         => PropertyStatus::Active->value,
+                'account_number' => $accountNumber,
             ]);
         }
-
-        // Обновляем ROLE пользователя (не status!)
-        if ($this->user) {
-            $this->user->update(['role' => 'client']);
-        }
+        // Роль пользователя НЕ меняем здесь — это ответственность ApplicationService
     }
 
     /**
