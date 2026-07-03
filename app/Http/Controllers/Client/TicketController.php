@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\DTO\Ticket\StoreTicketDTO;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
@@ -13,24 +14,25 @@ class TicketController extends Controller
 {
     public function storeTicket(StoreTicketRequest $request)
     {
-        $ticket = Ticket::create([
-            'user_id' => auth()->id(),
-            'subject' => $request->subject,
-            'message' => $request->message,
+        $dto    = StoreTicketDTO::fromRequest($request);
+        $user   = auth()->user();
+
+        $ticket = $user->tickets()->create([
+            'subject' => $dto->subject,
+            'message' => $dto->message,
+            'status'  => 'new',
         ]);
 
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $path = $file->store('tickets_attachments', 'local');
-                TicketAttachment::create([
-                    'ticket_id' => $ticket->id,
-                    'file_path' => $path,
-                    'file_name' => $file->getClientOriginalName(),
-                ]);
-            }
+        foreach ($dto->files as $file) {
+            $path = $file->store('tickets', 'local');
+            $ticket->attachments()->create([
+                'file_path' => $path,
+                'file_name' => $file->getClientOriginalName(),
+                'is_admin'  => false,
+            ]);
         }
 
-        return back();
+        return back()->with('success', 'Обращение отправлено');
     }
 
     public function ticketsIndex()

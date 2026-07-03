@@ -2,13 +2,13 @@
 
 namespace App\Http\Requests\Client;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 
-class StoreTicketRequest extends FormRequest
+class StoreTicketRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
-        return auth()->user()?->canCreateTickets() ?? false;
+        return $this->currentUser()?->canCreateTickets() ?? false;
     }
 
     public function rules(): array

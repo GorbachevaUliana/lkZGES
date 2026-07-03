@@ -1,9 +1,9 @@
 <?php
- 
+
 namespace App\Services;
 
 use App\Enums\ClientType;
- 
+
 /**
  * Единый источник Twig-содержимого для PDF-шаблонов.
  *
@@ -39,49 +39,65 @@ class PdfTemplateDefinitions
                 'object_address_full' => 'Адрес объекта энергоснабжения (собран)',
             ],
             ClientType::Individual->value => [
-                'last_name' => 'Фамилия',
-                'first_name' => 'Имя',
-                'middle_name' => 'Отчество',
-                'passport' => 'Серия и номер паспорта',
-                'passport_issue' => 'Кем выдан паспорт',
-                'passport_issue_date' => 'Дата выдачи паспорта',
-                'phone' => 'Телефон',
-                'email' => 'Email',
-                'power_object' => 'Тип энергопринимающих устройств',
-                'note' => 'Примечание',
-                'area' => 'Площадь помещения',
-                'residents_count' => 'Кол-во проживающих',
-                'max_power' => 'Максимальная мощность (кВт)',
-                'act_reference' => 'Реквизиты акта границы раздела',
-                'appeal_reason' => 'Причина обращения',
-                'supply_period' => 'Срок электроснабжения',
-                'voltage_level' => 'Уровень напряжения (220В/380В)',
-                'consumption_purpose' => 'Направления потребления',
-                'has_meter' => 'Приборы учета (Да/Нет)',
-                'tariff_choice' => 'Выбранный тариф',
-                'payment_delivery' => 'Способ доставки платежек',
+                'last_name'             => 'Фамилия',
+                'first_name'            => 'Имя',
+                'middle_name'           => 'Отчество',
+                'passport'              => 'Серия и номер паспорта',
+                'passport_issue'        => 'Кем выдан паспорт',
+                'passport_issue_date'   => 'Дата выдачи паспорта',
+                'phone'                 => 'Телефон',
+                'email'                 => 'Email',
+                'power_object'          => 'Тип энергопринимающих устройств',
+                'note'                  => 'Примечание',
+                'area'                  => 'Площадь помещения',
+                'residents_count'       => 'Кол-во проживающих',
+                'max_power'             => 'Максимальная мощность (кВт)',
+                'act_reference'         => 'Реквизиты акта границы раздела',
+                'appeal_reason'         => 'Причина обращения',
+                'supply_period'         => 'Срок электроснабжения',
+                'voltage_level'         => 'Уровень напряжения (220В/380В)',
+                'consumption_purpose'   => 'Направления потребления',
+                'has_meter'             => 'Приборы учета (Да/Нет)',
+                'tariff_choice'         => 'Выбранный тариф',
+                'payment_delivery'      => 'Способ доставки платежек',
                 'notification_delivery' => 'Способ доставки уведомлений',
-                'consent' => 'Согласие на обработку ПДн (Да/Нет)',
+                'consent'               => 'Согласие на обработку ПДн (Да/Нет)',
             ],
             'address_parts' => [
-                'region', 'district', 'locality', 'street', 'house', 'corpus', 'apartment',
-                'actual_region', 'actual_district', 'actual_locality', 'actual_street',
-                'actual_house', 'actual_corpus', 'actual_apartment',
-                'region_object', 'district_object', 'locality_object', 'street_object',
-                'house_object', 'corpus_object', 'apartment_object',
+                'region',
+                'district',
+                'locality',
+                'street',
+                'house',
+                'corpus',
+                'apartment',
+                'actual_region',
+                'actual_district',
+                'actual_locality',
+                'actual_street',
+                'actual_house',
+                'actual_corpus',
+                'actual_apartment',
+                'region_object',
+                'district_object',
+                'locality_object',
+                'street_object',
+                'house_object',
+                'corpus_object',
+                'apartment_object',
             ],
             ClientType::Legal->value => [
-                'company_name' => 'Наименование организации',
-                'inn' => 'ИНН',
-                'kpp' => 'КПП',
-                'ogrn' => 'ОГРН',
-                'legal_address' => 'Юридический адрес',
+                'company_name'   => 'Наименование организации',
+                'inn'            => 'ИНН',
+                'kpp'            => 'КПП',
+                'ogrn'           => 'ОГРН',
+                'legal_address'  => 'Юридический адрес',
                 'actual_address' => 'Фактический адрес',
                 'contact_person' => 'Контактное лицо',
             ],
         ];
     }
- 
+
     /**
      * Twig-содержимое шаблона для физических лиц.
      */
@@ -281,7 +297,7 @@ class PdfTemplateDefinitions
 </html>
 TWIG;
     }
- 
+
     /**
      * Twig-содержимое шаблона для юридических лиц.
      */

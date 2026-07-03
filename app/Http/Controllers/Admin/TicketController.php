@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DTO\Ticket\UpdateTicketDTO;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
@@ -50,24 +51,23 @@ class TicketController extends Controller
     public function update(UpdateTicketRequest $request, $id)
     {
         $ticket = Ticket::findOrFail($id);
+        $dto    = UpdateTicketDTO::fromRequest($request);
 
         $ticket->update([
-            'status'      => $request->status,
-            'staff_id'    => $request->staff_id,
-            'admin_reply' => $request->admin_reply,
-            'replied_at'  => $request->admin_reply ? now() : $ticket->replied_at,
-            'replied_by'  => $request->admin_reply ? auth()->id() : $ticket->replied_by,
+            'status'      => $dto->status,
+            'staff_id'    => $dto->staffId,
+            'admin_reply' => $dto->adminReply,
+            'replied_at'  => $dto->adminReply ? now() : $ticket->replied_at,
+            'replied_by'  => $dto->adminReply ? auth()->id() : $ticket->replied_by,
         ]);
 
-        if ($request->hasFile('admin_files')) {
-            foreach ($request->file('admin_files') as $file) {
-                $path = $file->store('tickets/replies', 'local');
-                $ticket->attachments()->create([
-                    'file_path' => $path,
-                    'file_name' => $file->getClientOriginalName(),
-                    'is_admin'  => true,
-                ]);
-            }
+        foreach ($dto->adminFiles as $file) {
+            $path = $file->store('tickets/replies', 'local');
+            $ticket->attachments()->create([
+                'file_path' => $path,
+                'file_name' => $file->getClientOriginalName(),
+                'is_admin'  => true,
+            ]);
         }
 
         return back();

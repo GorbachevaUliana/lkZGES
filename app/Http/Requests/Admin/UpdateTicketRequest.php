@@ -5,9 +5,9 @@ namespace App\Http\Requests\Admin;
 Use App\Enums\UserRole;
 use App\Models\Ticket;
 use App\Models\User;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 
-class UpdateTicketRequest extends FormRequest
+class UpdateTicketRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
@@ -15,7 +15,7 @@ class UpdateTicketRequest extends FormRequest
             ? $this->route('ticket')
             : Ticket::findOrFail($this->route('ticket') ?? $this->route('id'));
 
-        $user = auth()->user();
+        $user = $this->currentUser();
 
         // Сотрудник может изменять только назначенные ему тикеты.
         if ($user->role !== UserRole::Admin && $ticket->staff_id !== $user->id) {

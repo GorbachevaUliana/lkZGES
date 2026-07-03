@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DTO\Staff\CreateStaffDTO;
+use App\DTO\Staff\UpdateStaffDTO;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -25,32 +27,31 @@ class StaffController extends Controller
     // public function store(Request $request)
     public function store(StoreStaffRequest $request)
     {
-        // Создаём через forceFill, который намеренно обходит $fillable —
-        // здесь это безопасно, потому что данные уже прошли валидацию.
-        $user = new User();
-        $user->forceFill([
-            'name'        => $request->name,
-            'email'       => $request->email,
-            'password'    => Hash::make($request->password),
-            'role'        => $request->role,
-            'status'      => 'active',
-            'permissions' => $request->permissions ?? [],
-        ])->save();
+        $dto = CreateStaffDTO::fromRequest($request);
 
-        return back();
+        User::create([
+            'name'     => $dto->name,
+            'email'    => $dto->email,
+            'password' => Hash::make($dto->password),
+            'role'     => $dto->role->value,
+        ]);
+
+        return back()->with('success', 'Сотрудник создан');
     }
 
     public function update(UpdateStaffRequest $request, User $staff)
     {
+        $dto = UpdateStaffDTO::fromRequest($request);
+
         $updateData = [
-            'name' => $request->validated()['name'],
-            'email' => $request->validated()['email'],
-            'role' => $request->validated()['role'],
-            'permissions' => $request->validated()['permissions'] ?? [],
+            'name'        => $dto->name,
+            'email'       => $dto->email,
+            'role'        => $dto->role->value,
+            'permissions' => $dto->permissions,
         ];
 
-        if ($request->filled('password')) {
-            $updateData['password'] = Hash::make($request->validated()['password']);
+        if ($dto->password) {
+            $updateData['password'] = Hash::make($dto->password);
         }
 
         $staff->forceFill($updateData)->save();

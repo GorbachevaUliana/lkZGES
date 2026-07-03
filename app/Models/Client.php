@@ -197,7 +197,7 @@ class Client extends Model
      */
 
 
-    
+
     public function scopeIndividuals($query)
     {
         return $query->where('client_type', ClientType::Individual->value);

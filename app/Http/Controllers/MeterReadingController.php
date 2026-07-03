@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\MeterReading\StoreMeterReadingDTO;
 use App\Enums\UserRole;
 use App\Models\MeterReading;
 use App\Models\Property;
@@ -99,27 +100,28 @@ class MeterReadingController extends Controller
             return back()->withErrors(['error' => 'Профиль клиента не связан с вашим аккаунтом.']);
         }
 
-        $validated = $request->validated();
+        $dto = StoreMeterReadingDTO::fromRequest($request);
 
-        $property = Property::where('id', $validated['property_id'])
+        $property = Property::where('id', $dto->propertyId)
             ->where('client_id', $client->id)
             ->first();
 
-        if (!$property) {
+        if (! $property) {
             return back()->withErrors(['property_id' => 'Объект не найден или не принадлежит вам.']);
         }
 
-        $previousValue = MeterReading::getLastValue($validated['property_id']);
-        if ($validated['current_value'] < $previousValue) {
-            return back()->withErrors(['current_value' => "Показания не могут быть меньше предыдущих ($previousValue)"]);
+        $previousValue = MeterReading::getLastValue($dto->propertyId);
+        if ($dto->currentValue < $previousValue) {
+            return back()->withErrors([
+                'current_value' => "Показания не могут быть меньше предыдущих ({$previousValue})"
+            ]);
         }
 
-        // Создаём показания с привязкой к объекту и его тарифу
         $property->readings()->create([
-            'current_value' => $validated['current_value'],
-            'reading_date' => $validated['reading_date'],
-            'tariff_id' => $property->tariff_id, // Тариф из объекта
-            'created_by' => auth()->id(),
+            'current_value' => $dto->currentValue,
+            'reading_date'  => $dto->readingDate,
+            'tariff_id'     => $property->tariff_id,
+            'created_by'    => auth()->id(),
         ]);
 
         return back()->with('success', 'Показания приняты');
@@ -157,7 +159,7 @@ class MeterReadingController extends Controller
             abort(403, 'Нет доступа к этому лицевому счёту.');
         }
 
-        // Идём на сервер коллеги (только с бэка, не из браузера)
+        // Идём на сервер (только с бэка, не из браузера)
         $invoiceApiUrl = config('services.invoice_api.url');
         $url = "{$invoiceApiUrl}/api/reports/invoiceone/month/{$month}/dgvnumber/{$account}";
 

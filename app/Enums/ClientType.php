@@ -5,13 +5,13 @@ namespace App\Enums;
 enum ClientType: string
 {
     case Individual = 'individual';
-    case Legal = 'legal';
+    case Legal      = 'legal';
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::Individual => 'Физическое лицо',
-            self::Legal => 'Юридическое лицо',
+            self::Legal      => 'Юридическое лицо',
         };
     }
 
@@ -24,4 +24,3 @@ enum ClientType: string
         );
     }
 }
-?>

@@ -66,8 +66,6 @@ class MeterReading extends Model
                 $consumed = $reading->current_value - $reading->previous_value;
                 $reading->total_sum = $tariff->calculateCost($consumed);
             } else {
-                // У объекта нет назначенного тарифа — явно фиксируем как "не посчитано",
-                // а не молча списываем 0 руб. См. отдельный пункт про эту проблему ниже.
                 $reading->total_sum = 0;
             }
         });

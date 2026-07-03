@@ -3,13 +3,13 @@
 namespace App\Http\Requests\Admin;
 
 use App\Enums\UserRole;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 
-class UpdateClientRequest extends FormRequest
+class UpdateClientRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
-        return in_array(auth()->user()->role, [ UserRole::Admin, UserRole::Staff]);
+        return in_array($this->currentUser()->role, [ UserRole::Admin, UserRole::Staff]);
     }
 
     public function rules(): array

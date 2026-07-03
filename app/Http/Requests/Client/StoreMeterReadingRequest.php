@@ -3,13 +3,13 @@
 namespace App\Http\Requests\Client;
 
 use App\Enums\UserRole;
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 
-class StoreMeterReadingRequest extends FormRequest
+class StoreMeterReadingRequest extends BaseFormRequest
 {
     public function authorize(): bool
     {
-        return auth()->user()?->role === UserRole::Client;
+        return $this->currentUser()?->role === UserRole::Client;
     }
 
     public function rules(): array

@@ -4,16 +4,16 @@ namespace App\Enums;
 
 enum PropertyStatus: string
 {
-    case Active = 'active';
+    case Active   = 'active';
     case Inactive = 'inactive';
-    case Pending = 'pending';
+    case Pending  = 'pending';
 
     public function label(): string
     {
         return match($this) {
-            self::Active => 'Активен',
+            self::Active   => 'Активен',
             self::Inactive => 'Неактивен',
-            self::Pending => 'Ожидает активации',
+            self::Pending  => 'Ожидает активации',
         };
     }
 

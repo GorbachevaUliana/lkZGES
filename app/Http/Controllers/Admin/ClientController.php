@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DTO\Client\CreateClientDTO;
+use App\DTO\Client\UpdateClientDTO;
+use App\Enums\PropertyStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Property;
@@ -78,44 +81,38 @@ class ClientController extends Controller
 
     public function store(StoreClientRequest $request)
     {
-        $validated = $request->validated();
+        $dto = CreateClientDTO::fromRequest($request);
 
-        // Создаём клиента
         $client = Client::create([
-            'client_type' => $validated['client_type'],
-            'last_name' => $validated['last_name'] ?? null,
-            'first_name' => $validated['first_name'] ?? null,
-            'middle_name' => $validated['middle_name'] ?? null,
-            'company_name' => $validated['company_name'] ?? null,
-            'phone' => $validated['phone'] ?? null,
-            'email' => $validated['email'] ?? null,
+            'client_type'  => $dto->clientType->value,
+            'last_name'    => $dto->lastName,
+            'first_name'   => $dto->firstName,
+            'middle_name'  => $dto->middleName,
+            'company_name' => $dto->companyName,
+            'phone'        => $dto->phone,
+            'email'        => $dto->email,
+            'inn'          => $dto->inn,
+            'kpp'          => $dto->kpp,
+            'ogrn'         => $dto->ogrn,
         ]);
 
-        // Создаём объекты недвижимости
-        foreach ($validated['properties'] as $propData) {
-            // Сборка полного адреса
-            $addressParts = [];
-            $addressParts[] = $propData['region'] ?? 'Алтайский край';
-            if (!empty($propData['district'])) {
-                $addressParts[] = $propData['district'] . ' район';
-            }
-            $addressParts[] = $propData['locality'];
-            $addressParts[] = 'ул. ' . $propData['street'];
-            $addressParts[] = 'д. ' . $propData['house'];
-            if (!empty($propData['building'])) {
-                $addressParts[] = 'корп. ' . $propData['building'];
-            }
-            if (!empty($propData['apartment'])) {
-                $addressParts[] = 'кв. ' . $propData['apartment'];
-            }
-            $fullAddress = implode(', ', $addressParts);
+        foreach ($dto->properties as $propData) {
+            $addressParts = array_filter([
+                $propData['region'] ?? 'Алтайский край',
+                !empty($propData['district']) ? $propData['district'] . ' район' : null,
+                $propData['locality'],
+                'ул. ' . $propData['street'],
+                'д. ' . $propData['house'],
+                !empty($propData['building']) ? 'корп. ' . $propData['building'] : null,
+                !empty($propData['apartment']) ? 'кв. ' . $propData['apartment'] : null,
+            ]);
 
             Property::create([
                 'client_id' => $client->id,
                 'tariff_id' => $propData['tariff_id'],
                 'account_number' => $propData['account_number'],
-                'address' => $fullAddress,
-                'status' => 'active',
+                'address' => implode(', ', $addressParts),
+                'status' => PropertyStatus::Active->value,
             ]);
         }
 
@@ -125,9 +122,20 @@ class ClientController extends Controller
     public function update(UpdateClientRequest $request, $id)
     {
         $client = Client::findOrFail($id);
-        $validated = $request->validated();
+        $dto = UpdateClientDTO::fromRequest($request);
 
-        $client->update($validated);
+        $client->update([
+            'client_type'  => $dto->clientType->value,
+            'last_name'    => $dto->lastName,
+            'first_name'   => $dto->firstName,
+            'middle_name'  => $dto->middleName,
+            'company_name' => $dto->companyName,
+            'phone'        => $dto->phone,
+            'email'        => $dto->email,
+            'inn'          => $dto->inn,
+            'kpp'          => $dto->kpp,
+            'ogrn'         => $dto->ogrn,
+        ]);
 
         return back()->with('success', 'Данные обновлены');
     }
