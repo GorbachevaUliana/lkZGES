@@ -28,7 +28,7 @@ Route::redirect('/', '/login');
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function () {
-    Route::get('/secure/documents/{document}', [\App\Http\Controllers\DocumentController::class, 'serve'])
+    Route::get('/secure/documents/{document}', [DocumentController::class, 'serve'])
         ->name('documents.serve');
     Route::get('/secure/attachments/{attachment}', [\App\Http\Controllers\AttachmentController::class, 'serve'])
         ->name('attachments.serve');
