@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminMeterReadingController;
@@ -30,7 +31,7 @@ Route::redirect('/', '/login');
 Route::middleware(['auth'])->group(function () {
     Route::get('/secure/documents/{document}', [DocumentController::class, 'serve'])
         ->name('documents.serve');
-    Route::get('/secure/attachments/{attachment}', [\App\Http\Controllers\AttachmentController::class, 'serve'])
+    Route::get('/secure/attachments/{attachment}', [AttachmentController::class, 'serve'])
         ->name('attachments.serve');
 
     Route::get('/welcome-step', [AccountController::class, 'index'])->name('welcome.step');
