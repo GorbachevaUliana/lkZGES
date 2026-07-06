@@ -15,7 +15,7 @@ class Property extends Model
 
     protected $fillable = [
         'client_id',
-        'tariff_id',  // ДОБАВЛЕНО
+        'tariff_id',
         'account_number',
         'address',
         'property_type',

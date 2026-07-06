@@ -464,8 +464,6 @@ class ApplicationSubmitController extends Controller
             'inn' => $client->inn,
         ];
 
-        // $templateData = array_merge($data, $mainInfo);
-        // $templateData['data'] = $templateData;
         $templateData = app(PdfDataPreparator::class)->prepare($data, $mainInfo);
 
         if ($pdfTemplate) {
