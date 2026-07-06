@@ -98,15 +98,16 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                 );
             }
         },
-        { 
-            field: 'status', 
-            headerName: 'Статус', 
+        {
+            field: 'status',
+            headerName: 'Статус',
             width: 150,
             renderCell: (params) => {
-                const current = statusMap[params.value] || { label: params.value, color: 'default' };
+                const current = TICKET_STATUS_MAP[params.value] || { label: params.value, color: 'default' };
                 return <Chip label={current.label} color={current.color} size="small" variant="outlined" />;
             }
         },
+        
     ];
 
     const promptDeleteClient = (id) => {

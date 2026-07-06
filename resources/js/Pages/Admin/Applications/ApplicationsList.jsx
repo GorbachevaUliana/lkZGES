@@ -113,7 +113,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
             headerName: 'Статус',
             width: 140,
             renderCell: (params) => {
-                const colors = statusColors[params.row.status] || {bg: '#F5F5F5', color: '#666'};
+                const colors = APPLICATION_STATUS_COLORS[params.row.status] || {bg: '#F5F5F5', color: '#666'};
                 const statusLabels ={
                     pending: 'Ожидает',
                     processing: 'В работе',
