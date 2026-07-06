@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Enums\PropertyStatus;
 
 class Property extends Model
 {
@@ -27,13 +28,6 @@ class Property extends Model
         'area' => 'decimal:2',
         'status' => 'string',
     ];
-
-    /**
-     * Статусы объекта
-     */
-    const STATUS_PENDING = 'pending';
-    const STATUS_ACTIVE = 'active';
-    const STATUS_INACTIVE = 'inactive';
 
     /**
      * Связь с клиентом
@@ -88,7 +82,7 @@ class Property extends Model
      */
     public function isActive(): bool
     {
-        return $this->status === self::STATUS_ACTIVE && !empty($this->account_number);
+        return $this->status === PropertyStatus::Active->value && !empty($this->account_number);
     }
 
     /**
@@ -104,7 +98,7 @@ class Property extends Model
      */
     public function scopeActiveWithAccount($query)
     {
-        return $query->where('status', self::STATUS_ACTIVE)
+        return $query->where('status', PropertyStatus::Active->value)
             ->whereNotNull('account_number')
             ->where('account_number', '!=', '');
     }
