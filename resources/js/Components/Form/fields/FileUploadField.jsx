@@ -68,7 +68,7 @@ export default function FileUploadField({ block, fieldKey, value, onChange, erro
     const handleDrop   = (e) => { e.preventDefault(); setDragOver(false); addFiles(Array.from(e.dataTransfer.files)); };
 
     return (
-        <Grid item xs={12}>
+        <>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
                 {label}
                 {is_required && <span style={{ color: '#EF4444', marginLeft: '4px' }}>*</span>}
@@ -137,6 +137,6 @@ export default function FileUploadField({ block, fieldKey, value, onChange, erro
             )}
 
             {error && <Typography variant="caption" color="error">{error}</Typography>}
-        </Grid>
+        </>
     );
 }

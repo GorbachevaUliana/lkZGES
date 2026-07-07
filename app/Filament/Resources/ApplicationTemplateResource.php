@@ -62,9 +62,9 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
-                                                'all' => 'Всем',
+                                                'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
-                                                'legal' => 'Только юрлицам',
+                                                'legal'      => 'Только юрлицам',
                                             ])->default('all'),
                                     ])->columns(2),
 
@@ -86,9 +86,9 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
-                                                'all' => 'Всем',
+                                                'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
-                                                'legal' => 'Только юрлицам',
+                                                'legal'      => 'Только юрлицам',
                                             ])->default('all'),
                                     ])->columns(3),
 
@@ -121,10 +121,10 @@ class ApplicationTemplateResource extends Resource
                                                 Forms\Components\Select::make('input_type')
                                                     ->label('Тип доп.поля')
                                                     ->options([
-                                                        'none' => 'Без доп.поля',
+                                                        'none'  => 'Без доп.поля',
                                                         'email' => 'Электронная почта',
                                                         'phone' => 'Телефон',
-                                                        'text' => 'Текст',
+                                                        'text'  => 'Текст',
                                                     ])
                                                     ->default('none')
                                                     ->live()
@@ -140,9 +140,9 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
-                                                'all' => 'Всем',
+                                                'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
-                                                'legal' => 'Только юрлицам',
+                                                'legal'      => 'Только юрлицам',
                                             ])->default('all')
                                     ]),
 
@@ -169,21 +169,21 @@ class ApplicationTemplateResource extends Resource
                                                 Forms\Components\Select::make('type')
                                                     ->label('Тип данных')
                                                     ->options([
-                                                        'text' => 'Текст',
+                                                        'text'   => 'Текст',
                                                         'number' => 'Число',
-                                                        'date' => 'Дата',
-                                                        'email' => 'Email',
-                                                        'tel' => 'Телефон',
+                                                        'date'   => 'Дата',
+                                                        'email'  => 'Email',
+                                                        'tel'    => 'Телефон',
                                                     ])->default('text'),
                                                 Forms\Components\Select::make('special_format')
                                                     ->label('Формат')
                                                     ->options([
-                                                        'none' => 'Обычный',
-                                                        'passport' => 'Паспорт (0000 000000)',
-                                                        'phone' => 'Телефон (+7)',
-                                                        'snils' => 'СНИЛС',
+                                                        'none'          => 'Обычный',
+                                                        'passport'      => 'Паспорт (0000 000000)',
+                                                        'phone'         => 'Телефон (+7)',
+                                                        'snils'         => 'СНИЛС',
                                                         'range_numbers' => 'Диапазон чисел (0 - 0)',
-                                                        'range_date' => 'Диапазон дат (ДД.ММ.ГГГГ - ДД.ММ.ГГГГ)',
+                                                        'range_date'    => 'Диапазон дат (ДД.ММ.ГГГГ - ДД.ММ.ГГГГ)',
                                                     ])->default('none'),
                                                 Forms\Components\Toggle::make('is_required')
                                                     ->label('Обязательное')
@@ -202,9 +202,9 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
-                                                'all' => 'Всем',
+                                                'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
-                                                'legal' => 'Только юрлицам',
+                                                'legal'      => 'Только юрлицам',
                                             ])->default('all'),
                                     ]),
 
@@ -240,9 +240,9 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
-                                                'all' => 'Всем',
+                                                'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
-                                                'legal' => 'Только юрлицам',
+                                                'legal'      => 'Только юрлицам',
                                             ])->default('all'),
                                     ]),
 
@@ -277,9 +277,9 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
-                                                'all' => 'Всем',
+                                                'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
-                                                'legal' => 'Только юрлицам',
+                                                'legal'      => 'Только юрлицам',
                                             ])->default('all'),
                                     ]),
 
@@ -315,10 +315,10 @@ class ApplicationTemplateResource extends Resource
                                             ->keyLabel('Тип')
                                             ->valueLabel('Описание')
                                             ->default([
-                                                'pdf' => 'PDF документы',
-                                                'jpg' => 'Изображения JPG',
-                                                'png' => 'Изображения PNG',
-                                                'doc' => 'Word документы',
+                                                'pdf'  => 'PDF документы',
+                                                'jpg'  => 'Изображения JPG',
+                                                'png'  => 'Изображения PNG',
+                                                'doc'  => 'Word документы',
                                                 'docx' => 'Word документы',
                                             ])
                                             ->helperText('Оставьте пустым для разрешения всех типов')
@@ -344,9 +344,9 @@ class ApplicationTemplateResource extends Resource
                                         Forms\Components\Select::make('visibility')
                                             ->label('Показывать')
                                             ->options([
-                                                'all' => 'Всем',
+                                                'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
-                                                'legal' => 'Только юрлицам',
+                                                'legal'      => 'Только юрлицам',
                                             ])->default('all'),
                                     ]),
                             ])
@@ -453,9 +453,9 @@ class ApplicationTemplateResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListApplicationTemplates::route('/'),
+            'index'  => Pages\ListApplicationTemplates ::route('/'),
             'create' => Pages\CreateApplicationTemplate::route('/create'),
-            'edit' => Pages\EditApplicationTemplate::route('/{record}/edit'),
+            'edit'   => Pages\EditApplicationTemplate  ::route('/{record}/edit'),
         ];
     }
 }

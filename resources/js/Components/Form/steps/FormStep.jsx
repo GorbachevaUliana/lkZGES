@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Grid } from '@mui/material';
+import { Box, Typography, Stack } from '@mui/material';
 import FormField from '../FormField';
 
 export default function FormStep({ visibleFields, data, onChange, errors, clientTypeLabel, hasExistingClient }) {
@@ -13,18 +13,23 @@ export default function FormStep({ visibleFields, data, onChange, errors, client
                     </Typography>
                 )}
             </Typography>
-            <Grid container spacing={3}>
+
+            <Stack spacing={3}>
                 {visibleFields.map((block, index) => (
-                    <FormField
+                    <Box
                         key={index}
-                        block={block}
-                        index={index}
-                        data={data}
-                        onChange={onChange}
-                        errors={errors}
-                    />
+                        sx={{ mt: block.type === 'section_header' ? 2 : 0 }}
+                    >
+                        <FormField
+                            block={block}
+                            index={index}
+                            data={data}
+                            onChange={onChange}
+                            errors={errors}
+                        />
+                    </Box>
                 ))}
-            </Grid>
+            </Stack>
         </Box>
     );
-}
+} 

@@ -5,15 +5,15 @@ namespace App\Enums;
 enum PdfDocumentType: string
 {
     case Application = 'application';
-    case Contract = 'contract';
-    case Other = 'other';
+    case Contract    = 'contract';
+    case Other       = 'other';
 
     public function label(): string
     {
         return match($this) {
             self::Application => 'Заявка',
-            self::Contract => 'Договор',
-            self::Other => 'Другое',
+            self::Contract    => 'Договор',
+            self::Other       => 'Другое',
         };
     }
 

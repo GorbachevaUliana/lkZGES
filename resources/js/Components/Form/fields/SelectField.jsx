@@ -1,20 +1,15 @@
 import React from 'react';
-import { Grid, TextField } from '@mui/material';
+import { TextField } from '@mui/material';
 
 export default function SelectField({ block, fieldKey, value, onChange }) {
     const { label, is_required, options, allow_custom } = block.data;
 
     return (
-        <Grid item xs={12}>
+        <>
             <TextField
                 select
                 fullWidth
-                label={
-                    <>
-                        {label}
-                        {is_required && <span style={{ color: '#EF4444' }}> *</span>}
-                    </>
-                }
+                label={<>{label}{is_required && <span style={{ color: '#EF4444' }}> *</span>}</>}
                 value={value?.value || ''}
                 onChange={e => onChange(fieldKey, { ...value, value: e.target.value })}
                 SelectProps={{ native: true }}
@@ -25,7 +20,6 @@ export default function SelectField({ block, fieldKey, value, onChange }) {
                 ))}
                 {allow_custom && <option value="other">Другое (ввести свой вариант)</option>}
             </TextField>
-
             {allow_custom && value?.value === 'other' && (
                 <TextField
                     fullWidth
@@ -35,6 +29,6 @@ export default function SelectField({ block, fieldKey, value, onChange }) {
                     onChange={e => onChange(fieldKey, { ...value, customValue: e.target.value })}
                 />
             )}
-        </Grid>
+        </>
     );
 }

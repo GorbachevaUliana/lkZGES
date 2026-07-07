@@ -30,10 +30,10 @@ class ApplicationResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->options([
-                                'new' => 'Новая',
+                                'new'        => 'Новая',
                                 'processing' => 'В работе',
-                                'approved' => 'Одобрена',
-                                'rejected' => 'Отклонена',
+                                'approved'   => 'Одобрена',
+                                'rejected'   => 'Отклонена',
                             ])->required(),
                         Forms\Components\Textarea::make('admin_comment')
                             ->label('Комментарий для потребителя'),
@@ -42,10 +42,10 @@ class ApplicationResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('status')
                             ->options([
-                                'new' => 'Новая',
+                                'new'        => 'Новая',
                                 'processing' => 'В работе',
-                                'approved' => 'Одобрена',
-                                'rejected' => 'Отклонена',
+                                'approved'   => 'Одобрена',
+                                'rejected'   => 'Отклонена',
                             ])->required(),
 
                         // Выбор тарифа
@@ -70,10 +70,10 @@ class ApplicationResource extends Resource
                 Tables\Columns\SelectColumn::make('status')
                     ->label('Статус')
                     ->options([
-                        'new' => 'Новая',
+                        'new'        => 'Новая',
                         'processing' => 'В работе',
-                        'approved' => 'Одобрена',
-                        'rejected' => 'Отклонена',
+                        'approved'   => 'Одобрена',
+                        'rejected'   => 'Отклонена',
                     ]),
                 Tables\Columns\TextColumn::make('created_at')->label('Дата подачи заявления')->dateTime(),
             ])
@@ -98,9 +98,9 @@ class ApplicationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListApplications::route('/'),
+            'index'  => Pages\ListApplications ::route('/'),
             'create' => Pages\CreateApplication::route('/create'),
-            'edit' => Pages\EditApplication::route('/{record}/edit'),
+            'edit'   => Pages\EditApplication  ::route('/{record}/edit'),
         ];
     }
 }

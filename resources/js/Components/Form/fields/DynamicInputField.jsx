@@ -9,7 +9,7 @@ export default function DynamicInputField({ block, fieldKey, value, onChange }) 
     const showInput      = selectedOption?.input_type && selectedOption.input_type !== 'none';
 
     return (
-        <Grid item xs={12}>
+        <>
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
                 {label}
                 {is_required && <span style={{ color: '#EF4444', marginLeft: '4px' }}>*</span>}
@@ -40,6 +40,6 @@ export default function DynamicInputField({ block, fieldKey, value, onChange }) 
                     sx={{ mt: 1 }}
                 />
             )}
-        </Grid>
+        </>
     );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, TextField } from '@mui/material';
+import { TextField } from '@mui/material';
 import { getMaskComponent } from '../masks';
 
 export default function InputField({ block, fieldKey, value, onChange, error }) {
@@ -7,24 +7,17 @@ export default function InputField({ block, fieldKey, value, onChange, error }) 
     const maskComponent = getMaskComponent(special_format, type);
 
     return (
-        <Grid item xs={12}>
-            <TextField
-                fullWidth
-                label={
-                    <>
-                        {label}
-                        {is_required && <span style={{ color: '#EF4444' }}> *</span>}
-                    </>
-                }
-                value={value || ''}
-                onChange={e => onChange(fieldKey, e.target.value)}
-                type={type === 'number' ? 'number' : 'text'}
-                InputProps={maskComponent ? { inputComponent: maskComponent } : {}}
-                placeholder={type === 'date' ? 'дд.мм.гггг' : (placeholder || '')}
-                disabled={is_readonly}
-                helperText={helper_text}
-                error={!!error}
-            />
-        </Grid>
+        <TextField
+            fullWidth
+            label={<>{label}{is_required && <span style={{ color: '#EF4444' }}> *</span>}</>}
+            value={value || ''}
+            onChange={e => onChange(fieldKey, e.target.value)}
+            type={type === 'number' ? 'number' : 'text'}
+            InputProps={maskComponent ? { inputComponent: maskComponent } : {}}
+            placeholder={type === 'date' ? 'дд.мм.гггг' : (placeholder || '')}
+            disabled={is_readonly}
+            helperText={helper_text}
+            error={!!error}
+        />
     );
 }
