@@ -16,15 +16,26 @@ export default function Profile({ auth, client, application }) {
                     <Typography color="text.secondary" sx={{ mb: 3 }}>
                         Чтобы пользоваться всеми функциями ЛК, необходимо подать заявку на заключение договора.
                     </Typography>
-                    <Button 
-                        component={Link}
-                        href={route('application.show', { slug: 'konstruktor' })}
-                        variant="contained" 
-                        size="large" 
-                        sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
-                    >
-                        Заполнить заявку
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                        <Button 
+                            component={Link}
+                            href={route('application.show', { slug: 'application-individual' })}
+                            variant="contained" 
+                            size="large" 
+                            sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
+                        >
+                            Физическое лицо
+                        </Button>
+                        <Button 
+                            component={Link}
+                            href={route('application.show', { slug: 'application-legal' })}
+                            variant="outlined" 
+                            size="large" 
+                            sx={{ borderColor: '#4318FF', color: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
+                        >
+                            Юридическое лицо
+                        </Button>
+                    </Box>
                 </Paper>
             ) : (
                 <Grid container spacing={3}>

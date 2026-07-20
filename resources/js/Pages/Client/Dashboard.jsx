@@ -120,7 +120,9 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                 <Grid item xs={12} md={4}>
                     <Button
                         component={Link}
-                        href={route('application.show', { slug: 'konstruktor' })}
+                        href={route('application.show', {
+                            slug: client?.client_type === 'legal' ? 'application-legal' : 'application-individual'
+                        })}
                         variant="contained"
                         fullWidth
                         startIcon={<AddIcon />}

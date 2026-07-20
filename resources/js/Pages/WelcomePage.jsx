@@ -266,21 +266,36 @@ export default function WelcomePage({ step = 'link', maskedEmail }) {
                                         ))}
                                     </Box>
 
-                                    <Button
-                                        fullWidth variant="contained"
-                                        component={Link}
-                                        href={route('application.show', { slug: 'konstruktor' })}
-                                        sx={{
-                                            py: 1.5, borderRadius: '12px',
-                                            bgcolor: '#05CD99', textTransform: 'none',
-                                            fontSize: '1rem', fontWeight: 600,
-                                            boxShadow: '0px 10px 20px rgba(5,205,153,0.15)',
-                                            '&:hover': { bgcolor: '#04B386',
-                                                         boxShadow: '0px 14px 28px rgba(5,205,153,0.2)' },
-                                        }}
-                                    >
-                                        Заполнить заявку
-                                    </Button>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                        <Button
+                                            fullWidth variant="contained"
+                                            component={Link}
+                                            href={route('application.show', { slug: 'application-individual' })}
+                                            sx={{
+                                                py: 1.5, borderRadius: '12px',
+                                                bgcolor: '#05CD99', textTransform: 'none',
+                                                fontSize: '1rem', fontWeight: 600,
+                                                boxShadow: '0px 10px 20px rgba(5,205,153,0.15)',
+                                                '&:hover': { bgcolor: '#04B386',
+                                                            boxShadow: '0px 14px 28px rgba(5,205,153,0.2)' },
+                                            }}
+                                        >
+                                            Как физическое лицо
+                                        </Button>
+                                        <Button
+                                            fullWidth variant="outlined"
+                                            component={Link}
+                                            href={route('application.show', { slug: 'application-legal' })}
+                                            sx={{
+                                                py: 1.5, borderRadius: '12px',
+                                                borderColor: '#05CD99', color: '#04B386', textTransform: 'none',
+                                                fontSize: '1rem', fontWeight: 600,
+                                                '&:hover': { borderColor: '#04B386', bgcolor: 'rgba(5,205,153,0.05)' },
+                                            }}
+                                        >
+                                            Как юридическое лицо
+                                        </Button>
+                                    </Box>
                                 </Box>
                             </Paper>
                         </Grid>
