@@ -39,6 +39,15 @@ class ApplicationTemplateResource extends Resource
                             ->required()
                             ->helperText('Используется в ссылке: /new-application/{slug}'),
 
+                        Forms\Components\Select::make('client_type')
+                            ->label('Тип клиента')
+                            ->options([
+                                'individual' => 'Физическое лицо',
+                                'legal'      => 'Юридическое лицо',
+                            ])
+                            ->required()
+                            ->helperText('Определяет, к какому типу заявителей относится этот шаблон'),
+
                         Forms\Components\Toggle::make('is_active')
                             ->label('Активен')
                             ->default(true),
@@ -412,6 +421,12 @@ class ApplicationTemplateResource extends Resource
                     ->label('URL')
                     ->copyable()
                     ->copyMessage('Скопировано!'),
+                
+                Tables\Columns\TextColumn::make('client_type')
+                    ->label('Тип')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state === 'legal' ? 'Юрлицо' : 'Физлицо')
+                    ->color(fn ($state) => $state === 'legal' ? 'warning' : 'success'),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Активен')

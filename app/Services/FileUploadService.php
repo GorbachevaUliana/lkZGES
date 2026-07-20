@@ -89,8 +89,8 @@ class FileUploadService
         int $applicationId,
         ApplicationTemplate $template
     ): void {
-        $lastName  = $this->sanitizeFilename($client->last_name ?? 'Неизвестно');
-        $initials  = $this->getInitials($client);
+        $lastName     = $this->sanitizeFilename($client->last_name ?? 'Неизвестно');
+        $initials     = $this->getInitials($client);
         $fileCounters = [];
 
         foreach ($template->content ?? [] as $block) {

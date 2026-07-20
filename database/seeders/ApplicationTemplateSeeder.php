@@ -14,9 +14,10 @@ class ApplicationTemplateSeeder extends Seeder
     public function run(): void
     {
         ApplicationTemplate::updateOrCreate(
-            ['slug' => 'konstruktor'],
+            ['slug' => 'application-individual'],
             [
-                'title' => 'Заявление на заключение договора энергоснабжения (физлицо)',
+                'title' => 'Заявление на заключение договора энергоснабжения (физическое лицо)',
+                'client_type' => 'individual',
                 'is_active' => true,
                 'content' => [
                     [
@@ -826,6 +827,348 @@ class ApplicationTemplateSeeder extends Seeder
                             ],
                             'allow_multiple_custom' => false,
                             'visibility' => 'all',
+                            'is_required' => true
+                        ]
+                    ],
+                ],
+            ]
+        );
+
+        ApplicationTemplate::updateOrCreate(
+            ['slug' => 'application-legal'],
+            [
+                'title' => 'Заявление на заключение договора энергоснабжения (юридическое лицо)',
+                'client_type' => 'legal',
+                'is_active' => true,
+                'content' => [
+                    [
+                        'type' => 'text_block',
+                        'data' => [
+                            'body' => '<p>Заполните форму для создания заявления о заключении договора электроснабжения от имени организации</p>',
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '1. Данные организации', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'company_name',
+                            'label' => 'Полное наименование организации',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'director_position',
+                            'label' => 'Должность руководителя',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'director_name',
+                            'label' => 'Ф.И.О. руководителя',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '2. Срок действия договора', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'contract_period',
+                            'label' => 'Период времени, на который заключается договор',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '3. Адреса', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'legal_address',
+                            'label' => 'Место нахождения юридического лица (согласно учредительных документов)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_address',
+                            'label' => 'Фактический адрес для почтовых отправлений',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '4. Контактная информация', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'phone',
+                            'label' => 'Телефон (т/факс)',
+                            'type' => 'text',
+                            'special_format' => 'phone',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'email',
+                            'label' => 'Адрес электронной почты',
+                            'type' => 'email',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '5. Реквизиты организации', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'ogrn',
+                            'label' => 'ОГРН',
+                            'type' => 'text',
+                            'special_format' => 'ogrn',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'inn',
+                            'label' => 'ИНН',
+                            'type' => 'text',
+                            'special_format' => 'inn_legal',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'kpp',
+                            'label' => 'КПП',
+                            'type' => 'text',
+                            'special_format' => 'kpp',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'okved',
+                            'label' => 'ОКВЭД',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'bank_details',
+                            'label' => 'Банковские реквизиты (наименование банка, р/с, к/с, БИК)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '6. Электронный документооборот', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'edo_operator',
+                            'label' => 'Оператор ЭДО (если применяется усиленная квалифицированная подпись)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '7. Сведения об объекте энергоснабжения', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'object_category',
+                            'label' => 'Категория объекта (промышленное предприятие, учреждение, торговая палатка и т.п.)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'object_address',
+                            'label' => 'Адрес объекта (при нескольких объектах — через ";" с порядковым номером)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'object_schedule',
+                            'label' => 'График работы объекта',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '8. Для бюджетных организаций (заполняется при наличии)', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'budget_level',
+                            'label' => 'Уровень бюджетного финансирования',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'budget_authority',
+                            'label' => 'Министерство, комитет, область, район, муниципальное образование',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '9. Технические характеристики энергоснабжения', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'price_category',
+                            'label' => 'Избранный вариант ценовой категории (макс. мощность энергопринимающих устройств менее 670 кВт)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'planned_consumption',
+                            'label' => 'Плановое количество электроэнергии на год, кВт·ч',
+                            'type' => 'number',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'voltage_level_legal',
+                            'label' => 'Уровень напряжения',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'reliability_category',
+                            'label' => 'Категория надёжности снабжения электроэнергией',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'max_power',
+                            'label' => 'Максимальная мощность, кВт',
+                            'type' => 'number',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '10. Показания электросчётчика', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'meter_reading_at_signing',
+                            'label' => 'Показания электросчётчика на момент заключения договора',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'checkbox_group',
+                        'data' => [
+                            'key' => 'personal_info',
+                            'label' => 'В соответствии с ФЗ от 27.07.2006 №152-ФЗ "О персональных данных" даёте своё согласие на обработку персональных данных руководителя',
+                            'options' => [['value' => 'Да']],
+                            'allow_multiple_custom' => false,
                             'is_required' => true
                         ]
                     ],

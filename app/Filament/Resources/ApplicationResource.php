@@ -35,6 +35,7 @@ class ApplicationResource extends Resource
                                 'approved'   => 'Одобрена',
                                 'rejected'   => 'Отклонена',
                             ])->required(),
+                            
                         Forms\Components\Textarea::make('admin_comment')
                             ->label('Комментарий для потребителя'),
                     ]),

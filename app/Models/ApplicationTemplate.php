@@ -9,6 +9,7 @@ class ApplicationTemplate extends Model
     protected $fillable = [
         'title',
         'slug',
+        'client_type',
         'content',
         'is_active',
     ];

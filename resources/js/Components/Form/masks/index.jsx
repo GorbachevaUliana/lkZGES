@@ -24,6 +24,9 @@ export const SnilsMask       = createMask('000-000-000 00',       '___-___-___ _
 export const RangeNumberMask = createMask('0[00000000000] - 0[0000000000]', 'от - до');
 export const RangeDateMask   = createMask('00.00.0000 - 00.00.0000',        'дд.мм.гггг - дд.мм.гггг');
 export const DateMask        = createMask('00.00.0000',           'дд.мм.гггг');
+export const OgrnMask     = createMask('0000000000000', '_____________');
+export const InnLegalMask = createMask('0000000000',    '__________');
+export const KppMask      = createMask('000000000',     '_________');
 
 export const getMaskComponent = (specialFormat, fieldType) => {
     if (fieldType === 'date') return DateMask;
@@ -33,6 +36,9 @@ export const getMaskComponent = (specialFormat, fieldType) => {
         case 'snils':         return SnilsMask;
         case 'range_numbers': return RangeNumberMask;
         case 'range_date':    return RangeDateMask;
+        case 'ogrn':          return OgrnMask;
+        case 'inn_legal':     return InnLegalMask;
+        case 'kpp':           return KppMask;
         default:              return undefined;
     }
 };

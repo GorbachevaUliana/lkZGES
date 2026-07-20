@@ -1,37 +1,29 @@
 import React, { useState, useMemo } from 'react';
 import { Head, useForm } from '@inertiajs/react';
-import { Container, Typography, Paper, Box, Stepper, Step, StepLabel, Button, Alert } from '@mui/material';
-import { ArrowForward as ArrowIcon, ArrowBack as BackIcon, Send as SendIcon, Lock as LockIcon } from '@mui/icons-material';
+import { Container, Typography, Paper, Box, Stepper, Step, StepLabel, Button } from '@mui/material';
+import { ArrowForward as ArrowIcon, ArrowBack as BackIcon, Send as SendIcon } from '@mui/icons-material';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { ToastProvider } from '@/contexts/ToastContext';
-import ClientTypeStep from '@/Components/Form/steps/ClientTypeStep';
-import FormStep       from '@/Components/Form/steps/FormStep';
-import FormReview     from '@/Components/Form/steps/FormReview';
+import FormStep   from '@/Components/Form/steps/FormStep';
+import FormReview from '@/Components/Form/steps/FormReview';
 
-const ALL_STEPS = ['Тип клиента', 'Заполнение данных', 'Проверка'];
+const STEPS = ['Заполнение данных', 'Проверка'];
 
-export default function DynamicForm({ template, existingClientType, hasExistingClient }) {
+export default function DynamicForm({ template }) {
     return (
         <ToastProvider>
-            <DynamicFormContent
-                template={template}
-                existingClientType={existingClientType}
-                hasExistingClient={hasExistingClient}
-            />
+            <DynamicFormContent template={template} />
         </ToastProvider>
     );
 }
 
-function DynamicFormContent({ template, existingClientType, hasExistingClient }) {
-    const [clientType, setClientType] = useState(existingClientType || 'individual');
-    const [activeStep, setActiveStep] = useState(hasExistingClient ? 1 : 0);
-
+function DynamicFormContent({ template }) {
+    const [activeStep, setActiveStep] = useState(0);
+    const clientType      = template.client_type;
     const clientTypeLabel = clientType === 'individual' ? 'Физическое лицо' : 'Юридическое лицо';
-    const displaySteps    = hasExistingClient ? ALL_STEPS.slice(1) : ALL_STEPS;
-    const displayStep     = hasExistingClient ? activeStep - 1 : activeStep;
 
     const initialData = useMemo(() => {
-        const fields = { client_type: clientType };
+        const fields = {};
         template.content?.forEach(block => {
             const key = block.data.key || block.data.label;
             if      (block.type === 'checkbox_group') fields[key] = { preset: [], custom: [] };
@@ -41,46 +33,33 @@ function DynamicFormContent({ template, existingClientType, hasExistingClient })
             else if (block.type === 'input_field')    fields[key] = block.data.default_value || '';
         });
         return fields;
-    }, [template, clientType]);
+    }, [template]);
 
     const { data, setData, post, processing, errors } = useForm(initialData);
 
     const visibleFields = useMemo(() => {
         const allowed = ['input_field', 'select_field', 'checkbox_group', 'section_header', 'file_upload', 'dynamic_input', 'text_block'];
-        return template.content?.filter(block => {
-            if (!allowed.includes(block.type)) return false;
-            const vis = block.data.visibility || 'all';
-            return vis === 'all' || vis === clientType;
-        }) || [];
-    }, [template, clientType]);
-
-    const handleClientTypeChange = (type) => {
-        if (hasExistingClient) return;
-        setClientType(type);
-        setData('client_type', type);
-    };
+        return template.content?.filter(block => allowed.includes(block.type)) || [];
+    }, [template]);
 
     const handleFieldChange = (key, value) => setData(key, value);
 
     const isStepValid = (step) => {
-        if (step === 0) return hasExistingClient || !!clientType;
-        if (step === 1) {
-            return visibleFields.filter(f => f.data.is_required).every(f => {
-                const key = f.data.key || f.data.label;
-                if (f.type === 'input_field' && f.data.is_readonly && f.data.default_value) return true;
-                const val = data[key];
-                if (f.type === 'checkbox_group')  return val.preset.length > 0 || val.custom.some(c => c.value.trim());
-                if (f.type === 'file_upload')      return val && val.length > 0;
-                if (f.type === 'select_field')     return val.value === 'other' ? !!val.customValue : !!val.value;
-                if (f.type === 'dynamic_input') {
-                    if (!val.selected) return false;
-                    const opt = f.data.options?.find(o => o.value === val.selected);
-                    return opt?.input_type && opt.input_type !== 'none' ? !!val.inputValue.trim() : true;
-                }
-                return !!val;
-            });
-        }
-        return true;
+        if (step !== 0) return true;
+        return visibleFields.filter(f => f.data.is_required).every(f => {
+            const key = f.data.key || f.data.label;
+            if (f.type === 'input_field' && f.data.is_readonly && f.data.default_value) return true;
+            const val = data[key];
+            if (f.type === 'checkbox_group') return val.preset.length > 0 || val.custom.some(c => c.value.trim());
+            if (f.type === 'file_upload')     return val && val.length > 0;
+            if (f.type === 'select_field')    return val.value === 'other' ? !!val.customValue : !!val.value;
+            if (f.type === 'dynamic_input') {
+                if (!val.selected) return false;
+                const opt = f.data.options?.find(o => o.value === val.selected);
+                return opt?.input_type && opt.input_type !== 'none' ? !!val.inputValue.trim() : true;
+            }
+            return !!val;
+        });
     };
 
     return (
@@ -91,35 +70,26 @@ function DynamicFormContent({ template, existingClientType, hasExistingClient })
                     <Typography variant="h4" gutterBottom fontWeight="bold" color="#1B2559">
                         {template.title}
                     </Typography>
+                    <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+                        {clientTypeLabel}
+                    </Typography>
 
-                    {hasExistingClient && (
-                        <Alert severity="info" icon={<LockIcon />} sx={{ mb: 3, borderRadius: '12px' }}>
-                            Вы уже зарегистрированы как <strong>{clientTypeLabel}</strong>.
-                            Создание нового объекта возможно только с вашим текущим типом лица.
-                        </Alert>
-                    )}
-
-                    <Stepper activeStep={displayStep} sx={{ mb: 4 }}>
-                        {displaySteps.map(label => (
+                    <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+                        {STEPS.map(label => (
                             <Step key={label}><StepLabel>{label}</StepLabel></Step>
                         ))}
                     </Stepper>
 
                     <form onSubmit={e => { e.preventDefault(); post(route('application.store', template.slug)); }}>
-                        {activeStep === 0 && !hasExistingClient && (
-                            <ClientTypeStep clientType={clientType} onChange={handleClientTypeChange} />
-                        )}
-                        {activeStep === 1 && (
+                        {activeStep === 0 && (
                             <FormStep
                                 visibleFields={visibleFields}
                                 data={data}
                                 onChange={handleFieldChange}
                                 errors={errors}
-                                clientTypeLabel={clientTypeLabel}
-                                hasExistingClient={hasExistingClient}
                             />
                         )}
-                        {activeStep === 2 && (
+                        {activeStep === 1 && (
                             <FormReview
                                 visibleFields={visibleFields}
                                 data={data}
@@ -136,15 +106,15 @@ function DynamicFormContent({ template, existingClientType, hasExistingClient })
                             >
                                 Назад
                             </Button>
-                            {activeStep < 2 ? (
+                            {activeStep === 0 ? (
                                 <Button
                                     variant="contained"
-                                    onClick={() => setActiveStep(p => p + 1)}
-                                    disabled={!isStepValid(activeStep)}
+                                    onClick={() => setActiveStep(1)}
+                                    disabled={!isStepValid(0)}
                                     endIcon={<ArrowIcon />}
                                     sx={{ bgcolor: '#4318FF', '&:hover': { bgcolor: '#3614B8' }, borderRadius: '12px', px: 3 }}
                                 >
-                                    {activeStep === 0 ? 'Далее' : 'Проверить'}
+                                    Проверить
                                 </Button>
                             ) : (
                                 <Button
