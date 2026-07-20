@@ -339,84 +339,180 @@ class PdfTemplateSeeder extends Seeder
 HTML;
 
         // Шаблон для юридических лиц (оставляем без изменений)
+
         $legalContent = <<<'HTML'
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Заявка на заключение договора энергоснабжения (Юридическое лицо)</title>
+    <title>Заявление о заключении договора энергоснабжения</title>
     <style>
-        body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 12px; line-height: 1.6; margin: 0; padding: 40px; }
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-        .header h1 { font-size: 16px; text-transform: uppercase; margin: 0 0 10px 0; }
-        .header p { margin: 0; color: #666; }
-        .section { margin-bottom: 25px; }
-        .section-title { font-weight: bold; font-size: 13px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #ccc; }
-        .info-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .info-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
-        .info-table td:first-child { width: 40%; background-color: #f9f9f9; font-weight: 500; }
-        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ccc; }
-        .signature-block { display: flex; justify-content: space-between; margin-top: 40px; }
-        .signature-field { border-bottom: 1px solid #333; width: 200px; display: inline-block; }
-        .stamp-area { width: 150px; height: 150px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 10px; margin-top: 20px; }
+        body {
+            font-family: 'DejaVu Sans', 'Times New Roman', Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            margin: 0;
+            padding: 15mm 20mm 15mm 14mm;
+            color: #000;
+        }
+        .header-right {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .title h1 {
+            font-size: 14pt;
+            text-transform: uppercase;
+            margin: 0 0 5px 0;
+        }
+        .title p {
+            margin: 0;
+            font-size: 12pt;
+        }
+        .section {
+            margin-bottom: 15px;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 5px;
+            margin-top: 15px;
+        }
+        .info-row-value {
+            border-bottom: 1px solid #000;
+            display: inline-block;
+            min-width: 250px;
+            padding: 0 4px;
+        }
+        .info-row-value.wide {
+            min-width: 400px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 10pt;
+        }
+        .signature-line {
+            border-bottom: 1px solid #000;
+            width: 220px;
+            height: 25px;
+            display: inline-block;
+        }
+        .document-note {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Заявка № {{ $application_id ?? '___' }}</h1>
-        <p>на заключение договора энергоснабжения</p>
+    <!-- Шапка -->
+    <div class="header-right">
+        <p>Генеральному директору</p>
+        <p>ООО «Заринская горэлектросеть»</p>
+    </div>
+
+    <!-- Заголовок -->
+    <div class="title">
+        <h1>Заявление</h1>
+        <p>о заключении договора электроснабжения</p>
         <p><strong>Юридическое лицо</strong></p>
     </div>
 
-    <div class="content">
-        <div class="section">
-            <div class="section-title">1. Сведения об организации</div>
-            <table class="info-table">
-                <tr><td>Полное наименование</td><td><strong>{{ $company_name ?? $data['company_name'] ?? 'Не указано' }}</strong></td></tr>
-                <tr><td>ИНН</td><td>{{ $inn ?? $data['inn'] ?? 'Не указан' }}</td></tr>
-                @if(!empty($data['kpp']))<tr><td>КПП</td><td>{{ $data['kpp'] }}</td></tr>@endif
-                @if(!empty($data['ogrn']))<tr><td>ОГРН</td><td>{{ $data['ogrn'] }}</td></tr>@endif
-            </table>
-        </div>
-
-        <div class="section">
-            <div class="section-title">2. Контактная информация</div>
-            <table class="info-table">
-                @if(!empty($data['contact_person']))<tr><td>Контактное лицо</td><td><strong>{{ $data['contact_person'] }}</strong></td></tr>@endif
-                <tr><td>Телефон</td><td>{{ $phone ?? 'Не указан' }}</td></tr>
-                <tr><td>Email</td><td>{{ $user_email ?? 'Не указана' }}</td></tr>
-            </table>
-        </div>
-
-        <div class="section">
-            <div class="section-title">3. Адрес объекта энергопотребления</div>
-            @php
-                $addressParts = [];
-                $region = $data['region'] ?? $data[' region'] ?? null;
-                if (!empty($region)) $addressParts[] = $region;
-                if (!empty($data['district'])) $addressParts[] = $data['district'];
-                if (!empty($data['locality'])) $addressParts[] = $data['locality'];
-                if (!empty($data['street'])) $addressParts[] = 'ул. ' . $data['street'];
-                if (!empty($data['house'])) $addressParts[] = 'д. ' . $data['house'];
-                $fullAddress = !empty($addressParts) ? implode(', ', $addressParts) : ($address ?? 'Не указан');
-            @endphp
-            <table class="info-table">
-                <tr><td>Полный адрес</td><td><strong>{{ $fullAddress }}</strong></td></tr>
-            </table>
-        </div>
-
-        <div class="section">
-            <div class="section-title">4. Условия договора</div>
-            <p>Прошу заключить договор энергоснабжения на условиях III категории надёжности.</p>
-        </div>
+    <!-- 1. Данные организации -->
+    <div class="section-title">1. Данные организации</div>
+    <div class="section">
+        <p>Наименование организации: <span class="info-row-value wide">{{ company_name }}</span></p>
+        <p>В лице (должность): <span class="info-row-value">{{ director_position }}</span></p>
+        <p>Ф.И.О. руководителя: <span class="info-row-value wide">{{ director_name }}</span></p>
+        <p>Просит заключить договор энергоснабжения на период: <span class="info-row-value">{{ contract_period }}</span></p>
     </div>
 
+    <!-- 2. Адреса -->
+    <div class="section-title">2. Адреса</div>
+    <div class="section">
+        <p>Место нахождения юридического лица: <span class="info-row-value wide">{{ legal_address }}</span></p>
+        <p>Фактический адрес для почтовых отправлений: <span class="info-row-value wide">{{ actual_address }}</span></p>
+    </div>
+
+    <!-- 3. Контактная информация -->
+    <div class="section-title">3. Контактная информация</div>
+    <div class="section">
+        <p>Телефон (т/факс): <span class="info-row-value">{{ phone }}</span></p>
+        <p>Email: <span class="info-row-value">{{ email }}</span></p>
+    </div>
+
+    <!-- 4. Реквизиты -->
+    <div class="section-title">4. Реквизиты организации</div>
+    <div class="section">
+        <p>ОГРН: <span class="info-row-value">{{ ogrn }}</span></p>
+        <p>ИНН: <span class="info-row-value">{{ inn }}</span></p>
+        <p>КПП: <span class="info-row-value">{{ kpp }}</span></p>
+        <p>ОКВЭД: <span class="info-row-value">{{ okved }}</span></p>
+        <p>Банковские реквизиты: <span class="info-row-value wide">{{ bank_details }}</span></p>
+    </div>
+
+    <!-- 5. ЭДО -->
+    <div class="section-title">5. Электронный документооборот</div>
+    <div class="section">
+        <p>Оператор ЭДО: <span class="info-row-value wide">{{ edo_operator }}</span></p>
+    </div>
+
+    <!-- 6. Объект -->
+    <div class="section-title">6. Сведения об объекте энергоснабжения</div>
+    <div class="section">
+        <p>Категория объекта: <span class="info-row-value wide">{{ object_category }}</span></p>
+        <p>Адрес объекта: <span class="info-row-value wide">{{ object_address }}</span></p>
+        <p>График работы объекта: <span class="info-row-value wide">{{ object_schedule }}</span></p>
+    </div>
+
+    <!-- 7. Бюджетные организации -->
+    <div class="section-title">7. Для бюджетных организаций</div>
+    <div class="section">
+        <p>Уровень бюджетного финансирования: <span class="info-row-value wide">{{ budget_level }}</span></p>
+        <p>Министерство/комитет/муниципальное образование: <span class="info-row-value wide">{{ budget_authority }}</span></p>
+    </div>
+
+    <!-- 8. Технические характеристики -->
+    <div class="section-title">8. Технические характеристики энергоснабжения</div>
+    <div class="section">
+        <p>Ценовая категория: <span class="info-row-value wide">{{ price_category }}</span></p>
+        <p>Плановое количество электроэнергии на год: <span class="info-row-value">{{ planned_consumption }}</span> кВт·ч</p>
+        <p>Уровень напряжения: <span class="info-row-value">{{ voltage_level_legal }}</span></p>
+        <p>Категория надёжности снабжения: <span class="info-row-value">{{ reliability_category }}</span></p>
+        <p>Максимальная мощность: <span class="info-row-value">{{ max_power }}</span> кВт</p>
+    </div>
+
+    <!-- 9. Показания счётчика -->
+    <div class="section-title">9. Показания электросчётчика</div>
+    <div class="section">
+        <p>Показания на момент заключения договора: <span class="info-row-value">{{ meter_reading_at_signing }}</span></p>
+    </div>
+
+    <!-- Подпись -->
     <div class="footer">
-        <p><strong>Дата подачи заявки:</strong> {{ $created_at ?? date('d.m.Y H:i') }}</p>
-        <div class="signature-block">
-            <div><p>Руководитель:</p><p class="signature-field"></p><p style="font-size: 10px; color: #666;">ФИО, подпись</p></div>
-            <div><p>М.П.</p><div class="stamp-area">Место печати</div></div>
-            <div><p>Дата:</p><p class="signature-field" style="width: 120px;"></p></div>
+        <p><strong>Дата подачи заявки:</strong> {{ created_at }}</p>
+
+        <table style="margin-top: 30px; width: 100%;">
+            <tr>
+                <td style="width: 120px;">Руководитель:</td>
+                <td style="width: 220px;">
+                    <div class="signature-line"></div>
+                </td>
+                <td style="width: 30px;"></td>
+                <td style="width: 120px;">Расшифровка:</td>
+                <td style="width: 220px;">
+                    <div class="signature-line"></div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="document-note">
+            <p style="font-style: italic;">Документ сгенерирован автоматически в Личном кабинете потребителя. Оригинал подписи и печати проставляется при очном заключении договора.</p>
         </div>
     </div>
 </body>
