@@ -4,18 +4,12 @@ import {
     Typography, Box, Chip, Paper, Divider, Button
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { getTicketCategoryLabel } from '@/constants/statuses';
+import { getTicketCategoryLabel, TICKET_STATUS_MAP } from '@/constants/statuses';
 
 export default function TicketsCardClient({ open, onClose, ticket }) {
     if (!ticket) return null;
     const clientFiles = ticket.attachments?.filter(a => !a.is_admin) || [];
     const adminFiles = ticket.attachments?.filter(a => a.is_admin) || [];
-
-    const statusMap = {
-        new: { label: 'Новое', color: 'primary' },
-        in_progress: { label: 'В работе', color: 'warning' },
-        closed: { label: 'Закрыто', color: 'success' },
-    };
 
     return (
         <Dialog 
@@ -50,12 +44,12 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                     
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#2B3674' }}>
                         Тема: {ticket.subject}
-                    </Typography>s
+                    </Typography>
                     <Chip 
-                        label={getTicketCategoryLabel(data.category)} 
-                        size="small" 
-                        sx={{ mt: 0.5, mb: 1, bgcolor: '#F4F7FE', color: '#4318FF', fontWeight: 600 }}
-                    />
+                    label={(TICKET_STATUS_MAP[ticket.status] || { label: ticket.status }).label} 
+                    color={(TICKET_STATUS_MAP[ticket.status] || { color: 'default' }).color} 
+                    size="small" 
+                    sx={{ fontWeight: 'bold', borderRadius: '8px' }}/>
                     
                     <Typography variant="caption" sx={{ color: '#A3AED0', display: 'block', mb: 0.5 }}>
                         Ваше сообщение:

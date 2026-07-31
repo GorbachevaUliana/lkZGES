@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TICKET_CATEGORIES, getTicketCategoryLabel } from '@/constants/statuses';
+import { TICKET_CATEGORIES, getTicketCategoryLabel, TICKET_STATUS_MAP } from '@/constants/statuses';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { useForm } from '@inertiajs/react';
 import SearchIcon from '@mui/icons-material/Search';
@@ -19,13 +19,6 @@ export default function Tickets({ auth, tickets }) {
     const [showForm, setShowForm] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-
-    const statusMap = {
-        // new: { label: 'Новое', color: 'primary' },
-        new: { label: 'Новое', color: 'primary' },
-        in_progress: { label: 'В работе', color: 'warning' },
-        closed: { label: 'Закрыто', color: 'success' },
-    };
 
     const columns = [
         { 
@@ -57,7 +50,7 @@ export default function Tickets({ auth, tickets }) {
             headerName: 'Статус', 
             flex: 1,
             renderCell: (params) => {
-                const status = statusMap[params.value] || { label: params.value, color: 'default' };
+                const status = TICKET_STATUS_MAP[params.value] || { label: params.value, color: 'default' };
                 
                 return (
                     <Chip 
@@ -192,29 +185,6 @@ export default function Tickets({ auth, tickets }) {
                                     </motion.div>
 
                                     {data.category === 'other' && (
-                                        <motion.div variants={itemVariants} key="manual-subject">
-                                            <TextField 
-                                                fullWidth 
-                                                label="Уточните тему обращения" 
-                                                placeholder="Напишите свою тему..."
-                                                value={data.subject} 
-                                                onChange={e => setData('subject', e.target.value)}
-                                                error={!!errors.subject} 
-                                                helperText={errors.subject}
-                                                sx={{
-                                                    "& .MuiOutlinedInput-root": {
-                                                        bgcolor: '#F4F7FE',
-                                                        borderRadius: '14px',
-                                                        "& fieldset": { border: 'none' },
-                                                        "&:hover fieldset": { border: 'none' },
-                                                        "&.Mui-focused fieldset": { border: 'none' },
-                                                    }
-                                                }}/>
-                                        </motion.div>
-                                    )}
-
-                                    {/* 2. Поле ручного ввода (появляется только если выбрано "Другое") */}
-                                    {(data.subject === '' || !PREDEFINED_SUBJECTS.filter(s => s !== 'Другое').includes(data.subject)) && (
                                         <motion.div variants={itemVariants} key="manual-subject">
                                             <TextField 
                                                 fullWidth 
