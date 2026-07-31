@@ -10,3 +10,16 @@ export const TICKET_STATUS_MAP = {
     closed:  { label: 'Решено',   color: 'success' },
     pending: { label: 'В работе', color: 'warning' },
 };
+
+export const TICKET_CATEGORIES = [
+    {value: 'contract_change', label: 'Изменение договора'},
+    {value: 'contract_termination', label: 'Расторжение договора'},
+    {value: 'contract_documents', label: 'Получение проекта договора, доп.соглашения и иных документов'},
+    {value: 'meter_service', label: 'Замена/установка/поверка приборов учета'},
+    {value: 'complaint', label: 'Жалобы и предложения'},
+    {value: 'statement', label: 'Заявления'},
+    {value: 'other', label: 'Другое'},
+];
+
+export const getTicketCategoryLabel = (value) => 
+    TICKET_CATEGORIES.find(c=>c.value === value)?.label ||value;

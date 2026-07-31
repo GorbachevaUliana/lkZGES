@@ -4,6 +4,7 @@ import {
     Typography, Box, Chip, Paper, Divider, Button
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { getTicketCategoryLabel } from '@/constants/statuses';
 
 export default function TicketsCardClient({ open, onClose, ticket }) {
     if (!ticket) return null;
@@ -49,7 +50,12 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                     
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#2B3674' }}>
                         Тема: {ticket.subject}
-                    </Typography>
+                    </Typography>s
+                    <Chip 
+                        label={getTicketCategoryLabel(data.category)} 
+                        size="small" 
+                        sx={{ mt: 0.5, mb: 1, bgcolor: '#F4F7FE', color: '#4318FF', fontWeight: 600 }}
+                    />
                     
                     <Typography variant="caption" sx={{ color: '#A3AED0', display: 'block', mb: 0.5 }}>
                         Ваше сообщение:

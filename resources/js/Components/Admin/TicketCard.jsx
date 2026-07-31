@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { Save as SaveIcon, Close as CloseIcon, CloudUpload as UploadIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
+import { getTicketCategoryLabel } from '@/constants/statuses';
 
 export default function TicketCard({ auth, open, onClose, data, setData, showToast, staff_members, onOpenClientCard }) {
 
@@ -53,6 +54,11 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
                     <Grid item xs={12} md={6}>
                         <Typography variant="subtitle2" color="textSecondary" gutterBottom>Тема и сообщение</Typography>
                         <Typography variant="h6" fontWeight="bold" sx={{ color: '#1B2559' }}>{data.subject}</Typography>
+                        <Chip 
+                            label={getTicketCategoryLabel(data.category)} 
+                            size="small" 
+                            sx={{ mt: 0.5, mb: 1, bgcolor: '#F4F7FE', color: '#4318FF', fontWeight: 600 }}
+                        />
                         <Paper variant="outlined" sx={{ p: 2, mt: 1, bgcolor: '#fff', borderRadius: '12px', mb: 3 }}>
                             <Typography variant="body1">{data.message}</Typography>
                         </Paper>

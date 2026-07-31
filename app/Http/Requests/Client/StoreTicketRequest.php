@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Client;
 
 use App\Http\Requests\BaseFormRequest;
+use App\Enums\TicketCategory;
+use Illuminate\Validation\Rules\Enum;
 
 class StoreTicketRequest extends BaseFormRequest
 {
@@ -14,15 +16,17 @@ class StoreTicketRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'subject' => 'required|string|max:255',
-            'message' => 'required|string|max:10000',
-            'files.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
+            'category' => ['required', new Enum(TicketCategory::class)],
+            'subject'  => 'required|string|max:255',
+            'message'  => 'required|string|max:10000',
+            'files.*'  => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
         ];
     }
 
     public function messages(): array
     {
         return [
+            'category.required' => 'Выберите тему обращения',
             'subject.required' => 'Укажите тему обращения.',
             'message.required' => 'Введите текст обращения.',
             'message.max' => 'Текст обращения не должен превышать 10 000 символов.',

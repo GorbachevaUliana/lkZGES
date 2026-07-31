@@ -18,6 +18,7 @@ class TicketController extends Controller
         $user   = auth()->user();
 
         $ticket = $user->tickets()->create([
+            'category' => $dto->category->value,
             'subject' => $dto->subject,
             'message' => $dto->message,
             'status'  => 'new',

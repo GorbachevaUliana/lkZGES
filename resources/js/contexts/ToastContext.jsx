@@ -17,10 +17,10 @@ export const useToast = () => {
 };
 
 const ICONS = {
-    success: <CheckCircleIcon sx={{ color: '#22C55E' }} />,
-    warning: <WarningIcon    sx={{ color: '#F59E0B' }} />,
-    error:   <ErrorIcon      sx={{ color: '#EF4444' }} />,
-    info:    <InfoIcon       sx={{ color: '#3B82F6' }} />,
+    success: <CheckCircleIcon sx = {{ color: '#22C55E' }} />,
+    warning: <WarningIcon    sx  = {{ color: '#F59E0B' }} />,
+    error  : <ErrorIcon      sx  = {{ color: '#EF4444' }} />,
+    info   : <InfoIcon       sx  = {{ color: '#3B82F6' }} />,
 };
 
 const BG_COLORS = {

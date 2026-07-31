@@ -140,7 +140,7 @@ function StepVerify({ maskedEmail }) {
     );
 }
 
-// ─── Основной компонент ───────────────────────────────────────────────────────
+//Основной компонент
 export default function WelcomePage({ step = 'link', maskedEmail }) {
     const isVerifyStep = step === 'verify';
 
@@ -195,6 +195,7 @@ export default function WelcomePage({ step = 'link', maskedEmail }) {
                                     <Avatar sx={{ bgcolor: '#4318FF', width: 56, height: 56, borderRadius: '16px' }}>
                                         <AssignmentIcon sx={{ fontSize: 28 }} />
                                     </Avatar>
+                                    
                                     <Box>
                                         <Typography variant="h5" fontWeight="bold" sx={{ color: '#1B2559' }}>
                                             {isVerifyStep ? 'Подтверждение' : 'Я уже клиент'}

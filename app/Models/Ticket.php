@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TicketCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -11,6 +12,7 @@ class Ticket extends Model
     protected $fillable = [
         'user_id',
         'subject',
+        'category',
         'message',
         'staff_id',
         'status',
@@ -18,6 +20,12 @@ class Ticket extends Model
         'replied_at',
         'replied_by',
     ];
+
+    protected $casts = [
+        'category' => TicketCategory::class,
+    ];
+
+    protected $appends = ['category_name'];
 
     public function user()
     {
@@ -37,5 +45,10 @@ class Ticket extends Model
     public function repliedBy()
     {
         return $this->belongsTo(User::class, 'replied_by');
+    }
+
+    public function getCategoryNameAttribute(): string
+    {
+        return $this->category?->label() ?? 'Другое';
     }
 }

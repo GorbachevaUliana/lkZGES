@@ -9,7 +9,7 @@ import { useForm } from '@inertiajs/react';
 import ClientCard from '@/Components/Admin/ClientCard';
 import { router } from '@inertiajs/react';
 import { fixKeyboardLayout } from '@/utils/keyboard';
-import { TICKET_STATUS_MAP } from '@/constants/statuses';
+import { TICKET_STATUS_MAP, getTicketCategoryLabel } from '@/constants/statuses';
 
 export default function TicketsIndex({ auth, tickets, staff_members }) {
     const [editOpen, setEditOpen] = useState(false);
@@ -77,6 +77,12 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
             field: 'subject', 
             headerName: 'Тема заявки', 
             flex: 1
+        },
+        {
+            field: 'category',
+            headerName: 'Категория',
+            width: 220,
+            renderCell: (params) => getTicketCategoryLabel(params.value)
         },
         { 
             field: 'message', 

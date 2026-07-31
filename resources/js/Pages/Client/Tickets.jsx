@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TICKET_CATEGORIES, getTicketCategoryLabel } from '@/constants/statuses';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { useForm } from '@inertiajs/react';
 import SearchIcon from '@mui/icons-material/Search';
@@ -13,16 +14,6 @@ import SendIcon from '@mui/icons-material/Send';
 import AddIcon from '@mui/icons-material/Add';
 import TicketsCardClient from './TicketsCardClient';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const PREDEFINED_SUBJECTS = [
-    'Изменение договора',
-    'Расторжение договора',
-    'Получение проекта договора, доп. соглашения и иных документов',
-    'Замена/установка/поверка приборов учета',
-    'Жалобы и предложения',
-    'Заявления',
-    'Другое'
-];
 
 export default function Tickets({ auth, tickets }) {
     const [showForm, setShowForm] = useState(false);
@@ -54,6 +45,12 @@ export default function Tickets({ auth, tickets }) {
                     </Typography>
                 </Box>
             )
+        },
+        {
+            field: 'category',
+            headerName: 'Категория',
+            flex: 1.5,
+            renderCell: (params) => getTicketCategoryLabel(params.value)
         },
         { 
             field: 'status', 
@@ -87,6 +84,7 @@ export default function Tickets({ auth, tickets }) {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         user: '',
+        category: '',
         subject: '',
         message: '',
         files: [],
@@ -114,7 +112,8 @@ export default function Tickets({ auth, tickets }) {
     };
 
     const filteredRows = tickets.filter(ticket => 
-        ticket.subject.toLowerCase().includes(searchQuery.toLowerCase())
+        ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getTicketCategoryLabel(ticket.category).toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const handleSubmit = (e) => {
@@ -166,19 +165,17 @@ export default function Tickets({ auth, tickets }) {
                                     
                                     {/* 1. Выпадающий список темы */}
                                     <motion.div variants={itemVariants}>
-                                        <FormControl fullWidth error={!!errors.subject}>
-                                            <InputLabel id="subject-select-label">Выберите тему</InputLabel>
+                                        <FormControl fullWidth error={!!errors.category}>
+                                            <InputLabel id="category-select-label">Выберите тему</InputLabel>
                                             <Select
-                                                labelId="subject-select-label"
+                                                labelId="category-select-label"
                                                 label="Выберите тему"
-                                                value={PREDEFINED_SUBJECTS.includes(data.subject) ? data.subject : (data.subject ? 'Другое' : '')}
+                                                value={data.category}
                                                 onChange={(e) => {
                                                     const val = e.target.value;
-                                                    if (val === 'Другое') {
-                                                        setData('subject', '');
-                                                    } else {
-                                                        setData('subject', val);
-                                                    }
+                                                    const found = TICKET_CATEGORIES.find(c => c.value === val);
+                                                    setData('category', val);
+                                                    setData('subject', val === 'other' ? '' : (found?.label || ''));
                                                 }}
                                                 sx={{
                                                     bgcolor: '#F4F7FE',
@@ -187,12 +184,34 @@ export default function Tickets({ auth, tickets }) {
                                                     "&:hover .MuiOutlinedInput-notchedOutline": { border: "none" },
                                                     "&.Mui-focused .MuiOutlinedInput-notchedOutline": { border: "none" },
                                                 }}>
-                                                {PREDEFINED_SUBJECTS.map((s) => (
-                                                    <MenuItem key={s} value={s}>{s}</MenuItem>
+                                                {TICKET_CATEGORIES.map((c) => (
+                                                    <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
                                                 ))}
                                             </Select>
                                         </FormControl>
                                     </motion.div>
+
+                                    {data.category === 'other' && (
+                                        <motion.div variants={itemVariants} key="manual-subject">
+                                            <TextField 
+                                                fullWidth 
+                                                label="Уточните тему обращения" 
+                                                placeholder="Напишите свою тему..."
+                                                value={data.subject} 
+                                                onChange={e => setData('subject', e.target.value)}
+                                                error={!!errors.subject} 
+                                                helperText={errors.subject}
+                                                sx={{
+                                                    "& .MuiOutlinedInput-root": {
+                                                        bgcolor: '#F4F7FE',
+                                                        borderRadius: '14px',
+                                                        "& fieldset": { border: 'none' },
+                                                        "&:hover fieldset": { border: 'none' },
+                                                        "&.Mui-focused fieldset": { border: 'none' },
+                                                    }
+                                                }}/>
+                                        </motion.div>
+                                    )}
 
                                     {/* 2. Поле ручного ввода (появляется только если выбрано "Другое") */}
                                     {(data.subject === '' || !PREDEFINED_SUBJECTS.filter(s => s !== 'Другое').includes(data.subject)) && (

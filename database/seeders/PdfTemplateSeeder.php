@@ -338,7 +338,7 @@ class PdfTemplateSeeder extends Seeder
 </html>
 HTML;
 
-        // Шаблон для юридических лиц (оставляем без изменений)
+        // Шаблон для юридических лиц
 
         $legalContent = <<<'HTML'
 <!DOCTYPE html>
@@ -353,7 +353,7 @@ HTML;
             line-height: 1.4;
             margin: 0;
             padding: 15mm 20mm 15mm 14mm;
-            color: #000;
+            color: #000; 
         }
         .header-right {
             text-align: right;
