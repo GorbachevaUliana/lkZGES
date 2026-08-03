@@ -1,6 +1,6 @@
 import React from 'react';
-import { 
-    Dialog, DialogTitle, DialogContent, IconButton, 
+import {
+    Dialog, DialogTitle, DialogContent, IconButton,
     Typography, Box, Chip, Paper, Divider, Button
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -11,14 +11,16 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
     const clientFiles = ticket.attachments?.filter(a => !a.is_admin) || [];
     const adminFiles = ticket.attachments?.filter(a => a.is_admin) || [];
 
+    const status = TICKET_STATUS_MAP[ticket.status] || { label: ticket.status || 'Новое', color: 'primary' };
+
     return (
-        <Dialog 
+        <Dialog
             open={open}
             onClose={onClose}
             maxWidth="sm"
             fullWidth
-            PaperProps={{ 
-                sx: { borderRadius: '24px', p: 1, boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' } 
+            PaperProps={{
+                sx: { borderRadius: '24px', p: 1, boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' }
             }}>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                 <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1B2559' }}>
@@ -28,29 +30,29 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                     <CloseIcon />
                 </IconButton>
             </DialogTitle>
-            
+
             <DialogContent>
                 <Box sx={{ mb: 3 }}>
                     <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                        <Chip 
-                            label={statusMap[ticket.status].label || ticket.status || 'Новое'} 
-                            color={statusMap[ticket.status].color || 'primary'} 
-                            size="small" 
-                            sx={{ fontWeight: 'bold', borderRadius: '8px' }}/>
+                        <Chip
+                            label={status.label}
+                            color={status.color}
+                            size="small"
+                            sx={{ fontWeight: 'bold', borderRadius: '8px' }} />
                         <Typography variant="caption" sx={{ color: '#A3AED0', alignSelf: 'center' }}>
                             Отправлено: {new Date(ticket.created_at).toLocaleString()}
                         </Typography>
                     </Box>
-                    
+
                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#2B3674' }}>
                         Тема: {ticket.subject}
                     </Typography>
-                    <Chip 
-                    label={(TICKET_STATUS_MAP[ticket.status] || { label: ticket.status }).label} 
-                    color={(TICKET_STATUS_MAP[ticket.status] || { color: 'default' }).color} 
-                    size="small" 
-                    sx={{ fontWeight: 'bold', borderRadius: '8px' }}/>
-                    
+                    <Chip
+                        label={getTicketCategoryLabel(ticket.category)}
+                        size="small"
+                        sx={{ mt: 0.5, mb: 1, bgcolor: '#F4F7FE', color: '#4318FF', fontWeight: 600 }}
+                    />
+
                     <Typography variant="caption" sx={{ color: '#A3AED0', display: 'block', mb: 0.5 }}>
                         Ваше сообщение:
                     </Typography>
@@ -70,7 +72,7 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                                 {clientFiles.map((file) => (
                                     <Button
                                         key={file.id}
-                                        href={file.url} 
+                                        href={file.url}
                                         target="_blank"
                                         download={file.file_name}
                                         size="small"
@@ -94,7 +96,7 @@ export default function TicketsCardClient({ open, onClose, ticket }) {
                                 <Typography variant="body2" sx={{ color: '#1B2559' }}>
                                     {ticket.admin_reply}
                                 </Typography>
-                                
+
                                 {/* ФАЙЛЫ ОТ АДМИНА */}
                                 {adminFiles.length > 0 && (
                                     <Box sx={{ mt: 2, pt: 2, borderTop: '1px dashed #A3AED0' }}>

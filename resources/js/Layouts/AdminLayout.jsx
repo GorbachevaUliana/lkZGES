@@ -24,7 +24,7 @@ export default function AdminLayout({ children }) {
         { id: 'readings', label: 'Показания', route: 'admin.readings.index' }
     ];
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F4F7FE'}}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F4F7FE', overflowX: 'hidden' }}>
             {/* Верхняя панель */}
             <AppBar position="sticky" sx={{ bgcolor: '#fff', color: '#2B3674', boxShadow: 'none', borderBottom: '1px solid #E0E5F2'}}>
                 <Container maxWidth="xl">

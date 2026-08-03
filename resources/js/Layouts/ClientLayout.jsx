@@ -49,7 +49,7 @@ export default function ClientLayout({ user, children, title, application, prope
         ];
 
     return (
-        <Box sx={{ display: 'flex', bgcolor: '#F4F7FE', minHeight: '100vh' }}>
+        <Box sx={{ display: 'flex', bgcolor: '#F4F7FE', minHeight: '100vh', overflowX: 'hidden' }}>
             <Drawer
                 variant="permanent"
                 sx={{
