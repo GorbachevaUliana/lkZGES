@@ -8,13 +8,19 @@ import { DataGrid } from '@mui/x-data-grid';
 import {
     Paper, TextField, Button, Box, Typography, Grid,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip,
-    Select, MenuItem, FormControl, InputLabel, InputAdornment, TableSortLabel, InputBase
+    Select, MenuItem, FormControl, InputLabel, InputAdornment, TableSortLabel, InputBase,
+    IconButton
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SendIcon from '@mui/icons-material/Send';
 import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import TicketsCardClient from './TicketsCardClient';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const MAX_FILES = 5;
+const MAX_FILE_SIZE_MB = 15;
 
 export default function Tickets({ auth, tickets }) {
     return (
@@ -128,13 +134,45 @@ function TicketsContent({ auth, tickets }) {
                 showToast('Обращение отправлено', 'success');
             },
             onError: (formErrors) => {
-                const fileErrorKey = Object.keys(formErrors).find(k => k.startsWith('files'));
+                const firstErrorKey = Object.keys(formErrors)[0];
                 showToast(
-                    fileErrorKey ? formErrors[fileErrorKey] : 'Проверьте правильность заполнения формы',
+                    firstErrorKey ? formErrors[firstErrorKey] : 'Проверьте правильность заполнения формы',
                     'error'
                 );
             },
         });
+    };
+
+    // Добавление файлов — с клиентской проверкой размера и лимита количества,
+    // чтобы пользователь узнал об ошибке сразу, не дожидаясь ответа сервера.
+    const handleFilesSelected = (e) => {
+        const newFiles = Array.from(e.target.files);
+        const validFiles = [];
+
+        for (const file of newFiles) {
+            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                showToast(`Файл «${file.name}» превышает ${MAX_FILE_SIZE_MB} МБ`, 'error');
+                continue;
+            }
+            validFiles.push(file);
+        }
+
+        const availableSlots = MAX_FILES - data.files.length;
+        if (validFiles.length > availableSlots) {
+            showToast(`Можно прикрепить не более ${MAX_FILES} файлов`, 'warning');
+        }
+
+        setData('files', [...data.files, ...validFiles].slice(0, MAX_FILES));
+        e.target.value = '';
+    };
+
+    const removeFile = (index) => {
+        setData('files', data.files.filter((_, i) => i !== index));
+    };
+
+    const formatFileSize = (bytes) => {
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} КБ`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`;
     };
 
     return (
@@ -199,6 +237,11 @@ function TicketsContent({ auth, tickets }) {
                                                     <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
                                                 ))}
                                             </Select>
+                                            {errors.category && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                                                    {errors.category}
+                                                </Typography>
+                                            )}
                                         </FormControl>
                                     </motion.div>
 
@@ -247,22 +290,57 @@ function TicketsContent({ auth, tickets }) {
                                             }} />
                                     </motion.div>
 
-                                    {/* 4. Кнопки управления */}
-                                    <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'flex-start' }}>
-                                        <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />} sx={{ borderRadius: '12px', px: 3, py: 1, textTransform: 'none' }}>
-                                            Прикрепить файлы
-                                            <input type="file" multiple hidden onChange={e => setData('files', Array.from(e.target.files))} />
-                                        </Button>
+                                    {/* 4. Файлы */}
+                                    <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start', width: '100%' }}>
+                                        {data.files.length > 0 && (
+                                            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                {data.files.map((f, i) => (
+                                                    <Box
+                                                        key={i}
+                                                        sx={{
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                            bgcolor: '#F4F7FE', borderRadius: '10px', px: 2, py: 1
+                                                        }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                                                            <AttachFileIcon fontSize="small" sx={{ color: '#4318FF' }} />
+                                                            <Typography variant="caption" sx={{ color: '#2B3674' }} noWrap>
+                                                                {f.name} · {formatFileSize(f.size)}
+                                                            </Typography>
+                                                        </Box>
+                                                        <IconButton size="small" onClick={() => removeFile(i)} sx={{ color: '#FF5B5B' }}>
+                                                            <CloseIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                        )}
+
+                                        {data.files.length < MAX_FILES && (
+                                            <Button
+                                                variant="outlined"
+                                                component="label"
+                                                startIcon={<CloudUploadIcon />}
+                                                sx={{ borderRadius: '12px', px: 3, py: 1, textTransform: 'none' }}>
+                                                {data.files.length === 0
+                                                    ? 'Прикрепить файлы'
+                                                    : `Прикрепить ещё (${data.files.length}/${MAX_FILES})`}
+                                                <input type="file" multiple hidden onChange={handleFilesSelected} />
+                                            </Button>
+                                        )}
+
+                                        <Typography variant="caption" color="text.secondary">
+                                            До {MAX_FILES} файлов, не более {MAX_FILE_SIZE_MB} МБ каждый. JPG, PNG, WEBP, PDF, DOC, DOCX.
+                                        </Typography>
+
                                         {Object.keys(errors).filter(k => k.startsWith('files')).map((key) => (
                                             <Typography key={key} variant="caption" color="error" sx={{ display: 'block' }}>
                                                 {errors[key]}
                                             </Typography>
                                         ))}
+                                    </motion.div>
 
-                                        {data.files.map((f, i) => (
-                                            <Typography key={i} variant="caption" color="text.secondary" sx={{ ml: 1 }}>• {f.name}</Typography>
-                                        ))}
-
+                                    {/* 5. Кнопка отправки */}
+                                    <motion.div variants={itemVariants}>
                                         <Button
                                             type="submit"
                                             variant="contained"

@@ -49,7 +49,15 @@ export default function ClientLayout({ user, children, title, application, prope
         ];
 
     return (
-        <Box sx={{ display: 'flex', bgcolor: '#F4F7FE', minHeight: '100vh', overflowX: 'hidden' }}>
+        <Box
+            sx={{
+                display: 'flex',
+                bgcolor: '#F4F7FE',
+                minHeight: '100vh',
+                width: '100%',
+                maxWidth: '100%',
+            }}
+        >
             <Drawer
                 variant="permanent"
                 sx={{
@@ -80,7 +88,7 @@ export default function ClientLayout({ user, children, title, application, prope
                                 {applicationData?.admin_comment && (
                                     <><br /><strong>Причина:</strong> {applicationData.admin_comment}</>
                                 )}
-                            </>
+                            </> 
                         ) : (
                             <>
                                 Ваша заявка на заключение договора рассматривается. 
@@ -117,7 +125,16 @@ export default function ClientLayout({ user, children, title, application, prope
                 </Box>
             </Drawer>
 
-            <Box component="main" sx={{ flexGrow: 1, p: 4 }}>
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    minWidth: 0,
+                    width: 0,
+                    p: 4,
+                    boxSizing: 'border-box',
+                }}
+            >
                 <Typography variant="h4" fontWeight="bold" sx={{ mb: 4, color: '#1B2559' }}>{title}</Typography>
                 {children}
             </Box>

@@ -24,7 +24,7 @@ export default function AdminLayout({ children }) {
         { id: 'readings', label: 'Показания', route: 'admin.readings.index' }
     ];
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F4F7FE', overflowX: 'hidden' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F4F7FE', width: '100%', maxWidth: '100%',}}>
             {/* Верхняя панель */}
             <AppBar position="sticky" sx={{ bgcolor: '#fff', color: '#2B3674', boxShadow: 'none', borderBottom: '1px solid #E0E5F2'}}>
                 <Container maxWidth="xl">
@@ -65,7 +65,17 @@ export default function AdminLayout({ children }) {
             </AppBar>
 
             {/* Контент страницы */}
-            <Container maxWidth="xl" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
+            <Container
+                maxWidth="xl"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    flexGrow: 1,
+                    minWidth: 0,
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
+                }}
+            >
                 {children}
             </Container>
         </Box>
