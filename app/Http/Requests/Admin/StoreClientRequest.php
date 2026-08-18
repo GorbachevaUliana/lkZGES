@@ -71,17 +71,3 @@ class StoreClientRequest extends BaseFormRequest
         ];
     }
 }
-
-//Для всех реквестов (подготовка к валидации)
-// protected function prepareForValidation(): void
-//     {
-//         $input = $this->all();
-
-//         array_walk_recursive($input, function (&$value) {
-//             if (is_string($value)) {
-//                 $value = trim($value);
-//             }
-//         });
-
-//         $this->replace($input);
-//     }

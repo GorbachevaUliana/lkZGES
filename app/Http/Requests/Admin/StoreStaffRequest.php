@@ -15,10 +15,10 @@ class StoreStaffRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'name'        => 'required|string|max         : 255',
-            'email'       => 'required|string|email|unique: users',
-            'password'    => 'required|min                : 8',
-            'role'        => 'required|in                 : admin,staff',
+            'name'        => 'required|string|max:255',
+            'email'       => 'required|string|email|unique:users',
+            'password'    => 'required|min:8',
+            'role'        => 'required|in:admin,staff',
             'permissions' => 'nullable|array',
         ];
     }
