@@ -16,25 +16,25 @@ class StoreClientRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'client_type'                 => 'required|in            : individual,legal',
-            'last_name'                   => 'nullable|string|max    : 100',
-            'first_name'                  => 'nullable|string|max    : 100',
-            'middle_name'                 => 'nullable|string|max    : 100',
-            'company_name'                => 'nullable|string|max    : 255',
-            'phone'                       => 'nullable|string|max    : 20',
-            'email'                       => 'nullable|email|max     : 255',
-            'inn'                         => 'nullable|string|max    : 12',
-            'kpp'                         => 'nullable|string|max    : 9',
-            'ogrn'                        => 'nullable|string|max    : 15',
-            'properties'                  => 'required|array|min     : 1',
-            'properties.*.account_number' => 'required|string|max    : 20',
-            'properties.*.tariff_id'      => 'required|integer|exists: tariffs,id',
-            'properties.*.locality'       => 'required|string|max    : 100',
-            'properties.*.street'         => 'required|string|max    : 100',
-            'properties.*.house'          => 'required|string|max    : 20',
-            'properties.*.region'         => 'nullable|string|max    : 100',
-            'properties.*.district'       => 'nullable|string|max    : 100',
-            'properties.*.building'       => 'nullable|string|max    : 20',
+            'client_type'                 => 'required|in:individual,legal',
+            'last_name'                   => 'nullable|string|max:100',
+            'first_name'                  => 'nullable|string|max:100',
+            'middle_name'                 => 'nullable|string|max:100',
+            'company_name'                => 'nullable|string|max:255',
+            'phone'                       => 'nullable|string|max:20',
+            'email'                       => 'nullable|email|max:255',
+            'inn'                         => 'nullable|string|max:12',
+            'kpp'                         => 'nullable|string|max:9',
+            'ogrn'                        => 'nullable|string|max:15',
+            'properties'                  => 'required|array|min:1',
+            'properties.*.account_number' => 'required|string|max:20',
+            'properties.*.tariff_id'      => 'required|integer|exists:tariffs,id',
+            'properties.*.locality'       => 'required|string|max:100',
+            'properties.*.street'         => 'required|string|max:100',
+            'properties.*.house'          => 'required|string|max:20',
+            'properties.*.region'         => 'nullable|string|max:100',
+            'properties.*.district'       => 'nullable|string|max:100',
+            'properties.*.building'       => 'nullable|string|max:20',
             'properties.*.apartment'      => 'nullable|string|max:20',
         ];
     }
@@ -71,3 +71,17 @@ class StoreClientRequest extends BaseFormRequest
         ];
     }
 }
+
+//Для всех реквестов (подготовка к валидации)
+// protected function prepareForValidation(): void
+//     {
+//         $input = $this->all();
+
+//         array_walk_recursive($input, function (&$value) {
+//             if (is_string($value)) {
+//                 $value = trim($value);
+//             }
+//         });
+
+//         $this->replace($input);
+//     }

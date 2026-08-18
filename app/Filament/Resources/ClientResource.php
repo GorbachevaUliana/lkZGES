@@ -226,7 +226,7 @@ class ClientResource extends Resource
                     ->label('Создан')
                     ->dateTime('d.m.Y H:i')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true), 
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('client_type')

@@ -10,17 +10,29 @@ import {
 } from '@mui/icons-material';
 
 export default function Index({ auth, readings, data, id}) {
+    const readingsRows = readings.data ?? readings;
+    const readingsCurrentPage = readings?.current_page || 1;
+    const readingsTotal = readings?.total ?? readingsRows.length;
+
+    const goToReadingsPage = (zeroBasedPage) => {
+        router.get(route('admin.readings.index'), { page: zeroBasedPage + 1 }, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['readings'],
+        });
+    };
+
     const columns = [
         { field: 'id', headerName: 'ID', width: 70 },
         { 
-            field: 'client_name', 
-            headerName: 'Клиент', 
+            field: 'client_name',
+            headerName: 'Клиент',
             flex: 1.5,
             valueGetter: (params, row) => row.client?.user?.name || 'Удален'
         },
         { 
-            field: 'address', 
-            headerName: 'Адрес', 
+            field: 'address',
+            headerName: 'Адрес',
             flex: 2,
             valueGetter: (params, row) => row.client?.address || '—'
         },
@@ -91,13 +103,17 @@ export default function Index({ auth, readings, data, id}) {
                         <Typography variant="h4" fontWeight="800" color="#1B2559">Реестр показаний</Typography>
                     </Box>
 
-                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 20px 50px rgba(112, 144, 176, 0.15)' }}>
-                        <DataGrid 
-                            rows={readings.data ?? readings} 
+                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 20px 50px rgba(112, 144, 176, 0.15)' }}>
+                        <DataGrid
+                            rows={readingsRows} 
                             columns={columns} 
                             autoHeight
+                            paginationMode="server"
+                            rowCount={readingsTotal}
+                            paginationModel={{ page: readingsCurrentPage - 1, pageSize: 50 }}
+                            onPaginationModelChange={(model) => goToReadingsPage(model.page)}
+                            pageSizeOptions={[50]}
                             initialState={{
-                                pagination: { paginationModel: { pageSize: 15 } },
                                 sorting: { sortModel: [{ field: 'reading_date', sort: 'desc' }] }
                             }}
                             sx={{ border: 'none' }}/>

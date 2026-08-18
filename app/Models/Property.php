@@ -77,6 +77,7 @@ class Property extends Model
     //     return $this->hasMany(Payment::class);
     // }
 
+
     /**
      * Проверка активности объекта
      */

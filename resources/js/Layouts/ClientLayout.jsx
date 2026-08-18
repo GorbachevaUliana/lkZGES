@@ -117,6 +117,7 @@ export default function ClientLayout({ user, children, title, application, prope
                         </ListItem>
                     ))}
                 </List>
+
                 <Box sx={{ mt: 'auto', p: 2 }}>
                     <ListItemButton onClick={() => router.post(route('logout'))} sx={{ borderRadius: '12px', color: '#FF5B5B' }}>
                         <ListItemIcon sx={{ color: '#FF5B5B' }}><LogoutIcon /></ListItemIcon>

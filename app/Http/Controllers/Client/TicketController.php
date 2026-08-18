@@ -37,6 +37,8 @@ class TicketController extends Controller
     }
 
     public function ticketsIndex()
+
+
     {
         $tickets = auth()->user()->tickets()
             ->with(['attachments'])
