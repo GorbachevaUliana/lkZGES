@@ -192,13 +192,20 @@ class PdfTemplate extends Model
     private function simpleRender(string $content, array $data): string
     {
         // Замена простых переменных {{ $var }}
+        // Экранируем через htmlspecialchars — этот рендер срабатывает как
+        // fallback, в том числе когда Twig sandbox отклонил шаблон как
+        // небезопасный. Раньше здесь была прямая подстановка без
+        // экранирования, то есть именно в момент, когда защита sandbox
+        // сработала (или в шаблоне опечатка), мы неявно понижали уровень
+        // защиты вместо того, чтобы его сохранить.
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 continue; // Пропускаем массивы в простом рендеринге
             }
-            $content = str_replace('{{ $'.$key.' }}', $value ?? '', $content);
-            $content = str_replace('{{'.$key.'}}', $value ?? '', $content);
-            $content = str_replace('{{ '.$key.' }}', $value ?? '', $content);
+            $safeValue = htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
+            $content = str_replace('{{ $'.$key.' }}', $safeValue, $content);
+            $content = str_replace('{{'.$key.'}}', $safeValue, $content);
+            $content = str_replace('{{ '.$key.' }}', $safeValue, $content);
         }
 
         // Замена переменных массива {{ $data['key'] }}
@@ -207,8 +214,9 @@ class PdfTemplate extends Model
                 if (is_array($value)) {
                     $value = implode(', ', $value);
                 }
-                $content = str_replace("{{ \$data['".$key."'] }}", $value ?? '', $content);
-                $content = str_replace('{{ $data[\''.$key.'\'] }}', $value ?? '', $content);
+                $safeValue = htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
+                $content = str_replace("{{ \$data['".$key."'] }}", $safeValue, $content);
+                $content = str_replace('{{ $data[\''.$key.'\'] }}', $safeValue, $content);
             }
         }
 
