@@ -66,6 +66,20 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
         });
     }, [searchQuery, tickets]);
 
+    // Проблема №35: tickets — обычный пагинированный ответ Laravel (не
+    // через Resource, поэтому current_page/last_page/total лежат прямо в
+    // корне, а не в meta). Раньше эти поля просто не читались.
+    const ticketsCurrentPage = tickets?.current_page || 1;
+    const ticketsTotal = tickets?.total ?? filteredTickets.length;
+
+    const goToTicketsPage = (zeroBasedPage) => {
+        router.get(route('admin.tickets.index'), { page: zeroBasedPage + 1 }, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['tickets'],
+        });
+    };
+
     const columns = [
         { 
             field: 'user', 
@@ -140,10 +154,14 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
             content: 'Удалить этот файл навсегда?',
             onConfirm: () => {
                 router.delete(route('admin.documents.destroy', docId), {
-                    onSuccess: (page) => {
+                    onSuccess: () => {
                         setConfirmMeta(prev => ({ ...prev, open: false }));
-                        const updatedClient = page.props.clients.find(c => c.id === data.id);
-                        if (updatedClient) setData('documents', updatedClient.documents);
+                        // TicketsIndex не получает проп clients — искать
+                        // обновлённого клиента через page.props.clients.find(...)
+                        // здесь всегда падало. Известен сам docId, поэтому
+                        // проще и надёжнее убрать документ из уже открытых
+                        // данных локально, без обращения к чужому пропу.
+                        setData('documents', (data.documents || []).filter(doc => doc.id !== docId));
                         showToast('Документ успешно удален');
                     }
                 });
@@ -170,13 +188,18 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                     </Paper>
                 </Box>
 
-                <Paper sx={{ borderRadius: '20px', overflow: 'hidden', border: 'none', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                <Paper sx={{ borderRadius: '20px', overflowX: 'auto', border: 'none', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                     <DataGrid 
                         rows={filteredTickets} 
                         columns={columns} 
                         autoHeight 
                         onRowDoubleClick={handleRowClick}
                         disableRowSelectionOnClick
+                        paginationMode="server"
+                        rowCount={ticketsTotal}
+                        paginationModel={{ page: ticketsCurrentPage - 1, pageSize: 50 }}
+                        onPaginationModelChange={(model) => goToTicketsPage(model.page)}
+                        pageSizeOptions={[50]}
                         sx={{ 
                             border: 'none', 
                             '& .MuiDataGrid-columnHeaders': { bgcolor: '#F4F7FE', borderBottom: 'none' },
@@ -209,7 +232,3 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
         </AdminLayout>
     );
 }
-
-
-
-

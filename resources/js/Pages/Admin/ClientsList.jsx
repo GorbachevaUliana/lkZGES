@@ -151,6 +151,20 @@ export default function ClientsList({ auth, clients, tariffs }) {
     };
 
     const clientsData = Array.isArray(clients) ? clients : (clients?.data || []);
+    // Проблема №35: бэк пагинирует по 50 (ClientResource::collection() даёт
+    // meta.current_page/last_page/total), но фронт раньше эти поля не
+    // читал вообще — записи за пределами первых 50 были недостижимы.
+    const clientsMeta = clients?.meta || {};
+    const currentPage = clientsMeta.current_page || 1;
+    const totalClients = clientsMeta.total ?? clientsData.length;
+
+    const goToPage = (zeroBasedPage) => {
+        router.get(route('admin.clients.index'), { page: zeroBasedPage + 1 }, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['clients'],
+        });
+    };
 
     const filteredClients = useMemo(() => {
         const query = searchQuery.toLowerCase();
@@ -225,6 +239,27 @@ export default function ClientsList({ auth, clients, tariffs }) {
         })
     }
 
+    // Раньше onDeleteDocument вообще не передавался в ClientCard —
+    // кнопка удаления документа падала с TypeError. Реализована так же,
+    // как в TicketsIndex — без чтения page.props, чтобы не зависеть от
+    // формы ответа (пагинированной или нет).
+    const promptDeleteDocument = (docId) => {
+        setConfirmMeta({
+            open: true,
+            title: 'Удаление документа',
+            content: 'Удалить этот файл навсегда?',
+            onConfirm: () => {
+                router.delete(route('admin.documents.destroy', docId), {
+                    onSuccess: () => {
+                        setConfirmMeta(prev => ({ ...prev, open: false }));
+                        setData('documents', (data.documents || []).filter(doc => doc.id !== docId));
+                        showToast('Документ успешно удален');
+                    }
+                });
+            }
+        });
+    }
+
     return (
         <AdminLayout>
             <Head title="Потребители" />
@@ -249,7 +284,7 @@ export default function ClientsList({ auth, clients, tariffs }) {
                         </Box>
                     </Box>
 
-                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid
                             rows={filteredClients}
                             columns={columns}
@@ -257,6 +292,11 @@ export default function ClientsList({ auth, clients, tariffs }) {
                             onRowDoubleClick={handleRowClick}
                             sx={{ border: 'none' }}
                             getRowId={(row) => row.id}
+                            paginationMode="server"
+                            rowCount={totalClients}
+                            paginationModel={{ page: currentPage - 1, pageSize: 50 }}
+                            onPaginationModelChange={(model) => goToPage(model.page)}
+                            pageSizeOptions={[50]}
                         />
                     </Paper>
 
@@ -461,6 +501,7 @@ export default function ClientsList({ auth, clients, tariffs }) {
                         open={editOpen} onClose={() => setEditOpen(false)}
                         data={data} setData={setData} errors={errors}
                         showToast={showToast} onDeleteClient={promptDeleteClient}
+                        onDeleteDocument={promptDeleteDocument}
                         tariffs={tariffs}
                     />
 
