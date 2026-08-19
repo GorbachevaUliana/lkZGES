@@ -135,7 +135,7 @@ export default function StaffList({ auth, staff }) {
                         </Box>
                     </Box>
 
-                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid 
                             rows={filteredStaff}
                             columns={columns}
