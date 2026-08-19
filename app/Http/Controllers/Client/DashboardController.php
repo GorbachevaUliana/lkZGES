@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Property;
 use App\Models\Application;
 use App\Models\Document;
+use App\Models\MeterReading;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -170,16 +171,22 @@ class DashboardController extends Controller
             ];
         }
 
-        $totalDebt = 0;
+        $propertyIds = $activeProperties->pluck('id');
 
-        $lastReading = null;
-        foreach ($activeProperties as $property) {
-            $lastMeterReading = $property->meterReadings()->latest('reading_date')->first();
-            if ($lastMeterReading) {
-                $lastReading = $lastMeterReading->current_value;
-                break;
-            }
-        }
+        // Было: $totalDebt = 0; — объявлялось и никогда не пересчитывалось,
+        // клиент всегда видел долг «0» независимо от реальных неоплаченных
+        // показаний. Теперь считаем по-настоящему: сумма total_sum по всем
+        // неоплаченным показаниям на активных объектах клиента.
+        $totalDebt = MeterReading::whereIn('property_id', $propertyIds)
+            ->where('is_paid', false)
+            ->sum('total_sum');
+
+        // Было: foreach по объектам с отдельным запросом на каждой
+        // итерации (N+1) в поисках первого объекта с показанием. Теперь —
+        // один запрос по всем объектам сразу.
+        $lastReading = MeterReading::whereIn('property_id', $propertyIds)
+            ->latest('reading_date')
+            ->value('current_value');
 
         $tariff = $activeProperties->first()?->tariff?->name;
 
