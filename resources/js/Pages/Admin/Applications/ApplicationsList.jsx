@@ -28,6 +28,18 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
     const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
     const [confirmMeta, setConfirmMeta] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
     const appData = Array.isArray(applications) ? applications : (applications.data || []);
+    // Проблема №35: как и в тикетах — обычный пагинированный ответ,
+    // current_page/last_page/total лежат в корне.
+    const appsCurrentPage = applications?.current_page || 1;
+    const appsTotal = applications?.total ?? appData.length;
+
+    const goToApplicationsPage = (zeroBasedPage) => {
+        router.get(route('admin.applications.index'), { page: zeroBasedPage + 1 }, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['applications'],
+        });
+    };
 
     const showToast = (message, severity = 'success') => {
         setToast({ open: true, message, severity });
@@ -237,13 +249,18 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                     </Box>
 
                     {/* Таблица */}
-                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid
                             rows={filteredApplications}
                             columns={columns}
                             autoHeight
                             onRowDoubleClick={handleRowDoubleClick}
                             disableRowSelectionOnClick
+                            paginationMode="server"
+                            rowCount={appsTotal}
+                            paginationModel={{ page: appsCurrentPage - 1, pageSize: 50 }}
+                            onPaginationModelChange={(model) => goToApplicationsPage(model.page)}
+                            pageSizeOptions={[50]}
                             sx={{ border: 'none'}}/>
                     </Paper>
                     {/* Карточка заявки */}
