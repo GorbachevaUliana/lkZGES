@@ -10,6 +10,8 @@ import {
 } from '@mui/icons-material';
 
 export default function Index({ auth, readings, data, id}) {
+    // Проблема №35: показания тоже пагинируются по 50 на бэке, но фронт
+    // это игнорировал.
     const readingsRows = readings.data ?? readings;
     const readingsCurrentPage = readings?.current_page || 1;
     const readingsTotal = readings?.total ?? readingsRows.length;
@@ -25,14 +27,14 @@ export default function Index({ auth, readings, data, id}) {
     const columns = [
         { field: 'id', headerName: 'ID', width: 70 },
         { 
-            field: 'client_name',
-            headerName: 'Клиент',
+            field: 'client_name', 
+            headerName: 'Клиент', 
             flex: 1.5,
             valueGetter: (params, row) => row.client?.user?.name || 'Удален'
         },
         { 
-            field: 'address',
-            headerName: 'Адрес',
+            field: 'address', 
+            headerName: 'Адрес', 
             flex: 2,
             valueGetter: (params, row) => row.client?.address || '—'
         },
@@ -104,7 +106,7 @@ export default function Index({ auth, readings, data, id}) {
                     </Box>
 
                     <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 20px 50px rgba(112, 144, 176, 0.15)' }}>
-                        <DataGrid
+                        <DataGrid 
                             rows={readingsRows} 
                             columns={columns} 
                             autoHeight
