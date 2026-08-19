@@ -20,7 +20,12 @@ export default function TicketCard({ auth, open, onClose, data, setData, showToa
         }, {
             onSuccess: (page) => {
                 showToast('Обращение успешно обновлено');
-                const updatedTicket = page.props.tickets.find(t => t.id === data.id);
+                // tickets приходит пагинированным ({ data: [...] }), а не
+                // плоским массивом — прямой .find() на нём падал.
+                const ticketsList = Array.isArray(page.props.tickets)
+                    ? page.props.tickets
+                    : (page.props.tickets?.data || []);
+                const updatedTicket = ticketsList.find(t => t.id === data.id);
                 if (updatedTicket) {
                     setData(updatedTicket);
                 }
