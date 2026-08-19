@@ -63,7 +63,12 @@ export default function ClientCard({
         router.post(route('admin.clients.upload', data.id), { file }, {
             forceFormData: true, // Здесь он нужен, так как загружается файл
             onSuccess: (page) => {
-                const updated = page.props.clients.find(c => c.id === data.id);
+                // clients приходит пагинированным ({ data: [...] }) — прямой
+                // .find() на нём падал так же, как в TicketCard.
+                const clientsList = Array.isArray(page.props.clients)
+                    ? page.props.clients
+                    : (page.props.clients?.data || []);
+                const updated = clientsList.find(c => c.id === data.id);
                 if (updated) setData('documents', updated.documents);
                 showToast('Файл загружен');
             }
