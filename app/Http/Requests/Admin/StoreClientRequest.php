@@ -41,7 +41,7 @@ class StoreClientRequest extends BaseFormRequest
 
     public function withValidator($validator): void
     {
-        // Проверка уникальности лицевых счетов в БД — нельзя делать через
+        // Проверка уникальности лицевых счетов в базе данных — нельзя делать через
         // правило unique:properties,account_number, потому что мы проверяем
         // сразу массив и хотим указать конкретный номер в сообщении об ошибке.
         $validator->after(function ($validator) {
