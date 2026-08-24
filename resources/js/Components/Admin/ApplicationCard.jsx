@@ -22,7 +22,7 @@ function TabPanel({ children, value, index }) {
     return value === index ? <Box sx={{ py: 3 }}>{children}</Box> : null;
 }
 
-export default function ApplicationCard({ open, onClose, application, statuses, showToast, tariffs }) {
+export default function ApplicationCard({ open, onClose, application, statuses, showToast, tariffs, onRefresh }) {
     const [tabValue, setTabValue] = useState(0);
     const [accountNumber, setAccountNumber] = useState('');
     const [adminComment, setAdminComment] = useState('');
@@ -44,7 +44,7 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
     if (!application) return null;
 
     const appId = application.id || application.data?.id;
-    const colors = statusColors[application.status] || { bg: '#F5F5F5', color: '#666', label: application.status };
+    const colors = APPLICATION_STATUS_COLORS[application.status] || { bg: '#F5F5F5', color: '#666', label: application.status };
     const isLegal = application.client_type === 'legal';
 
     const handleUpdateStatus = () => {
@@ -74,6 +74,7 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
             onSuccess: () => {
                 showToast('Статус обновлён');
                 setProcessing(false);
+                onRefresh?.();
             },
 
             onError: (errors) => {
@@ -91,7 +92,10 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
         formData.append('file', file);
         router.post(`/admin/applications/${appId}/contract`, formData, {
             forceFormData: true,
-            onSuccess: () => showToast('Договор загружен'),
+            onSuccess: () => {
+                showToast('Договор загружен');
+                onRefresh?.();
+            },
             onError: () => showToast('Ошибка загрузки', 'error')
         });
     };
@@ -105,7 +109,10 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
 
         router.post(`/admin/applications/${appId}/document`, formData, {
             forceFormData: true,
-            onSuccess: () => showToast('Документ загружен'),
+            onSuccess: () => {
+                showToast('Документ загружен');
+                onRefresh?.();
+            },
             onError: () => showToast('Ошибка загрузки', 'error')
         });
     };

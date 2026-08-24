@@ -66,16 +66,20 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
         });
     }, [searchQuery, statusFilter, appData]);
 
-    const handleRowDoubleClick = async (params) => {
+    const fetchApplication = async (id) => {
         try {
-            const response = await fetch(`/admin/applications/${params.row.id}`);
+            const response = await fetch(`/admin/applications/${id}`);
             const data = await response.json();
             setSelectedApplication(data.application);
-            setCardOpen(true);
         } catch (error) {
             console.error('Error loading application:', error);
             showToast('Ошибка при загрузке данных заявки', 'error');
         }
+    };
+
+    const handleRowDoubleClick = async (params) => {
+        await fetchApplication(params.row.id);
+        setCardOpen(true);
     };
     const handleTakeToWork = (id) => {
         setConfirmMeta({
@@ -168,7 +172,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
             field: 'account_number',
             headerName: 'Лицевой счет',
             width: 130,
-            renderCell: (params) => params.row.account_number || 'Не указан' 
+            renderCell: (params) => params.row.account_number || 'Не указан'
         },
         {
             field: 'take_to_work',
@@ -268,6 +272,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                         open={cardOpen}
                         onClose={() => setCardOpen(false)}
                         application={selectedApplication}
+                        onRefresh={() => selectedApplication && fetchApplication(selectedApplication.id || selectedApplication.data?.id)}
                         statuses={statuses}
                         showToast={showToast}
                         tariffs={tariffs}/>

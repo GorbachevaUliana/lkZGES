@@ -83,7 +83,7 @@ export default function ClientLayout({ user, children, title, application, prope
                         </> 
                     ) : (
                         <>
-                            Ваша заявка на заключение договора рассматривается. 
+                            Ваша заявка на заключение договора рассматривается.
                             Функция обращений станет доступна после одобрения.
                         </>
                     )}
@@ -160,6 +160,7 @@ export default function ClientLayout({ user, children, title, application, prope
 
             <Box
                 component="main"
+
                 sx={{
                     flexGrow: 1,
                     minWidth: 0,
@@ -170,7 +171,9 @@ export default function ClientLayout({ user, children, title, application, prope
                 }}
             >
                 {!isMobile && (
-                    <Typography variant="h4" fontWeight="bold" sx={{ mb: 4, color: '#1B2559' }}>{title}</Typography>
+                    <Typography variant="h4" fontWeight="bold" sx={{ mb: 4, color: '#1B2559' }}>
+                        {title}
+                    </Typography>
                 )}
                 {children}
             </Box>

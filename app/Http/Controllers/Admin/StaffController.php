@@ -29,11 +29,18 @@ class StaffController extends Controller
     {
         $dto = CreateStaffDTO::fromRequest($request);
 
-        User::create([
-            'name'     => $dto->name,
-            'email'    => $dto->email,
-            'password' => Hash::make($dto->password),
-            'role'     => $dto->role->value,
+        // role и permissions намеренно исключены из User::$fillable
+        // (см. RegisteredUserController — это осознанная защита от Mass
+        // Assignment). Но именно поэтому обычный create() тут молча
+        // отбрасывал role и permissions — пользователь создавался с
+        // ролью по умолчанию ('client'), что бы ни было выбрано в форме.
+        // update() ниже уже делает это правильно через forceFill().
+        User::forceCreate([
+            'name'        => $dto->name,
+            'email'       => $dto->email,
+            'password'    => Hash::make($dto->password),
+            'role'        => $dto->role->value,
+            'permissions' => $dto->permissions,
         ]);
 
         return back()->with('success', 'Сотрудник создан');

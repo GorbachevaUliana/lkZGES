@@ -39,6 +39,14 @@ class Application extends Model
         'account_number',
         'status_name',
         'generated_pdf_url',
+        // Раньше отсутствовали здесь — у всех троих есть рабочий
+        // get...Attribute() ниже по файлу, но без записи в $appends
+        // Eloquent не включает их в JSON вообще. contract_pdf_url —
+        // ровно то, из-за чего в карточке всегда было «Договор ещё не
+        // загружен», даже когда договор был реально загружен.
+        'contract_pdf_url',
+        'client_type_name',
+        'processor_name',
     ];
 
     // ==================== CONSTANTS ====================

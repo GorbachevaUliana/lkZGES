@@ -125,3 +125,5 @@ export default function Index({ auth, readings, data, id}) {
         </AdminLayout>
     );
 }
+
+//Добавить плашку "В разработке" под оплатой
