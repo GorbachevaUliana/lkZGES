@@ -24,6 +24,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedApplication, setSelectedApplication] = useState(null);
+    const [allowedNextStatuses, setAllowedNextStatuses] = useState([]);
     const [cardOpen, setCardOpen] = useState(false);
     const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
     const [confirmMeta, setConfirmMeta] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
@@ -71,6 +72,14 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
             const response = await fetch(`/admin/applications/${id}`);
             const data = await response.json();
             setSelectedApplication(data.application);
+            // Раньше не читалось вообще — Select статуса показывал ВСЕ
+            // статусы без ограничений (см. Проблема, найденная 22.08),
+            // позволяя выбрать переход, недопустимый по state machine в
+            // ApplicationService (например, "Ожидает" сразу в "Одобрена",
+            // минуя "В работе"). Бэк это и раньше корректно отклонял по
+            // валидации — но человеку в интерфейсе такой вариант вообще
+            // не должен предлагаться.
+            setAllowedNextStatuses(data.allowedNextStatuses || []);
         } catch (error) {
             console.error('Error loading application:', error);
             showToast('Ошибка при загрузке данных заявки', 'error');
@@ -172,7 +181,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
             field: 'account_number',
             headerName: 'Лицевой счет',
             width: 130,
-            renderCell: (params) => params.row.account_number || 'Не указан'
+            renderCell: (params) => params.row.account_number || 'Не указан' 
         },
         {
             field: 'take_to_work',
@@ -274,6 +283,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                         application={selectedApplication}
                         onRefresh={() => selectedApplication && fetchApplication(selectedApplication.id || selectedApplication.data?.id)}
                         statuses={statuses}
+                        allowedNextStatuses={allowedNextStatuses}
                         showToast={showToast}
                         tariffs={tariffs}/>
 

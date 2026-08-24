@@ -22,24 +22,53 @@ function TabPanel({ children, value, index }) {
     return value === index ? <Box sx={{ py: 3 }}>{children}</Box> : null;
 }
 
-export default function ApplicationCard({ open, onClose, application, statuses, showToast, tariffs, onRefresh }) {
+// "2026-08-24T07:38:46.000000Z" -> "24.08.2026 07:38"
+function formatDateTime(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export default function ApplicationCard({ open, onClose, application, statuses, showToast, tariffs, onRefresh, allowedNextStatuses }) {
     const [tabValue, setTabValue] = useState(0);
     const [accountNumber, setAccountNumber] = useState('');
     const [adminComment, setAdminComment] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('');
     const [processing, setProcessing] = useState(false);
     const [tariffId, setTariffId] = useState('');
+    // Разовый флаг: зелёная плашка «Заявка одобрена» должна появляться
+    // только сразу после самого действия одобрения, а не каждый раз при
+    // открытии уже одобренной заявки. Сбрасывается при закрытии карточки.
+    const [justApproved, setJustApproved] = useState(false);
 
 
+    const appIdForEffects = application?.id || application?.data?.id;
+
+    // Синхронизация полей формы с данными заявки — должна происходить
+    // при каждом обновлении application, включая обновления после
+    // успешных действий (см. onRefresh), а не только при открытии.
     React.useEffect(() => {
         if (application) {
             setSelectedStatus(application.status || '');
             setAdminComment(application.admin_comment || '');
-            setAccountNumber(application.client?.account_number || '');
+            setAccountNumber(application.account_number || '');
             setTariffId(application.tariff_id || '');
-            setTabValue(0);
         }
     }, [application]);
+
+    // Сброс вкладки — отдельно, и только когда открывается ДРУГАЯ заявка
+    // или карточка открывается заново. Раньше жил в одном эффекте с
+    // синхронизацией полей выше и срабатывал на каждое фоновое
+    // обновление той же самой заявки (после загрузки договора,
+    // документа, смены статуса) — из-за этого карточка каждый раз
+    // прыгала на первую вкладку, даже если пользователь был на второй.
+    React.useEffect(() => {
+        if (open) {
+            setTabValue(0);
+        }
+    }, [appIdForEffects, open]);
 
     if (!application) return null;
 
@@ -74,6 +103,9 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
             onSuccess: () => {
                 showToast('Статус обновлён');
                 setProcessing(false);
+                if (selectedStatus === 'approved') {
+                    setJustApproved(true);
+                }
                 onRefresh?.();
             },
 
@@ -131,8 +163,16 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
 
     const applicantNameFormatted = formatApplicantName();
 
+    // Разовая плашка одобрения не должна показываться повторно, если
+    // эту же (уже одобренную) заявку открыть заново — сбрасываем флаг
+    // при закрытии карточки, а не только при смене заявки.
+    const handleClose = () => {
+        setJustApproved(false);
+        onClose?.();
+    };
+
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: '24px' } }}>
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: '24px' } }}>
             {/* Шапка */}
             <Box sx={{ bgcolor: '#0B1437', color: 'white', p: 3 }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -411,84 +451,90 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
 
                 {/* TAB 2: Обработка */}
                 <TabPanel value={tabValue} index={2}>
-                    {application.status === 'approved' && (
+                    {application.status === 'approved' && justApproved && (
                         <Alert severity="success" sx={{ mb: 3, borderRadius: '12px' }}>
-                            Заявка одобрена! Клиенту присвоен лицевой счёт: <strong>{application.client?.account_number}</strong>
+                            Заявка одобрена! Клиенту присвоен лицевой счёт: <strong>{application.account_number}</strong>
                         </Alert>
                     )}
 
                     <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                Статус заявки
-                            </Typography>
-                            <FormControl fullWidth disabled={application.status === 'approved'}>
-                                <Select
-                                    value={selectedStatus}
-                                    onChange={(e) => setSelectedStatus(e.target.value)}
-                                    sx={{ 
-                                        borderRadius: '12px',
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderRadius: '12px',
-                                        }
-                                    }}
-                                >
-                                    {Object.entries(statuses || {}).map(([value, label]) => (
-                                        <MenuItem key={value} value={value}>{label}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        {/* Лицевой счёт - показываем при одобрении */}
-                        {(selectedStatus === 'approved' || application.status === 'approved') && (
+                        {application.status !== 'approved' && (
                             <Grid item xs={12}>
-                                <Alert severity="info" sx={{ mb: 2, borderRadius: '12px' }}>
-                                    При одобрении заявки укажите лицевой счёт клиента. Он будет использоваться для входа в личный кабинет.
-                                </Alert>
-                                <TextField
-                                    fullWidth
-                                    label="Лицевой счёт"
-                                    value={accountNumber}
-                                    onChange={(e) => setAccountNumber(e.target.value)}
-                                    disabled={application.status === 'approved'}
-                                    required
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                                />
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Статус заявки
+                                </Typography>
                                 <FormControl fullWidth>
-                                    <InputLabel>Тариф</InputLabel>
                                     <Select
-                                        value={tariffId}
-                                        onChange={(e) => setTariffId(e.target.value)}
+                                        value={selectedStatus}
+                                        onChange={(e) => setSelectedStatus(e.target.value)}
+                                        sx={{ 
+                                            borderRadius: '12px',
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderRadius: '12px',
+                                            }
+                                        }}
                                     >
-                                        {tariffs.map(tariff => (
-                                            <MenuItem key={tariff.id} value={tariff.id}>
-                                                {tariff.name}
-                                            </MenuItem>
+                                        <MenuItem value={application.status}>
+                                            {statuses?.[application.status] || application.status} (текущий)
+                                        </MenuItem>
+                                        {(allowedNextStatuses || []).map(({ value, label }) => (
+                                            <MenuItem key={value} value={value}>{label}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
                         )}
 
-                        {/* 
-                        {selectedStatus === 'approved' && (
+                        {application.status === 'approved' ? (
+                            // Заявка уже одобрена и сохранена — просто текст,
+                            // не поля ввода. Синяя плашка-подсказка тут больше
+                            // не нужна: лицевой счёт уже указан и заявка уже
+                            // одобрена, подсказка о том, что делать при
+                            // одобрении, к этому моменту неактуальна.
                             <Grid item xs={12}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Тариф</InputLabel>
-                                    <Select
-                                        value={tariffId}
-                                        onChange={(e) => setTariffId(e.target.value)}
-                                    >
-                                        {tariffs.map(tariff => (
-                                            <MenuItem key={tariff.id} value={tariff.id}>
-                                                {tariff.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Лицевой счёт
+                                </Typography>
+                                <Typography variant="body1" sx={{ mb: 2 }}>
+                                    {application.account_number || '—'}
+                                </Typography>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Тариф
+                                </Typography>
+                                <Typography variant="body1">
+                                    {tariffs.find(t => t.id === application.tariff_id)?.name || '—'}
+                                </Typography>
                             </Grid>
-                        )} */}
+                        ) : (
+                            selectedStatus === 'approved' && (
+                                <Grid item xs={12}>
+                                    <Alert severity="info" sx={{ mb: 2, borderRadius: '12px' }}>
+                                        При одобрении заявки укажите лицевой счёт клиента. Он будет использоваться для входа в личный кабинет.
+                                    </Alert>
+                                    <TextField
+                                        fullWidth
+                                        label="Лицевой счёт"
+                                        value={accountNumber}
+                                        onChange={(e) => setAccountNumber(e.target.value)}
+                                        required
+                                        sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                    />
+                                    <FormControl fullWidth>
+                                        <InputLabel>Тариф</InputLabel>
+                                        <Select
+                                            value={tariffId}
+                                            onChange={(e) => setTariffId(e.target.value)}
+                                        >
+                                            {tariffs.map(tariff => (
+                                                <MenuItem key={tariff.id} value={tariff.id}>
+                                                    {tariff.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                            )
+                        )}
 
                         <Grid item xs={12}>
                             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -508,7 +554,7 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                         {application.processed_at && (
                             <Grid item xs={12}>
                                 <Typography variant="body2" color="text.secondary">
-                                    Обработано: {application.processed_at} • {application.processed_by_name}
+                                    Обработано: {formatDateTime(application.processed_at)} {application.processed_by_name}
                                 </Typography>
                             </Grid>
                         )}
@@ -531,7 +577,7 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
             </DialogContent>
 
             <DialogActions sx={{ p: 2 }}>
-                <Button onClick={onClose} color="inherit">Закрыть</Button>
+                <Button onClick={handleClose} color="inherit">Закрыть</Button>
             </DialogActions>
         </Dialog>
     );

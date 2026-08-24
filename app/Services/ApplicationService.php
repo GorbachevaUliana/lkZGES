@@ -22,7 +22,12 @@ class ApplicationService
      */
     private const ALLOWED_TRANSITIONS = [
         ApplicationStatus::New->value => [ApplicationStatus::Pending->value],
-        ApplicationStatus::Pending->value => [ApplicationStatus::Processing->value, ApplicationStatus::Rejected->value],
+        // Раньше отсюда можно было попасть только в "processing" —
+        // одобрить заявку, минуя "В работе", было в принципе нельзя, даже
+        // если её реально рассмотрели быстро. Добавлен прямой переход в
+        // "approved", "processing" остаётся отдельным путём для заявок,
+        // которые нужно вести дольше.
+        ApplicationStatus::Pending->value => [ApplicationStatus::Processing->value, ApplicationStatus::Approved->value, ApplicationStatus::Rejected->value],
         ApplicationStatus::Processing->value => [ApplicationStatus::Approved->value, ApplicationStatus::Rejected->value],
         ApplicationStatus::Approved->value => [],
         ApplicationStatus::Rejected->value => [],
