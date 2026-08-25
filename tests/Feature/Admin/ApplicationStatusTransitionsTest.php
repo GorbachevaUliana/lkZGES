@@ -58,6 +58,7 @@ class ApplicationStatusTransitionsTest extends TestCase
             'client_type' => ClientType::Individual->value,
             'property_id' => $property->id,
             'status' => ApplicationStatus::Pending->value,
+            'data' => [],
         ]);
 
         return [$admin, $application, $property, $tariff];

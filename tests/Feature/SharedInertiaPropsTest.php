@@ -73,7 +73,7 @@ class SharedInertiaPropsTest extends TestCase
         $response = $this->actingAs($staff)->get(route('admin.dashboard'));
 
         $response->assertInertia(fn ($page) => $page
-            ->where('auth.user.permissions', ['clients', 'tickets'])
+            ->where('auth.user.permissions', ['dashboard', 'clients', 'tickets'])
         );
     }
 
@@ -87,7 +87,7 @@ class SharedInertiaPropsTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
 
         $response->assertInertia(fn ($page) => $page
-            ->missing('hasActiveProperties')
+            ->where('hasActiveProperties', null)
         );
     }
 }

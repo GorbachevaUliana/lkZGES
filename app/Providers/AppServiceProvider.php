@@ -41,6 +41,37 @@ class AppServiceProvider extends ServiceProvider
                         : null,
                 ];
             },
+            // ClientLayout решает, показывать ли полное меню, по
+            // hasActiveProperties — но раньше этот проп передавал только
+            // Client/DashboardController::index(), а не остальные методы
+            // (например, documents()). На страницах, которые его не
+            // передавали, меню клиента с активным объектом откатывалось к
+            // урезанному варианту для заявителя. Через общий Inertia::share()
+            // это больше не зависит от того, что именно передал конкретный
+            // контроллер.
+            //
+            // (Раньше эта же правка ошибочно вносилась в
+            // App\Http\Middleware\HandleInertiaRequests — этот класс
+            // существует в проекте, но нигде не зарегистрирован и реально
+            // не выполняется. Правку перенесла сюда, в место, которое
+            // приложение действительно использует.)
+            'hasActiveProperties' => function () {
+                $user = auth()->user();
+
+                if (! $user || $user->role !== \App\Enums\UserRole::Client) {
+                    return null;
+                }
+
+                $client = $user->client;
+
+                return $client
+                    ? $client->properties()
+                        ->where('status', 'active')
+                        ->whereNotNull('account_number')
+                        ->where('account_number', '!=', '')
+                        ->exists()
+                    : false;
+            },
         ]);
     }
 }
