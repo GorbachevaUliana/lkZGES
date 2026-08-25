@@ -67,7 +67,7 @@ class SharedInertiaPropsTest extends TestCase
     {
         $staff = User::factory()->create([
             'role' => UserRole::Staff,
-            'permissions' => ['clients', 'tickets'],
+            'permissions' => ['dashboard', 'clients', 'tickets'],
         ]);
 
         $response = $this->actingAs($staff)->get(route('admin.dashboard'));

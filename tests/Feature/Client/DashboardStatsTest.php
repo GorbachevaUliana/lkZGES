@@ -73,7 +73,7 @@ class DashboardStatsTest extends TestCase
 
         $response->assertInertia(fn ($page) => $page
             ->component('Client/Dashboard')
-            ->where('stats.totalDebt', '750.75')
+            ->where('stats.totalDebt', 750.75)
         );
     }
 
@@ -87,7 +87,7 @@ class DashboardStatsTest extends TestCase
 
         $response->assertInertia(fn ($page) => $page
             ->component('Client/Dashboard')
-            ->where('stats.totalDebt', '0.00')
+            ->where('stats.totalDebt', 0)
         );
     }
 

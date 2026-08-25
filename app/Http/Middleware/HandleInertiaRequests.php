@@ -29,16 +29,46 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
+        $user = $request->user();
+
+        $shared = [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' -> $request->user()->id,
-                    'name' -> $request->user()->name,
-                    'email' -> $request->user()->email,
-                    'role' -> $request->user()->role,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    // Раньше не передавалось вообще — AdminLayout читает
+                    // user.permissions для показа пунктов меню сотруднику
+                    // без роли admin, поэтому у любого сотрудника без роли
+                    // "Администратор" меню было пустым независимо от того,
+                    // какие права ему реально назначены.
+                    'permissions' => $user->permissions,
                 ] : null,
             ],
         ];
+
+        // ClientLayout определяет, показывать ли полное меню, по
+        // hasActiveProperties/properties — но раньше эти пропсы передавал
+        // только Client/DashboardController::index(), а не остальные
+        // методы (например, documents()). На страницах, которые их не
+        // передавали, меню клиента с активным объектом откатывалось к
+        // урезанному варианту для заявителя. Теперь это расшарено глобально
+        // и не зависит от того, что именно передал конкретный контроллер.
+        if ($user && $user->role === \App\Enums\UserRole::Client) {
+            $client = $user->client;
+            $hasActiveProperties = $client
+                ? $client->properties()
+                    ->where('status', 'active')
+                    ->whereNotNull('account_number')
+                    ->where('account_number', '!=', '')
+                    ->exists()
+                : false;
+
+            $shared['hasActiveProperties'] = $hasActiveProperties;
+        }
+
+        return $shared;
     }
 }

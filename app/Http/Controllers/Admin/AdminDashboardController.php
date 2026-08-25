@@ -33,14 +33,24 @@ class AdminDashboardController extends Controller
         }
 
         // 2. Линейный график (Динамика за 30 дней)
-        $chartData = Ticket::where('created_at', '>=', Carbon::now()->subDays(30))
-            ->select(
-                DB::raw("to_char(created_at, 'DD.MM') as date"),
-                DB::raw('count(*) as count')
-            )
-            ->groupBy('date')
-            ->orderBy(DB::raw('min(created_at)'), 'ASC')
-            ->get();
+        // Раньше группировка и форматирование шли через to_char() —
+        // функцию, которой в SQLite не существует вообще (тесты это и
+        // поймали), а на MySQL (если в проде именно он) её тоже нет —
+        // это функция специфична для PostgreSQL. Группировка и
+        // форматирование даты перенесены в PHP через Carbon — работает
+        // одинаково на любой СУБД.
+        $recentTickets = Ticket::where('created_at', '>=', Carbon::now()->subDays(30))->get();
+
+        $chartData = $recentTickets
+            ->groupBy(fn ($ticket) => $ticket->created_at->format('d.m'))
+            ->map(fn ($group, $date) => [
+                'date' => $date,
+                'count' => $group->count(),
+                'sortKey' => $group->first()->created_at,
+            ])
+            ->sortBy('sortKey')
+            ->values()
+            ->map(fn ($item) => ['date' => $item['date'], 'count' => $item['count']]);
 
         // 3. Круговая диаграмма (Темы)
         $pieData = Ticket::select('subject as name', DB::raw('count(*) as value'))
