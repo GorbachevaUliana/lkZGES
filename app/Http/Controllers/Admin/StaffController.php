@@ -77,6 +77,6 @@ class StaffController extends Controller
 
         $staff->delete();
 
-        return back();
+        return back(303);
     }
 }

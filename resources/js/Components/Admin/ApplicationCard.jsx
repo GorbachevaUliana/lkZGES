@@ -536,20 +536,34 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                             )
                         )}
 
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                Комментарий для клиента
-                            </Typography>
-                            <TextField
-                                fullWidth
-                                multiline
-                                rows={3}
-                                value={adminComment}
-                                onChange={(e) => setAdminComment(e.target.value)}
-                                placeholder="Необязательный комментарий, который увидит клиент..."
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                            />
-                        </Grid>
+                        {application.status !== 'approved' ? (
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Комментарий для клиента
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    value={adminComment}
+                                    onChange={(e) => setAdminComment(e.target.value)}
+                                    placeholder="Необязательный комментарий, который увидит клиент..."
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                />
+                            </Grid>
+                        ) : application.admin_comment ? (
+                            // Поле ввода после одобрения смысла не имеет —
+                            // кнопки "Сохранить" в этом состоянии уже нет,
+                            // отправить новый комментарий всё равно нельзя.
+                            // Но если комментарий уже был оставлен раньше —
+                            // показываем его текстом, как лицевой счёт и тариф.
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Комментарий для клиента
+                                </Typography>
+                                <Typography variant="body1">{application.admin_comment}</Typography>
+                            </Grid>
+                        ) : null}
 
                         {application.processed_at && (
                             <Grid item xs={12}>

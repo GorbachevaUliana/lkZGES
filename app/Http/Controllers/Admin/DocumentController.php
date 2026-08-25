@@ -55,6 +55,6 @@ class DocumentController extends Controller
 
         $document->delete();
 
-        return back();
+        return back(303);
     }
 }

@@ -85,6 +85,7 @@ export default function ClientLayout({ user, children, title, application, prope
                         <>
                             Ваша заявка на заключение договора рассматривается.
                             Функция обращений станет доступна после одобрения.
+                            Function ticket will be available after approval
                         </>
                     )}
                 </Alert>

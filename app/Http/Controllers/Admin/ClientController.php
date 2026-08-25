@@ -119,6 +119,6 @@ class ClientController extends Controller
         $client->documents()->delete();
         $client->delete();
 
-        return back();
+        return back(303);
     }
-}   
+}

@@ -24,7 +24,36 @@ function TabPanel({ children, value, index }) {
     return value === index ? <Box sx={{ py: 3 }}>{children}</Box> : null;
 }
 
-const DADATA_API_KEY = "cd4b88f14527df99bbafecb1c09789391eb6f2ff";
+// Ключ вынесен в .env (VITE_DADATA_KEY) вместо хардкода в исходнике —
+// теперь его можно менять/ротировать без правки кода и держать разным
+// для разных окружений. Он всё равно попадёт в собранный клиентский
+// бандл (иначе подсказки адреса не заработают в браузере) — стоит
+// отдельно проверить в личном кабинете DaData, что ключ ограничен по
+// домену.
+const DADATA_API_KEY = import.meta.env.VITE_DADATA_KEY || '';
+
+// Вынесено на уровень модуля и обёрнуто в forwardRef по двум причинам:
+// 1) MUI пытается прокинуть ref в inputComponent — обычная функция-
+//    компонент ref принять не может, отсюда предупреждение в консоли
+//    "Function components cannot be given refs".
+// 2) Если определять компонент прямо внутри рендера ClientCard, при
+//    каждом ре-рендере React считает это НОВЫМ типом компонента и
+//    полностью размонтирует/монтирует AddressSuggestions заново — вместе
+//    с его внутренним состоянием (открытый список подсказок, фокус).
+//    На каждый чих formData это подсказки адреса тихо сбрасывало.
+const AddressSuggestionsInput = React.forwardRef(function AddressSuggestionsInput(
+    { inputRef, onAddressChange, ...props },
+    ref
+) {
+    return (
+        <AddressSuggestions
+            token={DADATA_API_KEY}
+            {...props}
+            inputRef={inputRef || ref}
+            onChange={(s) => onAddressChange(s.value)}
+        />
+    );
+});
 
 export default function ClientCard({ 
     open, 
@@ -167,14 +196,8 @@ export default function ClientCard({
                                 onChange={(e) => setData('address', e.target.value)}
                                 sx={inputSx}
                                 InputProps={{
-                                    inputComponent: ({ inputRef, ...props }) => (
-                                        <AddressSuggestions
-                                            token={DADATA_API_KEY}
-                                            {...props}
-                                            inputRef={inputRef}
-                                            onChange={(s) => setData('address', s.value)}
-                                        />
-                                    ),
+                                    inputComponent: AddressSuggestionsInput,
+                                    inputProps: { onAddressChange: (value) => setData('address', value) },
                                 }}
                             />
                         </Grid>
