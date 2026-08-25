@@ -181,13 +181,13 @@ class PdfTemplateDefinitions
  
     <div class="section">
         <p><strong>3.</strong> Адрес регистрации:
-            <span class="info-row-value" style="min-width: 450px;">{{ registration_address|raw }}</span>
+            <span class="info-row-value" style="min-width: 450px;">{{ registration_address }}</span>
         </p>
     </div>
  
     <div class="section">
         <p><strong>3.1.</strong> Адрес фактического проживания:
-            <span class="info-row-value" style="min-width: 400px;">{{ actual_address|raw }}</span>
+            <span class="info-row-value" style="min-width: 400px;">{{ actual_address }}</span>
         </p>
     </div>
  
@@ -218,10 +218,10 @@ class PdfTemplateDefinitions
     <div class="section">
         <p><strong>Местонахождение объекта, по которому заключается договор:</strong></p>
         <p style="margin-left: 20px;">Адрес:
-            <span class="info-row-value" style="min-width: 500px;">{{ object_address_full|raw }}</span>
+            <span class="info-row-value" style="min-width: 500px;">{{ object_address_full }}</span>
         </p>
         {% if note %}
-        <p style="margin-left: 20px;">Примечание: {{ note|raw }}</p>
+        <p style="margin-left: 20px;">Примечание: {{ note }}</p>
         {% endif %}
         <p style="margin-left: 20px;">Общая площадь помещения:
             <span class="info-row-value">{{ area|default('___') }}</span> кв. м.
@@ -237,20 +237,20 @@ class PdfTemplateDefinitions
         </p>
         {% if act_reference %}
         <p style="margin-left: 20px;">Реквизиты акта об определении границы раздела:
-            <span class="info-row-value" style="min-width: 350px;">{{ act_reference|raw }}</span>
+            <span class="info-row-value" style="min-width: 350px;">{{ act_reference }}</span>
         </p>
         {% endif %}
         <p style="margin-left: 20px;">Сведения о направлениях потребления электроэнергии:</p>
-        <p style="margin-left: 40px;">{{ consumption_purpose|default('___')|raw }}</p>
+        <p style="margin-left: 40px;">{{ consumption_purpose|default('___') }}</p>
         <p style="margin-left: 20px;">Приборы учета установлены:
             <span class="info-row-value">{{ has_meter|default('___') }}</span>
         </p>
         <p style="margin-left: 20px;">Тариф:
-            <span class="info-row-value" style="min-width: 450px;">{{ tariff_choice|default('___')|raw }}</span>
+            <span class="info-row-value" style="min-width: 450px;">{{ tariff_choice|default('___') }}</span>
         </p>
         {% if supply_period %}
         <p style="margin-left: 20px;">Срок электроснабжения:
-            <span class="info-row-value">{{ supply_period|raw }}</span>
+            <span class="info-row-value">{{ supply_period }}</span>
         </p>
         {% endif %}
     </div>
@@ -258,18 +258,18 @@ class PdfTemplateDefinitions
     <div class="section">
         <p><strong>7.</strong> Документы:</p>
         <p style="margin-left: 20px;">Платежные документы прошу предоставлять:</p>
-        <p style="margin-left: 40px;">{{ payment_delivery|default('___')|raw }}</p>
+        <p style="margin-left: 40px;">{{ payment_delivery|default('___') }}</p>
         <p style="margin-left: 20px;">Уведомления прошу направлять:</p>
-        <p style="margin-left: 40px;">{{ notification_delivery|default('___')|raw }}</p>
+        <p style="margin-left: 40px;">{{ notification_delivery|default('___') }}</p>
     </div>
  
     <div class="section" style="margin-top: 15px;">
         <p>В соответствии с ФЗ от 27.07.2006 №152-ФЗ "О персональных данных"
-           даю своё согласие на обработку своих персональных данных: <strong>{{ consent|raw }}</strong></p>
+           даю своё согласие на обработку своих персональных данных: <strong>{{ consent }}</strong></p>
     </div>
  
     <div class="footer">
-        <p><strong>Дата:</strong> {{ created_at|default("now"|date("d.m.Y"))|raw }}</p>
+        <p><strong>Дата:</strong> {{ created_at|default("now"|date("d.m.Y")) }}</p>
  
         <table class="signature-block" style="margin-top: 30px;">
             <tr>
@@ -338,15 +338,15 @@ TWIG;
             <table class="info-table">
                 <tr><td>Полное наименование</td><td><strong>{{ company_name|default('Не указано') }}</strong></td></tr>
                 <tr><td>ИНН</td><td>{{ inn|default('Не указан') }}</td></tr>
-                {% if kpp %}<tr><td>КПП</td><td>{{ kpp|raw }}</td></tr>{% endif %}
-                {% if ogrn %}<tr><td>ОГРН</td><td>{{ ogrn|raw }}</td></tr>{% endif %}
+                {% if kpp %}<tr><td>КПП</td><td>{{ kpp }}</td></tr>{% endif %}
+                {% if ogrn %}<tr><td>ОГРН</td><td>{{ ogrn }}</td></tr>{% endif %}
             </table>
         </div>
  
         <div class="section">
             <div class="section-title">2. Контактная информация</div>
             <table class="info-table">
-                {% if contact_person %}<tr><td>Контактное лицо</td><td><strong>{{ contact_person|raw }}</strong></td></tr>{% endif %}
+                {% if contact_person %}<tr><td>Контактное лицо</td><td><strong>{{ contact_person }}</strong></td></tr>{% endif %}
                 <tr><td>Телефон</td><td>{{ phone|default('Не указан') }}</td></tr>
                 <tr><td>Email</td><td>{{ user_email|default('Не указана') }}</td></tr>
             </table>
@@ -355,7 +355,7 @@ TWIG;
         <div class="section">
             <div class="section-title">3. Адрес объекта энергопотребления</div>
             <table class="info-table">
-                <tr><td>Полный адрес</td><td><strong>{{ object_address_full|raw }}</strong></td></tr>
+                <tr><td>Полный адрес</td><td><strong>{{ object_address_full }}</strong></td></tr>
             </table>
         </div>
  
@@ -366,7 +366,7 @@ TWIG;
     </div>
  
     <div class="footer">
-        <p><strong>Дата подачи заявки:</strong> {{ created_at|default("now"|date("d.m.Y H:i"))|raw }}</p>
+        <p><strong>Дата подачи заявки:</strong> {{ created_at|default("now"|date("d.m.Y H:i")) }}</p>
         <div class="signature-block">
             <div><p>Руководитель:</p><p class="signature-field"></p><p style="font-size: 10px; color: #666;">ФИО, подпись</p></div>
             <div><p>М.П.</p><div class="stamp-area">Место печати</div></div>
