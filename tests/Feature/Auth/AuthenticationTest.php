@@ -27,7 +27,10 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // AuthenticatedSessionController ветвит редирект по роли и наличию
+        // привязанного Client — у обычного User::factory() клиента нет,
+        // поэтому корректный результат — welcome.step, а не dashboard.
+        $response->assertRedirect(route('welcome.step', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

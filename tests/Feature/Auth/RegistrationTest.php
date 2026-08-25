@@ -26,6 +26,8 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        // RegisteredUserController всегда отправляет свежезарегистрированных
+        // на welcome.step (онбординг), не на dashboard.
+        $response->assertRedirect(route('welcome.step', absolute: false));
     }
 }
