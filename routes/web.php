@@ -148,4 +148,19 @@ Route::middleware(['auth', 'verified'])
         });
     });
 
+// Стандартные контроллеры Breeze (вход, регистрация, подтверждение email,
+// подтверждение пароля) после успешного действия вызывают route('dashboard')
+// напрямую — это дефолтное поведение самого Breeze, эти контроллеры не
+// переписывались под кастомные admin.dashboard/client.dashboard. Раньше
+// маршрута с именем ровно 'dashboard' не было вообще ни одного —
+// RouteNotFoundException. Этот маршрут просто перенаправляет дальше по роли.
+Route::middleware('auth')->get('/dashboard', function () {
+    $user = auth()->user();
+
+    return match ($user->role) {
+        \App\Enums\UserRole::Admin, \App\Enums\UserRole::Staff => redirect()->route('admin.dashboard'),
+        default => redirect()->route('client.dashboard'),
+    };
+})->name('dashboard');
+
 require __DIR__.'/auth.php';
