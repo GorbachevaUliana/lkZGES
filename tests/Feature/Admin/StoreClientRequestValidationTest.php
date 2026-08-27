@@ -56,7 +56,7 @@ class StoreClientRequestValidationTest extends TestCase
 
         $validator = Validator::make([
             'client_type' => 'legal',
-            'company_name' => 'ООО Ромашка',
+            'company_name' => 'ООО Кошка',
             'properties' => [$this->baseProperty($tariff->id)],
         ], (new StoreClientRequest())->rules());
 

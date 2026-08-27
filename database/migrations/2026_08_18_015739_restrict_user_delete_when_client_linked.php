@@ -20,7 +20,7 @@ return new class extends Migration
     {
         Schema::table('clients', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
-            $table->foreigh('user_id')
+            $table->foreign('user_id')
                 ->references('id')->on('users')
                 ->onDelete('cascade');
         });
