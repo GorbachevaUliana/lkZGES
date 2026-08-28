@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum ApplicationStatus: string
 {
+    case Draft      = 'draft';
     case New        = 'new';
     case Pending    = 'pending';
     case Processing = 'processing';
@@ -13,6 +14,7 @@ enum ApplicationStatus: string
     public function label(): string
     {
         return match ($this) {
+            self::Draft      => 'Черновик',
             self::New        => 'Новая',
             self::Pending    => 'Ожидает рассмотрения',
             self::Processing => 'В работе',
