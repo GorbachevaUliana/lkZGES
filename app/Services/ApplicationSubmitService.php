@@ -12,6 +12,7 @@ use App\Models\Document;
 use App\Models\PdfTemplate;
 use App\Models\Property;
 use App\Models\User;
+use App\Services\DraftApplicationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class ApplicationSubmitService
     public function __construct(
         private FileUploadService $fileUploadService,
         private PdfDataPreparator $pdfDataPreparator,
+        private DraftApplicationService $draftService,
     ) {}
 
     /**
@@ -48,17 +50,17 @@ class ApplicationSubmitService
 
             $this->promoteGuestToApplicant($user);
 
-            $application = Application::create([
-                'user_id'            => $user->id,
-                'client_id'          => $client->id,
-                'property_id'        => $property->id,
-                'template_id'        => $template->id,
-                'client_type'        => $clientType,
-                'data'               => $normalizedData,
-                'status'             => 'pending',
-                'generated_pdf_path' => '',
+            // Вместо рождения новой заявки — «запекаем» черновик пользователя
+            // (draft → pending), дозаполняя его. Если черновика нет — метод
+            // сам создаст заявку с нуля (запасной путь, поведение как раньше).
+            $application = $this->draftService->finalizeForUser($user, [
+                'client_id'   => $client->id,
+                'property_id' => $property->id,
+                'template_id' => $template->id,
+                'client_type' => $clientType,
+                'data'        => $normalizedData,
             ]);
-
+            
             $pdfPath = $this->generateApplicationPdf($normalizedData, $client, $clientType, $application, $property);
 
             $application->update(['generated_pdf_path' => $pdfPath]);
