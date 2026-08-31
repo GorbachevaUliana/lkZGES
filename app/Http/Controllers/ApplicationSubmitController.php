@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ApplicationTemplate;
 use App\Models\Client;
 use App\Services\ApplicationSubmitService;
+use App\Services\DraftApplicationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,6 +15,7 @@ class ApplicationSubmitController extends Controller
 {
     public function __construct(
         private ApplicationSubmitService $submitService,
+        private DraftApplicationService $draftService,
     ) {}
 
     public function show(Request $request, string $slug): Response|RedirectResponse
@@ -37,6 +39,8 @@ class ApplicationSubmitController extends Controller
                     ->with('error', 'У вас уже есть профиль другого типа клиента — открыта соответствующая форма.');
             }
         }
+
+        $this->draftService->getOrCreateForUser($user, $template);
 
         return Inertia::render('Applications/DynamicForm', [
             'template' => $template->only(['id', 'title', 'slug', 'content', 'client_type']),
