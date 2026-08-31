@@ -13,6 +13,7 @@ use App\Http\Controllers\ApplicationSubmitController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\TicketController as ClientTicketController;
 use App\Http\Controllers\MeterReadingController;
+use App\Http\Controllers\Client\DraftController;
 use App\Models\Client;
 use Illuminate\Support\Facades\Route;
 
@@ -136,6 +137,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
         Route::get('/profile', [ClientDashboardController::class, 'profile'])->name('profile');
         Route::get('/documents', [ClientDashboardController::class, 'documents'])->name('documents');
+        Route::delete('/draft', [DraftController::class, 'destroy'])->name('draft.destroy');
 
         Route::get('/readings', [MeterReadingController::class, 'index'])->name('readings');
         Route::post('/readings', [MeterReadingController::class, 'storeReading'])->name('readings.store');
