@@ -35,16 +35,6 @@ class DraftApplicationService
         ]);
     }
 
-        /**
-     * «Запечь» черновик в поданную заявку (draft → pending).
-     *
-     * Находит черновик пользователя и дозаполняет его переданными полями,
-     * переводя в статус pending. Если черновика нет (например, прямой POST
-     * мимо формы) — создаёт заявку с нуля, как было раньше.
-     *
-     * $attributes — те же поля, что submit писал в Application::create
-     * (client_id, property_id, template_id, client_type, data).
-     */
     public function finalizeForUser(User $user, array $attributes): Application
     {
         $payload = array_merge($attributes, [
@@ -64,5 +54,13 @@ class DraftApplicationService
         return Application::create(array_merge($payload, [
             'user_id' => $user->id,
         ]));
+    }
+
+        /** Текущий черновик пользователя (или null). Для разделов ЛК. */
+    public function currentForUser(User $user): ?Application
+    {
+        return Application::where('user_id', $user->id)
+            ->where('status', ApplicationStatus::Draft->value)
+            ->first();
     }
 }

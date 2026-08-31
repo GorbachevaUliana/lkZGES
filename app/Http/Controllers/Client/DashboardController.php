@@ -7,6 +7,8 @@ use App\Models\Property;
 use App\Models\Application;
 use App\Models\Document;
 use App\Models\MeterReading;
+use App\Services\DraftApplicationService;
+use App\Enums\ApplicationStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -68,40 +70,48 @@ class DashboardController extends Controller
     /**
      * Страница документов клиента
      */
-    public function documents()
+        public function documents(DraftApplicationService $draftService)
     {
-        $user = auth()->user();
+        $user   = auth()->user();
         $client = $user->client;
-        if (!$client) {
-            return redirect()->route('welcome.step');
-        }
-        $documents = Document::where('client_id', $client->id)
-            ->with('application:id,status')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($doc) {
-                return [
-                    'id' => $doc->id,
-                    'name' => $doc->name,
-                    'file_path' => $doc->file_path,
-                    'type' => $doc->type,
-                    'type_name' => $doc->type_name,
-                    'description' => $doc->description,
-                    'url' => $doc->url,
-                    'created_at' => $doc->created_at->format('d.m.Y H:i'),
-                    'application' => $doc->application ? [
-                        'id' => $doc->application->id,
-                        'status' => $doc->application->status,
-                    ] : null,
-                ];
-            });
+        $draft  = $draftService->currentForUser($user);
+
+        // Больше НЕ редиректим при отсутствии клиента: пользователь с одним
+        // лишь черновиком должен видеть раздел; плашку отрисует фронт по draft.
+        $documents = $client
+            ? Document::where('client_id', $client->id)
+                ->with('application:id,status')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($doc) {
+                    return [
+                        'id' => $doc->id,
+                        'name' => $doc->name,
+                        'file_path' => $doc->file_path,
+                        'type' => $doc->type,
+                        'type_name' => $doc->type_name,
+                        'description' => $doc->description,
+                        'url' => $doc->url,
+                        'created_at' => $doc->created_at->format('d.m.Y H:i'),
+                        'application' => $doc->application ? [
+                            'id' => $doc->application->id,
+                            'status' => $doc->application->status,
+                        ] : null,
+                    ];
+                })
+            : collect();
+
+        // Поданная заявка (НЕ черновик): фильтруем статус, иначе latest()
+        // подхватил бы черновик как «последнюю заявку».
         $application = Application::where('user_id', $user->id)
+            ->where('status', '!=', ApplicationStatus::Draft->value)
             ->latest()
             ->first();
 
         return Inertia::render('Client/Documents', [
-            'documents' => $documents,
+            'documents'   => $documents,
             'application' => $application,
+            'draft'       => $draft,
         ]);
     }
 
