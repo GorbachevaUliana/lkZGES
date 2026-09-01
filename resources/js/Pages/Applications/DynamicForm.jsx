@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { Container, Typography, Paper, Box, Stepper, Step, StepLabel, Button } from '@mui/material';
 import { ArrowForward as ArrowIcon, ArrowBack as BackIcon, Send as SendIcon } from '@mui/icons-material';
@@ -17,7 +17,7 @@ export default function DynamicForm({ template, draftData }) {
     );
 }
 
-function DynamicFormContent({ template }) {
+function DynamicFormContent({ template, draftData }) {
     const [activeStep, setActiveStep] = useState(0);
     const clientType      = template.client_type;
     const clientTypeLabel = clientType === 'individual' ? 'Физическое лицо' : 'Юридическое лицо';
@@ -54,6 +54,38 @@ function DynamicFormContent({ template }) {
     }, [template]);
 
     const handleFieldChange = (key, value) => setData(key, value);
+
+    const isFirstRender = useRef(true);
+    const saveTimer = useRef(null);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+
+        saveTimer.current = setTimeout(() => {
+            const fileKeys = new Set();
+            template.content?.forEach(b => {
+                if (b.type === 'file_upload') fileKeys.add(b.data.key || b.data.label);
+            });
+
+            const payload = {};
+            Object.keys(data).forEach(key => {
+                if (!fileKeys.has(key)) payload[key] = data[key];
+            });
+
+            window.axios
+                .patch(route('client.draft.save'), { data: payload })
+                .catch(() => { /* автосохранение фоновое — ошибки не мешаем пользователю */ });
+        }, 1000);
+
+        return () => {
+            if (saveTimer.current) clearTimeout(saveTimer.current);
+        };
+    }, [data, template]);
 
     const isStepValid = (step) => {
         if (step !== 0) return true;
