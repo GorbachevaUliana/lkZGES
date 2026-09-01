@@ -78,8 +78,18 @@ class AccountController extends Controller
             return redirect()->route('welcome.step')
                 ->with('link_step', 'verify');
         }
+        if (empty($client->email)) {
+            $user->forceFill([
+                'link_code'         => null,
+                'link_code_expires' => null,
+                'link_client_id'    => null,
+            ])->save();
 
-        // Клиент найден — генерируем код, отправляем письмо.
+            return redirect()->route('welcome.step')
+                ->with('link_step', 'verify');
+        }
+
+        // У клиента есть почта в базе — генерируем код и шлём ТОЛЬКО на неё.
         $code = (string) random_int(100000, 999999);
 
         $user->forceFill([
@@ -88,14 +98,13 @@ class AccountController extends Controller
             'link_client_id'    => $client->id,
         ])->save();
 
-        $sendTo   = $client->email ?? $user->email;
         $fullName = trim("{$client->last_name} {$client->first_name} {$client->middle_name}");
 
-        Mail::to($sendTo)->send(new AccountLinkCode($code, $fullName));
+        Mail::to($client->email)->send(new AccountLinkCode($code, $fullName));
 
         return redirect()->route('welcome.step')
             ->with('link_step', 'verify')
-            ->with('link_masked_email', $this->maskEmail($sendTo));
+            ->with('link_masked_email', $this->maskEmail($client->email));
     }
 
     /**
