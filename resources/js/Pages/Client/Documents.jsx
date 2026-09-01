@@ -2,7 +2,6 @@ import React from 'react';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { Grid, Paper, Typography, Box, IconButton } from '@mui/material';
 import { Download as DownloadIcon, InsertDriveFile as FileIcon } from '@mui/icons-material';
-import DraftBanner from '@/Components/DraftBanner';
 
 export default function Documents({ auth, documents, application, draft }) {
 
@@ -12,7 +11,6 @@ export default function Documents({ auth, documents, application, draft }) {
         title="Мои документы"
         application={application}
         applicationStatus={applicationStatus}>
-            <DraftBanner draft={draft}/>
             {documents.length === 0 ? (
                 <Box textAlign="center" py={10}>
                     <Typography color="text.secondary">Администратор еще не загрузил документы для вашего аккаунта.</Typography>
