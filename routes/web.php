@@ -138,6 +138,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/profile', [ClientDashboardController::class, 'profile'])->name('profile');
         Route::get('/documents', [ClientDashboardController::class, 'documents'])->name('documents');
         Route::delete('/draft', [DraftController::class, 'destroy'])->name('draft.destroy');
+        Route::patch('/draft/data', [DraftController::class, 'saveData'])->name('draft.save');
 
         Route::get('/readings', [MeterReadingController::class, 'index'])->name('readings');
         Route::post('/readings', [MeterReadingController::class, 'storeReading'])->name('readings.store');
@@ -150,12 +151,6 @@ Route::middleware(['auth', 'verified'])
         });
     });
 
-// Стандартные контроллеры Breeze (вход, регистрация, подтверждение email,
-// подтверждение пароля) после успешного действия вызывают route('dashboard')
-// напрямую — это дефолтное поведение самого Breeze, эти контроллеры не
-// переписывались под кастомные admin.dashboard/client.dashboard. Раньше
-// маршрута с именем ровно 'dashboard' не было вообще ни одного —
-// RouteNotFoundException. Этот маршрут просто перенаправляет дальше по роли.
 Route::middleware('auth')->get('/dashboard', function () {
     $user = auth()->user();
 

@@ -63,4 +63,17 @@ class DraftApplicationService
             ->where('status', ApplicationStatus::Draft->value)
             ->first();
     }
+
+    public function saveDataForUser(User $user, array $data): ?Application
+    {
+        $draft = $this->currentForUser($user);
+        
+        if (!$draft) {
+            return null;
+        }
+
+        $draft->update(['data' => $data]);
+
+        return $draft;
+    }
 }
