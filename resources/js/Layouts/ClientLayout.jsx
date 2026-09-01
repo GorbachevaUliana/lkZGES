@@ -14,24 +14,21 @@ import {
 } from '@mui/icons-material';
 import { ElectricMeter } from '@mui/icons-material';
 import { Link, router, usePage } from '@inertiajs/react';
+import DraftBanner from '@/Components/DraftBanner';
 
 const drawerWidth = 280;
 
 export default function ClientLayout({ user, children, title, application, properties, hasActiveProperties }) {
     const { props } = usePage();
     const theme = useTheme();
-    // Проблема №19: variant="permanent" никак не адаптировался под узкий
-    // экран — тот самый баг с DevTools. На мобильном теперь temporary
-    // Drawer, открывается по кнопке-гамбургеру в AppBar.
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [mobileOpen, setMobileOpen] = React.useState(false);
+    const draftData = props?.draft;
     const userData = user || props?.auth?.user;
     const applicationData = application || props?.application;
     const propertiesData = properties || props?.properties;
     const hasActive = hasActiveProperties ?? props?.hasActiveProperties ?? false;
 
-    // ИСПРАВЛЕНИЕ: Проверяем наличие активных объектов, а не только статус заявки
-    // Пользователь с активными properties имеет полный доступ
     const canUseFullFeatures = hasActive || (propertiesData && propertiesData.some(p => p.status === 'active' && p.account_number));
 
     const currentStatus = applicationData?.status || 'pending';
@@ -39,15 +36,12 @@ export default function ClientLayout({ user, children, title, application, prope
     const isRejected = currentStatus === 'rejected';
     const hasApplication = !!applicationData;
 
-    // ИСПРАВЛЕНИЕ: Меню зависит от наличия активных объектов
     const menuItems = !canUseFullFeatures && hasApplication 
         ? [
-            // Для pending/processing/rejected - урезанное меню
             { label: 'Главная', icon: <HomeIcon />, href: route('client.dashboard'), active: route().current('client.dashboard') },
             { label: 'Мои документы', icon: <DescriptionIcon />, href: route('client.documents'), active: route().current('client.documents') },
         ]
         : [
-            // Полное меню при наличии активных объектов
             { label: 'Главная', icon: <HomeIcon />, href: route('client.dashboard'), active: route().current('client.dashboard') },
             { label: 'Мой профиль', icon: <PersonIcon />, href: route('client.profile'), active: route().current('client.profile') },
             { label: 'Документы', icon: <DescriptionIcon />, href: route('client.documents'), active: route().current('client.documents') },
@@ -69,7 +63,6 @@ export default function ClientLayout({ user, children, title, application, prope
                 </Box>
             </Box>
             <Divider sx={{ mx: 2, mb: 2 }} />
-            {/* ИСПРАВЛЕНИЕ: Предупреждение показываем только без активных объектов */}
             {!canUseFullFeatures && hasApplication && (
                 <Alert 
                     severity={isRejected ? 'error' : 'info'} 
@@ -169,6 +162,7 @@ export default function ClientLayout({ user, children, title, application, prope
                     p: { xs: 2, md: 4 },
                     pt: isMobile ? 10 : 4,
                     boxSizing: 'border-box',
+                    pb: draftData ? 16 : { xs: 2, md: 4 },
                 }}
             >
                 {!isMobile && (
@@ -178,6 +172,7 @@ export default function ClientLayout({ user, children, title, application, prope
                 )}
                 {children}
             </Box>
+            <DraftBanner draft={draftData}/>
         </Box>
     );
 }
