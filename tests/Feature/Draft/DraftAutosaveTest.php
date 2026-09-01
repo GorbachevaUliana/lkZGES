@@ -65,4 +65,20 @@ class DraftAutosaveTest extends TestCase
 
         $this->assertEquals(0, Application::where('user_id', $user->id)->count());
     }
+
+    public function test_show_passes_draft_data_to_form(): void
+    {
+        $user  = User::factory()->create(['role' => UserRole::Applicant]);
+        $draft = $this->makeDraftFor($user);
+        $draft->update(['data' => ['last_name' => 'Иванов']]);
+
+        $response = $this->actingAs($user)
+            ->get(route('application.show', ['slug' => 'application-individual']));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Applications/DynamicForm')
+            ->where('draftData.last_name', 'Иванов')
+        );
+    }
 }

@@ -27,8 +27,6 @@ class ApplicationSubmitController extends Controller
         $user           = auth()->user();
         $existingClient = Client::where('user_id', $user->id)->first();
 
-        // Если у пользователя уже есть профиль другого типа — ведём
-        // на форму, соответствующую его реальному типу клиента.
         if ($existingClient && $existingClient->client_type !== $template->client_type) {
             $correctSlug = ApplicationTemplate::where('client_type', $existingClient->client_type)
                 ->where('is_active', true)
@@ -40,10 +38,11 @@ class ApplicationSubmitController extends Controller
             }
         }
 
-        $this->draftService->getOrCreateForUser($user, $template);
+        $draft = $this->draftService->getOrCreateForUser($user, $template);
 
         return Inertia::render('Applications/DynamicForm', [
-            'template' => $template->only(['id', 'title', 'slug', 'content', 'client_type']),
+            'template'  => $template->only(['id', 'title', 'slug', 'content', 'client_type']),
+            'draftData' => $draft->data ?? [],
         ]);
     }
 

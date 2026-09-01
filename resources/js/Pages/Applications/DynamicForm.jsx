@@ -9,10 +9,10 @@ import FormReview from '@/Components/Form/steps/FormReview';
 
 const STEPS = ['Заполнение данных', 'Проверка'];
 
-export default function DynamicForm({ template }) {
+export default function DynamicForm({ template, draftData }) {
     return (
         <ToastProvider>
-            <DynamicFormContent template={template} />
+            <DynamicFormContent template={template} draftData={draftData}/>
         </ToastProvider>
     );
 }
@@ -22,18 +22,29 @@ function DynamicFormContent({ template }) {
     const clientType      = template.client_type;
     const clientTypeLabel = clientType === 'individual' ? 'Физическое лицо' : 'Юридическое лицо';
 
-    const initialData = useMemo(() => {
+        const initialData = useMemo(() => {
         const fields = {};
+        const fileKeys = new Set();
         template.content?.forEach(block => {
             const key = block.data.key || block.data.label;
             if      (block.type === 'checkbox_group') fields[key] = { preset: [], custom: [] };
             else if (block.type === 'select_field')   fields[key] = { value: '', customValue: '' };
-            else if (block.type === 'file_upload')    fields[key] = [];
+            else if (block.type === 'file_upload')  { fields[key] = []; fileKeys.add(key); }
             else if (block.type === 'dynamic_input')  fields[key] = { selected: '', inputValue: '' };
             else if (block.type === 'input_field')    fields[key] = block.data.default_value || '';
         });
+
+        if (draftData && typeof draftData === 'object') {
+            Object.keys(fields).forEach(key => {
+                if (fileKeys.has(key)) return;
+                if (draftData[key] !== undefined && draftData[key] !== null) {
+                    fields[key] = draftData[key];
+                }
+            });
+        }
+
         return fields;
-    }, [template]);
+    }, [template, draftData]);
 
     const { data, setData, post, processing, errors } = useForm(initialData);
 
