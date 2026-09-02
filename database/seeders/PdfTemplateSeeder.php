@@ -111,202 +111,148 @@ class PdfTemplateSeeder extends Seeder
     </style>
 </head>
 <body>
-    {{-- Шапка --}}
+    {# Шапка #}
     <div class="header-right">
         <p>Генеральному директору</p>
         <p>ООО «Заринская горэлектросеть»</p>
     </div>
 
-    {{-- Заголовок --}}
+    {# Заголовок #}
     <div class="title">
         <h1>ЗАЯВЛЕНИЕ</h1>
         <p><strong>на заключение договора энергоснабжения</strong></p>
         <p>(открытие лицевого счета)</p>
     </div>
 
-    {{-- 1. Инициалы --}}
+    {# 1. Инициалы #}
     <div class="section">
         <p><strong>1.</strong> ФИО заявителя:
-            <span class="info-row-value">{{ $data['last_name'] ?? '___' }}</span>
-            <span class="info-row-value">{{ $data['first_name'] ?? '___' }}</span>
-            <span class="info-row-value">{{ $data['middle_name'] ?? '___' }}</span>
+            <span class="info-row-value">{{ data.last_name|default('___') }}</span>
+            <span class="info-row-value">{{ data.first_name|default('___') }}</span>
+            <span class="info-row-value">{{ data.middle_name|default('___') }}</span>
         </p>
     </div>
 
-    {{-- 2. Паспортные данные --}}
+    {# 2. Паспортные данные #}
     <div class="section">
-        <p><strong>2.</strong> Паспорт: серия и номер <span class="info-row-value">{{ $data['passport'] ?? '___' }}</span></p>
-        <p style="margin-left: 30px;">выдан <span class="info-row-value" style="min-width: 400px;">{{ $data['passport_issue'] ?? '___' }}</span></p>
-        <p style="margin-left: 30px;">дата выдачи <span class="info-row-value">{{ $data['passport_issue_date'] ?? '___' }}</span></p>
+        <p><strong>2.</strong> Паспорт: серия и номер <span class="info-row-value">{{ data.passport|default('___') }}</span></p>
+        <p style="margin-left: 30px;">выдан <span class="info-row-value" style="min-width: 400px;">{{ data.passport_issue|default('___') }}</span></p>
+        <p style="margin-left: 30px;">дата выдачи <span class="info-row-value">{{ data.passport_issue_date|default('___') }}</span></p>
     </div>
 
-    {{-- 3. Адрес регистрации --}}
+    {# 3. Адрес регистрации #}
     <div class="section">
-        @php
-            $regAddressParts = [];
-            if (!empty($data['region'])) $regAddressParts[] = $data['region'];
-            if (!empty($data['district'])) $regAddressParts[] = $data['district'];
-            if (!empty($data['locality'])) $regAddressParts[] = $data['locality'];
-            if (!empty($data['street'])) $regAddressParts[] = 'ул. ' . $data['street'];
-            if (!empty($data['house'])) $regAddressParts[] = 'д. ' . $data['house'];
-            if (!empty($data['corpus'])) $regAddressParts[] = 'корп. ' . $data['corpus'];
-            if (!empty($data['apartment'])) $regAddressParts[] = 'кв. ' . $data['apartment'];
-            $regAddressFull = !empty($regAddressParts) ? implode(', ', $regAddressParts) : 'Не указан';
-        @endphp
-        <p><strong>3.</strong> Адрес регистрации: <span class="info-row-value" style="min-width: 450px;">{{ $regAddressFull }}</span></p>
+        {% set regParts = [] %}
+        {% if data.region is not empty %}{% set regParts = regParts|merge([data.region]) %}{% endif %}
+        {% if data.district is not empty %}{% set regParts = regParts|merge([data.district]) %}{% endif %}
+        {% if data.locality is not empty %}{% set regParts = regParts|merge([data.locality]) %}{% endif %}
+        {% if data.street is not empty %}{% set regParts = regParts|merge(['ул. ' ~ data.street]) %}{% endif %}
+        {% if data.house is not empty %}{% set regParts = regParts|merge(['д. ' ~ data.house]) %}{% endif %}
+        {% if data.corpus is not empty %}{% set regParts = regParts|merge(['корп. ' ~ data.corpus]) %}{% endif %}
+        {% if data.apartment is not empty %}{% set regParts = regParts|merge(['кв. ' ~ data.apartment]) %}{% endif %}
+        {% set regAddressFull = regParts is not empty ? regParts|join(', ') : 'Не указан' %}
+        <p><strong>3.</strong> Адрес регистрации: <span class="info-row-value" style="min-width: 450px;">{{ regAddressFull }}</span></p>
     </div>
 
-    {{-- 3.1. Адрес фактического проживания --}}
+    {# 3.1. Адрес фактического проживания #}
     <div class="section">
-        @php
-            $actualAddressParts = [];
-            if (!empty($data['actual_region'])) $actualAddressParts[] = $data['actual_region'];
-            if (!empty($data['actual_district'])) $actualAddressParts[] = $data['actual_district'];
-            if (!empty($data['actual_locality'])) $actualAddressParts[] = $data['actual_locality'];
-            if (!empty($data['actual_street'])) $actualAddressParts[] = 'ул. ' . $data['actual_street'];
-            if (!empty($data['actual_house'])) $actualAddressParts[] = 'д. ' . $data['actual_house'];
-            if (!empty($data['actual_corpus'])) $actualAddressParts[] = 'корп. ' . $data['actual_corpus'];
-            if (!empty($data['actual_apartment'])) $actualAddressParts[] = 'кв. ' . $data['actual_apartment'];
-            $actualAddressFull = !empty($actualAddressParts) ? implode(', ', $actualAddressParts) : 'Не указан';
-        @endphp
-        <p><strong>3.1.</strong> Адрес фактического проживания: <span class="info-row-value" style="min-width: 400px;">{{ $actualAddressFull }}</span></p>
+        {% set actParts = [] %}
+        {% if data.actual_region is not empty %}{% set actParts = actParts|merge([data.actual_region]) %}{% endif %}
+        {% if data.actual_district is not empty %}{% set actParts = actParts|merge([data.actual_district]) %}{% endif %}
+        {% if data.actual_locality is not empty %}{% set actParts = actParts|merge([data.actual_locality]) %}{% endif %}
+        {% if data.actual_street is not empty %}{% set actParts = actParts|merge(['ул. ' ~ data.actual_street]) %}{% endif %}
+        {% if data.actual_house is not empty %}{% set actParts = actParts|merge(['д. ' ~ data.actual_house]) %}{% endif %}
+        {% if data.actual_corpus is not empty %}{% set actParts = actParts|merge(['корп. ' ~ data.actual_corpus]) %}{% endif %}
+        {% if data.actual_apartment is not empty %}{% set actParts = actParts|merge(['кв. ' ~ data.actual_apartment]) %}{% endif %}
+        {% set actualAddressFull = actParts is not empty ? actParts|join(', ') : 'Не указан' %}
+        <p><strong>3.1.</strong> Адрес фактического проживания: <span class="info-row-value" style="min-width: 400px;">{{ actualAddressFull }}</span></p>
     </div>
 
-    {{-- 4. Контактная информация --}}
+    {# 4. Контактная информация #}
     <div class="section">
-        <p><strong>4.</strong> Телефон: <span class="info-row-value">{{ $data['phone'] ?? '___' }}</span></p>
-        <p style="margin-left: 20px;">Адрес электронной почты: <span class="info-row-value" style="min-width: 300px;">{{ $data['email'] ?? $user_email ?? '___' }}</span></p>
+        <p><strong>4.</strong> Телефон: <span class="info-row-value">{{ data.phone|default('___') }}</span></p>
+        <p style="margin-left: 20px;">Адрес электронной почты: <span class="info-row-value" style="min-width: 300px;">{{ data.email|default(user_email|default('___')) }}</span></p>
     </div>
 
-    {{-- Основной текст заявления --}}
+    {# Основной текст заявления #}
     <div class="section" style="margin-top: 20px;">
         <p>Прошу заключить договор энергоснабжения (открыть лицевой счет) с учетом информации, содержащейся в настоящем заявлении.</p>
     </div>
 
-    {{-- 5. Причина обращения --}}
+    {# 5. Причина обращения #}
     <div class="section">
-        <p><strong>5.</strong> Причина обращения: <span class="info-row-value" style="min-width: 400px;">{{ $data['appeal_reason'] ?? '___' }}</span></p>
+        <p><strong>5.</strong> Причина обращения: <span class="info-row-value" style="min-width: 400px;">{{ data.appeal_reason|default('___') }}</span></p>
     </div>
 
-    {{-- 6. Сведения об объекте энергоснабжения --}}
+    {# 6. Сведения об объекте энергоснабжения #}
     <div class="section">
         <p><strong>6.</strong> Сведения об объекте энергоснабжения:</p>
-        <p style="margin-left: 20px;">Энергопринимающие устройства, планируемые к присоединению: <span class="info-row-value">{{ $data['power_object'] ?? '___' }}</span></p>
+        <p style="margin-left: 20px;">Энергопринимающие устройства, планируемые к присоединению: <span class="info-row-value">{{ data.power_object|default('___') }}</span></p>
     </div>
 
-    {{-- Местонахождение объекта --}}
+    {# Местонахождение объекта #}
     <div class="section">
         <p><strong>Местонахождение объекта, по которому заключается договор:</strong></p>
-        @php
-            $objectAddressParts = [];
-            if (!empty($data['region_object'])) $objectAddressParts[] = $data['region_object'];
-            if (!empty($data['district_object'])) $objectAddressParts[] = $data['district_object'];
-            if (!empty($data['locality_object'])) $objectAddressParts[] = $data['locality_object'];
-            if (!empty($data['street_object'])) $objectAddressParts[] = 'ул. ' . $data['street_object'];
-            if (!empty($data['house_object'])) $objectAddressParts[] = 'д. ' . $data['house_object'];
-            if (!empty($data['corpus_object'])) $objectAddressParts[] = 'корп. ' . $data['corpus_object'];
-            if (!empty($data['apartment_object'])) $objectAddressParts[] = 'кв. ' . $data['apartment_object'];
-            $objectAddressFull = !empty($objectAddressParts) ? implode(', ', $objectAddressParts) : 'Не указан';
-        @endphp
-        <p style="margin-left: 20px;">Адрес: <span class="info-row-value" style="min-width: 500px;">{{ $objectAddressFull }}</span></p>
-        @if(!empty($data['note']))
-        <p style="margin-left: 20px;">Примечание: {{ $data['note'] }}</p>
-        @endif
-        <p style="margin-left: 20px;">Общая площадь помещения: <span class="info-row-value">{{ $data['area'] ?? '___' }}</span> кв. м.</p>
-        <p style="margin-left: 20px;">Количество лиц, постоянно проживающих в помещении: <span class="info-row-value">{{ $data['residents_count'] ?? '___' }}</span></p>
-        <p style="margin-left: 20px;">Максимальная мощность электроприемников: <span class="info-row-value">{{ $data['max_power'] ?? '___' }}</span> кВт</p>
-        @php
-            $voltageLevel = $data['voltage_level'] ?? [];
-            if (is_array($voltageLevel)) {
-                $voltageLevelStr = implode(', ', $voltageLevel);
-            } else {
-                $voltageLevelStr = $voltageLevel ?? '___';
-            }
-        @endphp
-        <p style="margin-left: 20px;">Уровень напряжения: <span class="info-row-value">{{ $voltageLevelStr }}</span></p>
-        @if(!empty($data['act_reference']))
-        <p style="margin-left: 20px;">Реквизиты акта об определении границы раздела: <span class="info-row-value" style="min-width: 350px;">{{ $data['act_reference'] }}</span></p>
-        @endif
-        @php
-            $consumptionPurpose = $data['consumption_purpose'] ?? [];
-            if (is_array($consumptionPurpose)) {
-                $consumptionPurposeStr = implode(', ', $consumptionPurpose);
-            } else {
-                $consumptionPurposeStr = $consumptionPurpose ?? '___';
-            }
-        @endphp
+        {% set objParts = [] %}
+        {% if data.region_object is not empty %}{% set objParts = objParts|merge([data.region_object]) %}{% endif %}
+        {% if data.district_object is not empty %}{% set objParts = objParts|merge([data.district_object]) %}{% endif %}
+        {% if data.locality_object is not empty %}{% set objParts = objParts|merge([data.locality_object]) %}{% endif %}
+        {% if data.street_object is not empty %}{% set objParts = objParts|merge(['ул. ' ~ data.street_object]) %}{% endif %}
+        {% if data.house_object is not empty %}{% set objParts = objParts|merge(['д. ' ~ data.house_object]) %}{% endif %}
+        {% if data.corpus_object is not empty %}{% set objParts = objParts|merge(['корп. ' ~ data.corpus_object]) %}{% endif %}
+        {% if data.apartment_object is not empty %}{% set objParts = objParts|merge(['кв. ' ~ data.apartment_object]) %}{% endif %}
+        {% set objectAddressFull = objParts is not empty ? objParts|join(', ') : 'Не указан' %}
+        <p style="margin-left: 20px;">Адрес: <span class="info-row-value" style="min-width: 500px;">{{ objectAddressFull }}</span></p>
+        {% if data.note is not empty %}
+        <p style="margin-left: 20px;">Примечание: {{ data.note }}</p>
+        {% endif %}
+        <p style="margin-left: 20px;">Общая площадь помещения: <span class="info-row-value">{{ data.area|default('___') }}</span> кв. м.</p>
+        <p style="margin-left: 20px;">Количество лиц, постоянно проживающих в помещении: <span class="info-row-value">{{ data.residents_count|default('___') }}</span></p>
+        <p style="margin-left: 20px;">Максимальная мощность электроприемников: <span class="info-row-value">{{ data.max_power|default('___') }}</span> кВт</p>
+        {% set _v = data.voltage_level|default([]) %}
+        {% if _v is iterable %}{% set voltageLevelStr = _v|join(', ') %}{% else %}{% set voltageLevelStr = _v|default('___') %}{% endif %}
+        <p style="margin-left: 20px;">Уровень напряжения: <span class="info-row-value">{{ voltageLevelStr }}</span></p>
+        {% if data.act_reference is not empty %}
+        <p style="margin-left: 20px;">Реквизиты акта об определении границы раздела: <span class="info-row-value" style="min-width: 350px;">{{ data.act_reference }}</span></p>
+        {% endif %}
+        {% set _v = data.consumption_purpose|default([]) %}
+        {% if _v is iterable %}{% set consumptionPurposeStr = _v|join(', ') %}{% else %}{% set consumptionPurposeStr = _v|default('___') %}{% endif %}
         <p style="margin-left: 20px;">Сведения о направлениях потребления электроэнергии:</p>
-        <p style="margin-left: 40px;">{{ $consumptionPurposeStr }}</p>
-        @php
-            $hasMeter = $data['has_meter'] ?? [];
-            if (is_array($hasMeter)) {
-                $hasMeterStr = implode(', ', $hasMeter);
-            } else {
-                $hasMeterStr = $hasMeter ?? '___';
-            }
-        @endphp
-        <p style="margin-left: 20px;">Приборы учета установлены: <span class="info-row-value">{{ $hasMeterStr }}</span></p>
-        @php
-            $tariffChoice = $data['tariff_choice'] ?? [];
-            if (is_array($tariffChoice)) {
-                $tariffChoiceStr = implode(', ', $tariffChoice);
-            } else {
-                $tariffChoiceStr = $tariffChoice ?? '___';
-            }
-        @endphp
-        <p style="margin-left: 20px;">Тариф: <span class="info-row-value" style="min-width: 450px;">{{ $tariffChoiceStr }}</span></p>
-        @if(!empty($data['supply_period']))
-        <p style="margin-left: 20px;">Срок электроснабжения: <span class="info-row-value">{{ $data['supply_period'] }}</span></p>
-        @endif
+        <p style="margin-left: 40px;">{{ consumptionPurposeStr }}</p>
+        {% set _v = data.has_meter|default([]) %}
+        {% if _v is iterable %}{% set hasMeterStr = _v|join(', ') %}{% else %}{% set hasMeterStr = _v|default('___') %}{% endif %}
+        <p style="margin-left: 20px;">Приборы учета установлены: <span class="info-row-value">{{ hasMeterStr }}</span></p>
+        {% set _v = data.tariff_choice|default([]) %}
+        {% if _v is iterable %}{% set tariffChoiceStr = _v|join(', ') %}{% else %}{% set tariffChoiceStr = _v|default('___') %}{% endif %}
+        <p style="margin-left: 20px;">Тариф: <span class="info-row-value" style="min-width: 450px;">{{ tariffChoiceStr }}</span></p>
+        {% if data.supply_period is not empty %}
+        <p style="margin-left: 20px;">Срок электроснабжения: <span class="info-row-value">{{ data.supply_period }}</span></p>
+        {% endif %}
     </div>
 
-    {{-- 7. Документы --}}
+    {# 7. Документы #}
     <div class="section">
         <p><strong>7.</strong> Документы:</p>
         <p style="margin-left: 20px;">Платежные документы прошу предоставлять:</p>
-        @php
-            $paymentDelivery = $data['payment_delivery'] ?? [];
-            if (is_array($paymentDelivery)) {
-                $paymentDeliveryStr = $paymentDelivery['selected'] ?? $paymentDelivery[0] ?? '';
-                if (!empty($paymentDelivery['inputValue'])) {
-                    $paymentDeliveryStr .= ': ' . $paymentDelivery['inputValue'];
-                }
-            } else {
-                $paymentDeliveryStr = $paymentDelivery ?? '___';
-            }
-        @endphp
-        <p style="margin-left: 40px;">{{ $paymentDeliveryStr }}</p>
+        {% set _d = data.payment_delivery|default([]) %}
+        {% if _d is iterable %}{% set paymentDeliveryStr = _d.selected|default(_d.0)|default('') %}{% if _d.inputValue is defined and _d.inputValue is not empty %}{% set paymentDeliveryStr = paymentDeliveryStr ~ ': ' ~ _d.inputValue %}{% endif %}{% else %}{% set paymentDeliveryStr = _d|default('___') %}{% endif %}
+        <p style="margin-left: 40px;">{{ paymentDeliveryStr }}</p>
         <p style="margin-left: 20px;">Уведомления прошу направлять:</p>
-        @php
-            $notificationDelivery = $data['notification_delivery'] ?? [];
-            if (is_array($notificationDelivery)) {
-                $notificationDeliveryStr = $notificationDelivery['selected'] ?? $notificationDelivery[0] ?? '';
-                if (!empty($notificationDelivery['inputValue'])) {
-                    $notificationDeliveryStr .= ': ' . $notificationDelivery['inputValue'];
-                }
-            } else {
-                $notificationDeliveryStr = $notificationDelivery ?? '___';
-            }
-        @endphp
-        <p style="margin-left: 40px;">{{ $notificationDeliveryStr }}</p>
+        {% set _d = data.notification_delivery|default([]) %}
+        {% if _d is iterable %}{% set notificationDeliveryStr = _d.selected|default(_d.0)|default('') %}{% if _d.inputValue is defined and _d.inputValue is not empty %}{% set notificationDeliveryStr = notificationDeliveryStr ~ ': ' ~ _d.inputValue %}{% endif %}{% else %}{% set notificationDeliveryStr = _d|default('___') %}{% endif %}
+        <p style="margin-left: 40px;">{{ notificationDeliveryStr }}</p>
     </div>
 
-    {{-- Согласие на обработку персональных данных --}}
+    {# Согласие на обработку персональных данных #}
     <div class="section" style="margin-top: 15px;">
-        @php
-            $personalInfo = $data['personal_info'] ?? [];
-            if (is_array($personalInfo)) {
-                $consent = in_array('Да', $personalInfo) ? 'Да' : 'Нет';
-            } else {
-                $consent = str_contains($personalInfo ?? '', 'Да') ? 'Да' : 'Нет';
-            }
-        @endphp
-        <p>В соответствии с ФЗ от 27.07.2006 №152-ФЗ "О персональных данных" даю своё согласие на обработку своих персональных данных: <strong>{{ $consent }}</strong></p>
+        {% set _pi = data.personal_info|default('') %}
+        {% set consent = 'Да' in _pi ? 'Да' : 'Нет' %}
+        <p>В соответствии с ФЗ от 27.07.2006 №152-ФЗ "О персональных данных" даю своё согласие на обработку своих персональных данных: <strong>{{ consent }}</strong></p>
     </div>
 
-    {{-- Подпись --}}
+    {# Подпись #}
     <div class="footer">
-        <p><strong>Дата:</strong> {{ $data['created_at'] ?? date('d.m.Y') }}</p>
+        <p><strong>Дата:</strong> {{ data.created_at|default("now"|date("d.m.Y")) }}</p>
         
         <table class="signature-block" style="margin-top: 30px;">
             <tr>
