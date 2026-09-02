@@ -36,4 +36,23 @@ class PdfTemplateRenderTest extends TestCase
         $this->assertStringNotContainsString("\$data[", $html);
         $this->assertStringNotContainsString('@php', $html);
     }
+
+    public function test_legal_template_renders_data_via_twig(): void
+    {
+        $template = PdfTemplate::getTemplate('legal', 'application');
+        $this->assertNotNull($template, 'Шаблон юрлица должен быть засеян');
+
+        $html = $template->render([
+            'company_name' => 'ООО «Ромашка»',
+            'inn'          => '2222222222',
+            'director_name'=> 'Петров Пётр Петрович',
+        ]);
+
+        $this->assertStringContainsString('ООО «Ромашка»', $html);
+        $this->assertStringContainsString('2222222222', $html);
+
+        $this->assertStringNotContainsString('{{', $html);
+        $this->assertStringNotContainsString("\$data[", $html);
+        $this->assertStringNotContainsString('@php', $html);
+    }
 }
