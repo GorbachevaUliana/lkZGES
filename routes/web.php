@@ -145,10 +145,14 @@ Route::middleware(['auth', 'verified'])
         Route::post('/readings/{id}/pay', [MeterReadingController::class, 'pay'])->name('readings.pay');
         Route::get('/invoice/{month}/{account}', [MeterReadingController::class, 'downloadInvoice'])->name('invoice.download');
 
-        Route::middleware(['can:create-tickets'])->group(function () {
-            Route::get('/tickets', [ClientTicketController::class, 'ticketsIndex'])->name('tickets.index');
-            Route::post('/tickets', [ClientTicketController::class, 'storeTicket'])->name('tickets.store');
-        });
+        // Обращения доступны ЛЮБОМУ зарегистрированному клиенту — и
+        // просмотр, и создание — без всякого порога. Вопросы могут
+        // возникнуть ещё ДО подачи заявки (например, как её заполнить),
+        // поэтому запирать поддержку нельзя. Прежнее ограничение
+        // can:create-tickets требовало активный объект с лицевым счётом
+        // (то есть уже одобренную заявку) и давало 403 всем остальным.
+        Route::get('/tickets', [ClientTicketController::class, 'ticketsIndex'])->name('tickets.index');
+        Route::post('/tickets', [ClientTicketController::class, 'storeTicket'])->name('tickets.store');
     });
 
 Route::middleware('auth')->get('/dashboard', function () {
