@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Head, useForm, router, usePage } from '@inertiajs/react';
+import { Head, useForm, router, usePage, Link } from '@inertiajs/react';
 import { 
     Container, Grid, Card, CardContent, Typography, 
     TextField, Button, Table, TableBody, TableCell, 
@@ -11,6 +11,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import DownloadIcon from '@mui/icons-material/GetApp';
 import HomeIcon from '@mui/icons-material/Home';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import ClientLayout from '@/Layouts/ClientLayout';
 
 import UICard from '@/Components/UI/Card';
@@ -25,7 +26,8 @@ export default function Index({
     lastReadingValue, 
     history, 
     auth, 
-    application 
+    application,
+    emptyState = null
 }) {
     const [consumed, setConsumed] = useState(0);
     const [totalSum, setTotalSum] = useState(0);
@@ -153,6 +155,43 @@ export default function Index({
         <ClientLayout user={auth.user}
             title="Показания и оплата"
             application={application}>
+            {emptyState === 'no_application' ? (
+                <Paper sx={{ p: 4, borderRadius: '20px', textAlign: 'center', boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' }}>
+                    <AssignmentIcon sx={{ fontSize: 60, color: '#4318FF', mb: 2 }} />
+                    <Typography variant="h5" fontWeight="bold" gutterBottom>Показания пока недоступны</Typography>
+                    <Typography color="text.secondary" sx={{ mb: 3 }}>
+                        Чтобы передавать показания, необходимо подать заявку на заключение договора.
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                        <Button
+                            component={Link}
+                            href={route('application.show', { slug: 'application-individual' })}
+                            variant="contained"
+                            size="large"
+                            sx={{ bgcolor: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
+                        >
+                            Физическое лицо
+                        </Button>
+                        <Button
+                            component={Link}
+                            href={route('application.show', { slug: 'application-legal' })}
+                            variant="outlined"
+                            size="large"
+                            sx={{ borderColor: '#4318FF', color: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
+                        >
+                            Юридическое лицо
+                        </Button>
+                    </Box>
+                </Paper>
+            ) : emptyState === 'no_active_property' ? (
+                <Paper sx={{ p: 4, borderRadius: '20px', textAlign: 'center', boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' }}>
+                    <AssignmentIcon sx={{ fontSize: 60, color: '#4318FF', mb: 2 }} />
+                    <Typography variant="h5" fontWeight="bold" gutterBottom>Показания появятся после одобрения заявки</Typography>
+                    <Typography color="text.secondary">
+                        Ваша заявка на заключение договора рассматривается. Как только она будет одобрена и объекту присвоят лицевой счёт, здесь можно будет передавать показания.
+                    </Typography>
+                </Paper>
+            ) : (
             <Grid container spacing={3}>
                 {/* Форма подачи показаний - ФИКСИРОВАННАЯ ШИРИНА */}
                 <Grid item xs={12} md={5} sx={{ minWidth: { md: '41.666%' } }}>
@@ -203,10 +242,10 @@ export default function Index({
                                 <HomeIcon sx={{ color: '#4318FF' }} />
                                 <Box>
                                     <Typography variant="body2" fontWeight="bold">
-                                        {property.address}
+                                        {property?.address}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
-                                        ЛС: {property.account_number}
+                                        ЛС: {property?.account_number}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -294,9 +333,9 @@ export default function Index({
                         border: '1px solid #E0E5F2'
                     }}>
                         <CardContent>
-                            {property.tariff && (
+                            {property?.tariff && (
                                 <Typography variant="caption" color="text.secondary" display="block">
-                                    Тариф: {property.tariff.name}
+                                    Тариф: {property?.tariff?.name}
                                 </Typography>
                             )}
                             <Divider sx={{ my: 1 }} />
@@ -361,6 +400,7 @@ export default function Index({
                     </Paper>
                 </Grid>
             </Grid>
+            )}
         </ClientLayout>
     );
 }

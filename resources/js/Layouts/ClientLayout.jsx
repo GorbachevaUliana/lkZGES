@@ -26,28 +26,25 @@ export default function ClientLayout({ user, children, title, application, prope
     const draftData = props?.draft;
     const userData = user || props?.auth?.user;
     const applicationData = application || props?.application;
-    const propertiesData = properties || props?.properties;
-    const hasActive = hasActiveProperties ?? props?.hasActiveProperties ?? false;
-
-    const canUseFullFeatures = hasActive || (propertiesData && propertiesData.some(p => p.status === 'active' && p.account_number));
 
     const currentStatus = applicationData?.status || 'pending';
     const isApproved = currentStatus === 'approved';
     const isRejected = currentStatus === 'rejected';
     const hasApplication = !!applicationData;
 
-    const menuItems = !canUseFullFeatures && hasApplication 
-        ? [
-            { label: 'Главная', icon: <HomeIcon />, href: route('client.dashboard'), active: route().current('client.dashboard') },
-            { label: 'Мои документы', icon: <DescriptionIcon />, href: route('client.documents'), active: route().current('client.documents') },
-        ]
-        : [
-            { label: 'Главная', icon: <HomeIcon />, href: route('client.dashboard'), active: route().current('client.dashboard') },
-            { label: 'Мой профиль', icon: <PersonIcon />, href: route('client.profile'), active: route().current('client.profile') },
-            { label: 'Документы', icon: <DescriptionIcon />, href: route('client.documents'), active: route().current('client.documents') },
-            { label: 'Обращения', icon: <MessageIcon />, href: route('client.tickets.index'), active: route().current('client.tickets.index') },
-            { label: 'Показания', icon: <ElectricMeter />, href: route('client.readings'), active: route().current('client.readings')},
-        ];
+    // Меню всегда полное. Раньше клиенту без ОДОБРЕННОЙ заявки
+    // показывалась урезанная версия (только Главная + Документы) —
+    // это противоречило общему принципу «доступ ко всем разделам у
+    // всех, а разделы сами рисуют плашки, если данных нет». Урезание
+    // убрано, чтобы поведение сайдбара совпадало с уже открытыми
+    // разделами (обращения, документы и т.д.).
+    const menuItems = [
+        { label: 'Главная', icon: <HomeIcon />, href: route('client.dashboard'), active: route().current('client.dashboard') },
+        { label: 'Мой профиль', icon: <PersonIcon />, href: route('client.profile'), active: route().current('client.profile') },
+        { label: 'Документы', icon: <DescriptionIcon />, href: route('client.documents'), active: route().current('client.documents') },
+        { label: 'Обращения', icon: <MessageIcon />, href: route('client.tickets.index'), active: route().current('client.tickets.index') },
+        { label: 'Показания', icon: <ElectricMeter />, href: route('client.readings'), active: route().current('client.readings')},
+    ];
 
     const drawerContent = (
         <>
@@ -63,7 +60,7 @@ export default function ClientLayout({ user, children, title, application, prope
                 </Box>
             </Box>
             <Divider sx={{ mx: 2, mb: 2 }} />
-            {!canUseFullFeatures && hasApplication && (
+            {hasApplication && !isApproved && (
                 <Alert 
                     severity={isRejected ? 'error' : 'info'} 
                     sx={{ mx: 2, mb: 2, borderRadius: '12px', fontSize: '12px' }}>
@@ -77,8 +74,6 @@ export default function ClientLayout({ user, children, title, application, prope
                     ) : (
                         <>
                             Ваша заявка на заключение договора рассматривается.
-                            Функция обращений станет доступна после одобрения.
-                            Function ticket will be available after approval
                         </>
                     )}
                 </Alert>

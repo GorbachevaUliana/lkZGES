@@ -29,7 +29,12 @@ class MeterReadingController extends Controller
                 return redirect()->route('admin.dashboard')
                     ->with('error', 'У сотрудников нет личного кабинета потребителя.');
             }
-            return redirect()->route('welcome.step');
+            // Нет записи client = заявка вообще не подавалась. Раньше был
+            // редирект на welcome.step (Ю-2). Теперь показываем страницу
+            // показаний в пустом состоянии с плашкой «подайте заявку».
+            return Inertia::render('Client/Readings/Readings', [
+                'emptyState' => 'no_application',
+            ]);
         }
 
         $propertyId = $request->query('property');
@@ -49,8 +54,14 @@ class MeterReadingController extends Controller
         }
 
         if (!$property) {
-            return redirect()->route('client.dashboard')
-                ->with('error', 'Объект не найден.');
+            // client есть, но активного объекта с лицевым счётом нет =
+            // заявка подана, но ещё не одобрена. Раньше был редирект на
+            // дашборд (Ю-2). Теперь плашка «показания появятся после
+            // одобрения заявки» — не путаем человека предложением подать
+            // заявку, которую он уже подал.
+            return Inertia::render('Client/Readings/Readings', [
+                'emptyState' => 'no_active_property',
+            ]);
         }
 
         $activeProperties = $client->properties()

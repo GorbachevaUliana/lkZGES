@@ -39,6 +39,16 @@ class AccountController extends Controller
             }
         }
 
+        // Если у пользователя уже есть черновик заявки — тип лица он выбрал
+        // при его создании. Не заставляем выбирать заново при каждом входе
+        // (это был баг Ю-3): ведём сразу на форму этого черновика по slug
+        // его шаблона, чтобы можно было продолжить заполнение.
+        $draft = app(\App\Services\DraftApplicationService::class)->currentForUser($user);
+
+        if ($draft && $draft->template) {
+            return redirect()->route('application.show', ['slug' => $draft->template->slug]);
+        }
+
         return Inertia::render('WelcomePage', [
             // Шаг и maskedEmail берём из flash-сессии (выставляются в link/verify).
             // По умолчанию — шаг 1 (форма ввода ЛС + ФИО).
