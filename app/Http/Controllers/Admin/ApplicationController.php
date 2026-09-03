@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Models\Tariff;
 use App\Services\ApplicationService;
@@ -25,7 +26,13 @@ class ApplicationController extends Controller
      */
     public function index()
     {
+        // Черновики (draft) — незаконченные заявки, видны ТОЛЬКО клиенту,
+        // который их пишет. В админке их быть не должно: заявку ещё не
+        // подали. Исключаем из списка и из счётчика «Все». Остальные
+        // счётчики считают по конкретным статусам, draft в них и так не
+        // попадает.
         $applications = Application::with(['user', 'client', 'property', 'documents'])
+            ->where('status', '!=', ApplicationStatus::Draft->value)
             ->orderBy('created_at', 'desc')
             ->paginate(50);
 
@@ -35,7 +42,7 @@ class ApplicationController extends Controller
             'clientTypes'  => Application::getClientTypes(),
             'tariffs'      => Tariff::all(),
             'stats' => [
-                'all'        => Application::count(),
+                'all'        => Application::where('status', '!=', ApplicationStatus::Draft->value)->count(),
                 'pending'    => Application::whereIn('status', ['new', 'pending'])->count(),
                 'processing' => Application::where('status', 'processing')->count(),
                 'approved'   => Application::where('status', 'approved')->count(),
