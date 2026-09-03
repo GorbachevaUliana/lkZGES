@@ -39,7 +39,7 @@ class ApplicationSubmitService
         $normalizedData = $this->normalizeData($request);
 
         return DB::transaction(function () use ($request, $template, $user, $clientType, $normalizedData) {
-            $client      = $this->resolveClient($normalizedData, $user);
+            $client      = $this->resolveClient($normalizedData, $user, $clientType);
             $fullAddress = $this->buildFullAddress($normalizedData);
 
             $property = Property::create([
@@ -150,18 +150,19 @@ class ApplicationSubmitService
     /**
      * Находит существующего клиента пользователя или создаёт нового.
      */
-    private function resolveClient(array $data, User $user): Client
+    private function resolveClient(array $data, User $user, ?string $clientType = null): Client
     {
-        $existing = Client::where('user_id', $user->id)->first();
-
-        if ($existing) {
-            return $existing;
-        }
+        // Тип клиента приходит из ШАБЛОНА (application-legal / -individual),
+        // а не из полей формы — в $data ключа client_type нет. Раньше он
+        // читался из $data и всегда падал в individual по умолчанию,
+        // из-за чего клиент-юрлицо создавался как физлицо, и его
+        // company_name не использовался (баг Ю-6). Берём переданный тип.
+        $resolvedType = $clientType ?? $data['client_type'] ?? ClientType::Individual->value;
 
         return Client::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'client_type'  => $data['client_type']              ?? ClientType::Individual->value,
+                'client_type'  => $resolvedType,
                 'last_name'    => $data['last_name']   ?? $data['Фамилия']               ?? 'Не указано',
                 'first_name'   => $data['first_name']  ?? $data['Имя']                   ?? 'Не указано',
                 'middle_name'  => $data['middle_name'] ?? $data['Отчество']              ?? '',

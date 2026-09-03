@@ -117,7 +117,18 @@ class Application extends Model
         }
 
         $data = $this->data ?? [];
-        return trim(($data['last_name'] ?? '').' '.($data['first_name'] ?? '').' '.($data['middle_name'] ?? ''));
+
+        // Юрлицо: фамилии/имени у него нет, имя заявителя — это название
+        // организации. Раньше эта ветка (когда client ещё не создан)
+        // собирала строку только из ФИО, поэтому у заявок юрлиц выходило
+        // пусто / «Не указано Не указано» (Ю-6).
+        if (($this->client_type ?? null) === ClientType::Legal->value) {
+            return $data['company_name'] ?? 'Название не указано';
+        }
+
+        $name = trim(($data['last_name'] ?? '').' '.($data['first_name'] ?? '').' '.($data['middle_name'] ?? ''));
+
+        return $name !== '' ? $name : 'Не указано';
     }
 
     public function getUserEmailAttribute(): string
