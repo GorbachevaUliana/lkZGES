@@ -14,16 +14,13 @@ use Inertia\Inertia;
 
 class AccountController extends Controller
 {
-    /**
-     * GET /welcome-step — единственный GET-маршрут для обоих шагов.
-     *
-     * Состояние (какой шаг показывать, email) хранится в сессии,
-     * а не в URL. Это решает проблему 405 при обновлении страницы:
-     * браузер всегда делает GET /welcome-step, а не GET /account/link.
-     */
     public function index()
     {
         $user = auth()->user();
+
+        if (in_array($user->role, [UserRole::Admin, UserRole::Staff], true)) {
+            return redirect()->route('admin.dashboard');
+        }
 
         $client = $user->client;
 
@@ -39,10 +36,6 @@ class AccountController extends Controller
             }
         }
 
-        // Если у пользователя уже есть черновик заявки — тип лица он выбрал
-        // при его создании. Не заставляем выбирать заново при каждом входе
-        // (это был баг Ю-3): ведём сразу на форму этого черновика по slug
-        // его шаблона, чтобы можно было продолжить заполнение.
         $draft = app(\App\Services\DraftApplicationService::class)->currentForUser($user);
 
         if ($draft && $draft->template) {
@@ -50,19 +43,11 @@ class AccountController extends Controller
         }
 
         return Inertia::render('WelcomePage', [
-            // Шаг и maskedEmail берём из flash-сессии (выставляются в link/verify).
-            // По умолчанию — шаг 1 (форма ввода ЛС + ФИО).
             'step'        => session('link_step', 'link'),
             'maskedEmail' => session('link_masked_email'),
         ]);
     }
 
-    /**
-     * POST /account/link — шаг 1: найти клиента, отправить код.
-     *
-     * Намеренно не сообщаем, найден ли клиент — защита от перебора.
-     * После обработки ВСЕГДА делаем redirect на GET /welcome-step (PRG-паттерн).
-     */
     public function link(LinkAccountRequest $request)
     {
         $user = auth()->user();
@@ -76,8 +61,6 @@ class AccountController extends Controller
             ->whereRaw('LOWER(middle_name) = LOWER(?)', [$request->middle_name])
             ->first();
 
-        // Клиент не найден или ЛС уже привязан к другому — тихо уходим на шаг 2.
-        // Код не отправляем, link_code оставляем null.
         if (! $client || ($client->user_id && $client->user_id !== $user->id)) {
             $user->forceFill([
                 'link_code'         => null,
@@ -99,7 +82,6 @@ class AccountController extends Controller
                 ->with('link_step', 'verify');
         }
 
-        // У клиента есть почта в базе — генерируем код и шлём ТОЛЬКО на неё.
         $code = (string) random_int(100000, 999999);
 
         $user->forceFill([
@@ -117,25 +99,16 @@ class AccountController extends Controller
             ->with('link_masked_email', $this->maskEmail($client->email));
     }
 
-    /**
-     * POST /account/verify — шаг 2: проверить код, привязать ЛС.
-     *
-     * На ошибке тоже делаем redirect на GET /welcome-step с сохранением
-     * шага 'verify' в сессии — иначе браузер при обновлении страницы
-     * делает GET /account/verify и получает 405 Method Not Allowed.
-     */
     public function verify(VerifyAccountRequest $request)
     {
         $user = auth()->user();
 
-        // Код просрочен или не запрашивался.
         if (! $user->link_code || ! $user->link_code_expires || now()->isAfter($user->link_code_expires)) {
             return redirect()->route('welcome.step')
                 ->with('link_step', 'verify')
                 ->withErrors(['code' => 'Код истёк или недействителен. Запросите новый.']);
         }
 
-        // Неверный код.
         if (! Hash::check($request->code, $user->link_code)) {
             return redirect()->route('welcome.step')
                 ->with('link_step', 'verify')
@@ -145,14 +118,12 @@ class AccountController extends Controller
 
         $client = Client::find($user->link_client_id);
 
-        // Клиент мог быть привязан другим пользователем пока шёл процесс.
         if (! $client || ($client->user_id && $client->user_id !== $user->id)) {
             $this->clearLinkCode($user);
             return redirect()->route('welcome.step')
                 ->withErrors(['code' => 'Не удалось привязать лицевой счёт. Обратитесь в службу поддержки.']);
         }
 
-        // Всё верно — привязываем и чистим временные поля.
         $client->update(['user_id' => $user->id]);
         $user->forceFill(['role' => UserRole::Client->value])->save();
         $this->clearLinkCode($user);

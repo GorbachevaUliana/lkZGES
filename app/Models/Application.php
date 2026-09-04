@@ -147,7 +147,12 @@ class Application extends Model
             ? $this->documents
             : $this->documents()->get();
 
-        $doc = $docs->firstWhere('type', 'application_pdf');
+        // Ищем по значению enum (PdfDocumentType::Application = 'application'),
+        // с которым документ и сохраняется в ApplicationSubmitService. Раньше
+        // здесь был хардкод 'application_pdf' — тип, которого не существует,
+        // поэтому сгенерированная заявка не находилась и показывалось
+        // «Файл не найден», хотя документ был (Ю-7).
+        $doc = $docs->firstWhere('type', \App\Enums\PdfDocumentType::Application->value);
         return $doc ? route('documents.serve', $doc->id) : null;
     }
 
