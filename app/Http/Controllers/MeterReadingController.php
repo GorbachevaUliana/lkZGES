@@ -88,6 +88,13 @@ class MeterReadingController extends Controller
             ->take(12)
             ->get();
 
+        // Флаг «можно ли сейчас передавать показания» считаем на бэкенде
+        // по времени Заринска (Asia/Barnaul) — тем же способом, что и
+        // защита в storeReading. Фронт НЕ считает период сам (взял бы
+        // часовой пояс устройства клиента), а просто использует этот флаг.
+        $dayInvoice = (int) now('Asia/Barnaul')->format('d');
+        $canSubmitReadings = $dayInvoice >= 20 && $dayInvoice <= 25;
+
         return Inertia::render('Client/Readings/Readings', [
             'client' => $client,
             'property' => $property,
@@ -95,6 +102,7 @@ class MeterReadingController extends Controller
             'currentTariff' => $currentTariff,
             'lastReadingValue' => $lastReadingValue,
             'history' => $history,
+            'canSubmitReadings' => $canSubmitReadings,
         ]);
     }
 
@@ -105,6 +113,19 @@ class MeterReadingController extends Controller
      */
     public function storeReading(StoreMeterReadingRequest $request)
     {
+        // Показания принимаются только с 20 по 25 число включительно, по
+        // времени Заринска (Asia/Barnaul, UTC+7). Считаем период ЯВНО в
+        // этом поясе, не полагаясь на часовой пояс сервера (сейчас UTC, а
+        // на сервере организации может быть любой) — так проверка не
+        // съедет при переносе проекта. Это защита на бэкенде: кнопку на
+        // фронте можно обойти, а этот запрет — нет.
+        $dayInZarinsk = (int) now('Asia/Barnaul')->format('d');
+        if ($dayInZarinsk < 20 || $dayInZarinsk > 25) {
+            return back()->withErrors([
+                'current_value' => 'Показания принимаются с 20 по 25 число. Сейчас передача недоступна.',
+            ]);
+        }
+
         $client = auth()->user()->client;
 
         if (! $client) {

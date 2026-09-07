@@ -27,11 +27,39 @@ export default function Index({
     history, 
     auth, 
     application,
-    emptyState = null
+    emptyState = null,
+    canSubmitReadings = true
 }) {
     const theme = useTheme();
     // Мобильный вид: ниже breakpoint md (как в ClientLayout/AdminLayout).
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+    // Показания группируются по годам: клиенту показываем максимум
+    // MAX_YEARS последних лет (в базе может храниться больше — запас на
+    // случай изменения законов о сроках хранения). Фильтр работает по
+    // reading_date; когда данные переедут в веб-базу, контроллер будет
+    // отдавать их в том же формате — фронт менять не придётся.
+    const MAX_YEARS = 5;
+    const availableYears = React.useMemo(() => {
+        const years = [...new Set(
+            (history || []).map((r) => new Date(r.reading_date).getFullYear())
+        )].sort((a, b) => b - a);
+        return years.slice(0, MAX_YEARS);
+    }, [history]);
+
+    const [selectedYear, setSelectedYear] = useState(availableYears[0] ?? new Date().getFullYear());
+
+    // Если список годов изменился (сменили объект) — выбираем самый свежий.
+    useEffect(() => {
+        if (availableYears.length && !availableYears.includes(selectedYear)) {
+            setSelectedYear(availableYears[0]);
+        }
+    }, [availableYears]);
+
+    const historyForYear = React.useMemo(
+        () => (history || []).filter((r) => new Date(r.reading_date).getFullYear() === selectedYear),
+        [history, selectedYear]
+    );
 
     const [consumed, setConsumed] = useState(0);
     const [totalSum, setTotalSum] = useState(0);
@@ -294,7 +322,11 @@ export default function Index({
                                 flexDirection: 'column',
                                 justifyContent: 'center'
                             }}>
-                                {consumed > 0 ? (
+                                {!canSubmitReadings ? (
+                                    <Typography variant="body2" sx={{ color: '#C0392B', fontWeight: 500, textAlign: 'center' }}>
+                                        Показания принимаются с 20 по 25 число. Сейчас передача недоступна.
+                                    </Typography>
+                                ) : consumed > 0 ? (
                                     <>
                                         <Typography variant="body2">
                                             Расход: <b>{consumed} кВт*ч</b>
@@ -321,7 +353,7 @@ export default function Index({
                                     bgcolor: '#4318FF'
                                 }}
                                 type="submit"
-                                disabled={processing || parseFloat(data.current_value) < parseFloat(lastReadingValue)}
+                                disabled={!canSubmitReadings || processing || parseFloat(data.current_value) < parseFloat(lastReadingValue)}
                             >
                                 Отправить показания
                             </Button>
@@ -359,18 +391,36 @@ export default function Index({
                             </Grid>
                         </CardContent>
                     </Paper>
+                    {availableYears.length > 0 && (
+                        <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Typography variant="subtitle2" color="text.secondary">
+                                История за год:
+                            </Typography>
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <Select
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                    sx={{ borderRadius: '10px' }}
+                                >
+                                    {availableYears.map((year) => (
+                                        <MenuItem key={year} value={year}>{year}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    )}
                     {isMobile ? (
                         // Мобильный вид: каждая строка истории — вертикальная
                         // карточка (вариант Б). Таблица DataGrid на узком
                         // экране не помещается, а карточки читаются сверху вниз
                         // и палец достаёт до кнопки оплаты.
                         <Stack spacing={1.5} sx={{ mt: 3 }}>
-                            {history.length === 0 && (
+                            {historyForYear.length === 0 && (
                                 <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                                    Показаний пока нет
+                                    За {selectedYear} год показаний нет
                                 </Typography>
                             )}
-                            {[...history]
+                            {[...historyForYear]
                                 .sort((a, b) => new Date(b.reading_date) - new Date(a.reading_date))
                                 .map((row) => {
                                     const rowConsumed = row.current_value - row.previous_value;
@@ -434,7 +484,7 @@ export default function Index({
                         boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.08)' 
                     }}>
                         <DataGrid 
-                            rows={history} 
+                            rows={historyForYear} 
                             columns={columns} 
                             autoHeight 
                             disableRowSelectionOnClick
@@ -442,9 +492,9 @@ export default function Index({
                                 sorting: {
                                     sortModel: [{ field: 'reading_date', sort: 'desc' }],
                                 },
-                                pagination: { paginationModel: { pageSize: 5 } },
+                                pagination: { paginationModel: { pageSize: 12 } },
                             }}
-                            pageSizeOptions={[5, 10, 20]}
+                            pageSizeOptions={[12, 24]}
                             sx={{
                                 border: 'none',
 
