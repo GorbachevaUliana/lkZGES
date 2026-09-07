@@ -5,7 +5,7 @@ import {
     TextField, Button, Table, TableBody, TableCell, 
     TableContainer, TableHead, TableRow, Paper, Chip, 
     Box, Divider, Alert, Select, MenuItem, FormControl, 
-    InputLabel, Tabs, Tab 
+    InputLabel, Tabs, Tab, useMediaQuery, useTheme, Stack 
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import CalculateIcon from '@mui/icons-material/Calculate';
@@ -29,6 +29,10 @@ export default function Index({
     application,
     emptyState = null
 }) {
+    const theme = useTheme();
+    // Мобильный вид: ниже breakpoint md (как в ClientLayout/AdminLayout).
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
     const [consumed, setConsumed] = useState(0);
     const [totalSum, setTotalSum] = useState(0);
     const [selectedPropertyId, setSelectedPropertyId] = useState(property?.id || '');
@@ -355,6 +359,73 @@ export default function Index({
                             </Grid>
                         </CardContent>
                     </Paper>
+                    {isMobile ? (
+                        // Мобильный вид: каждая строка истории — вертикальная
+                        // карточка (вариант Б). Таблица DataGrid на узком
+                        // экране не помещается, а карточки читаются сверху вниз
+                        // и палец достаёт до кнопки оплаты.
+                        <Stack spacing={1.5} sx={{ mt: 3 }}>
+                            {history.length === 0 && (
+                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                                    Показаний пока нет
+                                </Typography>
+                            )}
+                            {[...history]
+                                .sort((a, b) => new Date(b.reading_date) - new Date(a.reading_date))
+                                .map((row) => {
+                                    const rowConsumed = row.current_value - row.previous_value;
+                                    return (
+                                        <Paper key={row.id} sx={{ p: 2, borderRadius: '16px', border: '1px solid #E0E5F2', boxShadow: 'none' }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                <Typography variant="subtitle2" fontWeight="bold">
+                                                    {new Date(row.reading_date).toLocaleDateString('ru-RU')}
+                                                </Typography>
+                                                <Chip
+                                                    label={row.is_paid ? 'Оплачено' : 'К оплате'}
+                                                    color={row.is_paid ? 'success' : 'warning'}
+                                                    size="small"
+                                                    sx={{ borderRadius: '8px', fontWeight: 'bold', fontSize: '10px' }}
+                                                />
+                                            </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                                                <Typography variant="body2" color="text.secondary">Показания</Typography>
+                                                <Typography variant="body2">{row.current_value} кВт*ч</Typography>
+                                            </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                                                <Typography variant="body2" color="text.secondary">Расход</Typography>
+                                                <Typography variant="body2">{rowConsumed} кВт*ч</Typography>
+                                            </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                                                <Typography variant="body2" color="text.secondary">Сумма</Typography>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {row.total_sum ? `${row.total_sum} ₽` : '—'}
+                                                </Typography>
+                                            </Box>
+                                            {!row.is_paid ? (
+                                                <Button
+                                                    fullWidth
+                                                    variant="contained"
+                                                    size="small"
+                                                    onClick={() => router.post(route('client.readings.pay', row.id))}
+                                                    sx={{ mt: 1, bgcolor: '#4318FF', borderRadius: '10px', textTransform: 'none' }}
+                                                >
+                                                    Оплатить
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    fullWidth
+                                                    size="small"
+                                                    startIcon={<DownloadIcon />}
+                                                    sx={{ mt: 1, color: '#A3AED0', textTransform: 'none' }}
+                                                >
+                                                    PDF
+                                                </Button>
+                                            )}
+                                        </Paper>
+                                    );
+                                })}
+                        </Stack>
+                    ) : (
                     <Paper sx={{ 
                         mt: 3, 
                         borderRadius: '20px', 
@@ -398,6 +469,7 @@ export default function Index({
                                 }
                             }}/>
                     </Paper>
+                    )}
                 </Grid>
             </Grid>
             )}
