@@ -274,7 +274,12 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                 {/* QR-код блок */}
                 <Grid item xs={12} md={6}>
                     <Paper sx={{ p: 3, borderRadius: '20px' }}>
-                        <Box display="flex" gap={2} alignItems="flex-start">
+                        <Box
+                            display="flex"
+                            gap={2}
+                            alignItems={{ xs: 'center', sm: 'flex-start' }}
+                            sx={{ flexDirection: { xs: 'column', sm: 'row' } }}
+                        >
                             <Box sx={{ flexShrink: 0 }}>
                                 <a href="https://forms.yandex.ru/cloud/6a0670c7493639178613adf6" target="_blank" rel="noopener noreferrer">
                                     <img 
@@ -287,7 +292,7 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                                     />
                                 </a>
                             </Box>
-                            <Typography variant="body2">
+                            <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
                                 Откажитесь от бумажных квитанций! Заполните заявку на переход на электронные квитанции. Отсканируйте QR-код, либо перейдите по ссылке.<br/>
                                 <strong>https://forms.yandex.ru/cloud/6a0670c7493639178613adf6</strong>
                             </Typography>

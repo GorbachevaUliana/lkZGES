@@ -36,36 +36,49 @@ export default function DraftBanner({ draft }) {
                     pointerEvents: 'auto',
                     p: 2,
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
+                    // На мобильном плашка перестраивается вертикально, иначе
+                    // иконка+текст+кнопка+крестик не влезают в одну строку и
+                    // кнопка «Продолжить» ломается по слогам.
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    gap: { xs: 1.5, sm: 2 },
                     borderRadius: '16px',
                     border: '1px dashed #4318FF',
                     bgcolor: 'rgba(238, 234, 255, 0.98)',
                     backdropFilter: 'blur(4px)',
                 }}
             >
-                <Box sx={{ color: '#4318FF', display: 'flex' }}>
-                    <EditNoteIcon />
-                </Box>
-                <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="body1" fontWeight="bold">
-                        У вас есть незаполненный черновик
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        Вы начали оформление заявки, но не завершили её.
-                    </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1 }}>
+                    <Box sx={{ color: '#4318FF', display: 'flex' }}>
+                        <EditNoteIcon />
+                    </Box>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="body1" fontWeight="bold">
+                            У вас есть незаполненный черновик
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            Вы начали оформление заявки, но не завершили её.
+                        </Typography>
+                    </Box>
+                    {/* Крестик прижат к тексту в обоих режимах */}
+                    <IconButton onClick={handleDelete} size="small" aria-label="Удалить черновик">
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
                 </Box>
                 <Button
                     component={Link}
                     href={route('application.show', { slug })}
                     variant="contained"
-                    sx={{ borderRadius: '10px', textTransform: 'none' }}
+                    fullWidth={false}
+                    sx={{
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        whiteSpace: 'nowrap',
+                        width: { xs: '100%', sm: 'auto' },
+                    }}
                 >
                     Продолжить
                 </Button>
-                <IconButton onClick={handleDelete} size="small" aria-label="Удалить черновик">
-                    <CloseIcon fontSize="small" />
-                </IconButton>
             </Paper>
         </Box>
     );
