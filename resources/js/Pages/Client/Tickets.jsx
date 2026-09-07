@@ -9,7 +9,7 @@ import {
     Paper, TextField, Button, Box, Typography, Grid,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip,
     Select, MenuItem, FormControl, InputLabel, InputAdornment, TableSortLabel, InputBase,
-    IconButton
+    IconButton, useMediaQuery, useTheme, Stack
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SendIcon from '@mui/icons-material/Send';
@@ -32,9 +32,16 @@ export default function Tickets({ auth, tickets }) {
 
 function TicketsContent({ auth, tickets }) {
     const { showToast } = useToast();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [showForm, setShowForm] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    // Сколько карточек показано на мобильном (паттерн «Показать ещё»).
+    // По 10 за раз. Обращений у клиента обычно немного, поэтому все они
+    // уже в браузере — догрузка с сервера не нужна, листаем локально.
+    const PAGE_SIZE = 10;
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
     const columns = [
         {
@@ -364,6 +371,57 @@ function TicketsContent({ auth, tickets }) {
                 )}
             </AnimatePresence>
 
+            {isMobile ? (
+                <Stack spacing={1.5}>
+                    {filteredRows.length === 0 && (
+                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
+                            Обращений пока нет
+                        </Typography>
+                    )}
+                    {filteredRows.slice(0, visibleCount).map((ticket) => {
+                        const status = TICKET_STATUS_MAP[ticket.status] || { label: ticket.status, color: 'default' };
+                        return (
+                            <Paper
+                                key={ticket.id}
+                                onClick={() => setSelectedTicket(ticket)}
+                                sx={{ p: 2, borderRadius: '16px', border: '1px solid #E0E5F2', boxShadow: 'none', cursor: 'pointer' }}
+                            >
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {new Date(ticket.created_at).toLocaleDateString()}
+                                    </Typography>
+                                    <Chip
+                                        label={status.label}
+                                        color={status.color}
+                                        size="small"
+                                        sx={{ borderRadius: '8px', fontWeight: 700, textTransform: 'uppercase', fontSize: '10px' }}
+                                    />
+                                </Box>
+                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.5 }}>
+                                    {ticket.subject}
+                                </Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {getTicketCategoryLabel(ticket.category)}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {ticket.attachments?.length || 0} шт.
+                                    </Typography>
+                                </Box>
+                            </Paper>
+                        );
+                    })}
+                    {visibleCount < filteredRows.length && (
+                        <Button
+                            variant="outlined"
+                            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                            sx={{ borderRadius: '12px', textTransform: 'none', mt: 1 }}
+                        >
+                            Показать ещё
+                        </Button>
+                    )}
+                </Stack>
+            ) : (
             <Paper sx={{ borderRadius: '20px', overflow: 'hidden', border: 'none', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                 <Box sx={{ width: '100%', overflowX: 'auto' }}>
                     <DataGrid
@@ -387,6 +445,7 @@ function TicketsContent({ auth, tickets }) {
                         }} />
                 </Box>
             </Paper>
+            )}
 
             <TicketsCardClient
                 open={Boolean(selectedTicket)}
