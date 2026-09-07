@@ -184,13 +184,20 @@ function TicketsContent({ auth, tickets }) {
 
     return (
         <ClientLayout user={auth.user} title="Обращения">
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6">История ваших запросов</Typography>
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h6" sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>История ваших запросов</Typography>
                 <Button
                     variant="contained"
+                    size={isMobile ? 'small' : 'medium'}
                     startIcon={showForm ? null : <AddIcon />}
                     onClick={() => setShowForm(!showForm)}
-                    sx={{ bgcolor: showForm ? '#FF5B5B' : '#4318FF' }}>
+                    sx={{
+                        bgcolor: showForm ? '#FF5B5B' : '#4318FF',
+                        flexShrink: 0,
+                        textTransform: 'none',
+                        fontSize: { xs: '0.75rem', md: '0.875rem' },
+                        px: { xs: 1.5, md: 2 },
+                    }}>
                     {showForm ? 'Отмена' : 'Новое обращение'}
                 </Button>
             </Box>
