@@ -5,7 +5,7 @@ import {
     Dialog, DialogContent, TextField, DialogActions,
     Snackbar, Alert, InputBase, Grid,
     FormControl, InputLabel, Select, MenuItem, FormHelperText,
-    Card, CardContent, IconButton, Divider
+    Card, CardContent, IconButton, Divider, useMediaQuery, useTheme
 } from '@mui/material';
 import {
     Add as AddIcon, Search as SearchIcon, Delete as DeleteIcon
@@ -30,6 +30,8 @@ const emptyProperty = () => ({
 });
 
 export default function ClientsList({ auth, clients, tariffs }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [editOpen, setEditOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -265,10 +267,19 @@ export default function ClientsList({ auth, clients, tariffs }) {
             <Head title="Потребители" />
             <Box sx={{ bgcolor: '#f4f7fe', minHeight: '90vh', py: 4 }}>
                 <Container maxWidth="xl">
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                        <Typography variant="h4" fontWeight="800" color="#1B2559">Потребители</Typography>
-                        <Box display="flex" gap={2}>
-                            <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: 300, border: '1px solid #E0E5F2', boxShadow: 'none' }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', md: 'row' },
+                            justifyContent: 'space-between',
+                            alignItems: { xs: 'stretch', md: 'center' },
+                            gap: 2,
+                            mb: 4,
+                        }}
+                    >
+                        <Typography variant="h4" fontWeight="800" color="#1B2559" sx={{ fontSize: { xs: '1.6rem', md: '2.125rem' } }}>Потребители</Typography>
+                        <Box sx={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                            <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: { xs: '100%', md: 300 }, border: '1px solid #E0E5F2', boxShadow: 'none' }}>
                                 <SearchIcon sx={{ color: '#A3AED0' }} />
                                 <InputBase
                                     placeholder="Поиск..."
@@ -278,13 +289,13 @@ export default function ClientsList({ auth, clients, tariffs }) {
                                     onChange={e => setSearchQuery(e.target.value)}
                                 />
                             </Paper>
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ borderRadius: '16px', bgcolor: '#4318FF' }}>
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ borderRadius: '16px', bgcolor: '#4318FF', flexShrink: 0 }}>
                                 Добавить
                             </Button>
                         </Box>
                     </Box>
 
-                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid
                             rows={filteredClients}
                             columns={columns}

@@ -172,12 +172,12 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
     return (
         <AdminLayout user={auth.user}>
             <Box sx={{ p: 4, bgcolor: '#f4f7fe', minHeight: '100vh' }}>
-                <Typography variant="h4" fontWeight="800" color="#1B2559" mb={4}>
+                <Typography variant="h4" fontWeight="800" color="#1B2559" mb={4} sx={{ fontSize: { xs: '1.6rem', md: '2.125rem' } }}>
                     Обращения
                 </Typography>
 
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                    <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: 400, boxShadow: 'none', border: '1px solid #E0E5F2' }}>
+                    <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: { xs: '100%', md: 400 }, boxShadow: 'none', border: '1px solid #E0E5F2' }}>
                         <SearchIcon sx={{ color: '#A3AED0' }} />
                         <InputBase
                             placeholder="Поиск по теме или тексту..."
@@ -188,7 +188,7 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                     </Paper>
                 </Box>
 
-                <Paper sx={{ borderRadius: '20px', overflowX: 'auto', border: 'none', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                <Paper sx={{ borderRadius: '20px', overflow: 'hidden', border: 'none', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                     <DataGrid 
                         rows={filteredTickets} 
                         columns={columns} 
