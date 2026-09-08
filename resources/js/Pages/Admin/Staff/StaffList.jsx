@@ -3,7 +3,7 @@ import { Head, useForm, router } from '@inertiajs/react';
 import { Container, Typography, Paper, Button, Box, 
     Dialog, DialogContent, TextField, DialogActions, 
     IconButton, Snackbar, Alert, InputBase, MenuItem,
-    Select, FormControl, InputLabel } from '@mui/material';
+    Select, FormControl, InputLabel, useMediaQuery, useTheme } from '@mui/material';
 import Grid from '@mui/material/Grid'; 
 import { Add as AddIcon, Delete as DeleteIcon, Search as SearchIcon } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -13,6 +13,8 @@ import StaffCard from '@/Components/Admin/StaffCard';
 import { fixKeyboardLayout } from '@/utils/keyboard';
 
 export default function StaffList({ auth, staff }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [editOpen, setEditOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -116,10 +118,19 @@ export default function StaffList({ auth, staff }) {
             <Head title="Сотрудники" />
             <Box sx={{ bgcolor: '#f4f7fe', minHeight: '90vh', py: 4 }}>
                 <Container maxWidth="xl">
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                        <Typography variant="h4" fontWeight="800" color="#1B2559">Сотрудники</Typography>
-                        <Box display="flex" gap={2}>
-                            <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: 300, boxShadow: 'none', border: '1px solid #E0E5F2' }}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', md: 'row' },
+                            justifyContent: 'space-between',
+                            alignItems: { xs: 'stretch', md: 'center' },
+                            gap: 2,
+                            mb: 4,
+                        }}
+                    >
+                        <Typography variant="h4" fontWeight="800" color="#1B2559" sx={{ fontSize: { xs: '1.6rem', md: '2.125rem' } }}>Сотрудники</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, flexShrink: 0 }}>
+                            <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: { xs: '100%', md: 300 }, boxShadow: 'none', border: '1px solid #E0E5F2' }}>
                                 <SearchIcon sx={{ color: '#A3AED0' }} />
                                 <InputBase
                                     placeholder="Поиск по ФИО или Email..."
@@ -129,13 +140,13 @@ export default function StaffList({ auth, staff }) {
                                     onChange={e => setSearchQuery(e.target.value)}
                                     inputProps = {{autoComplete: 'off', name: 'search-staff-unique'}}/>
                             </Paper>
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ borderRadius: '16px', bgcolor: '#4318FF', px: 3 }}>
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate} sx={{ borderRadius: '16px', bgcolor: '#4318FF', px: 3, flexShrink: 0, whiteSpace: 'nowrap' }}>
                                 Добавить сотрудника
                             </Button>
                         </Box>
                     </Box>
 
-                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid 
                             rows={filteredStaff}
                             columns={columns}
