@@ -4,7 +4,15 @@ import { Typography, Divider } from '@mui/material';
 export default function SectionHeader({ block }) {
     return (
         <>
-            <Typography variant={block.data.level || 'h6'} fontWeight="bold" color="#2B3674">
+            <Typography
+                variant={block.data.level || 'h6'}
+                fontWeight="bold"
+                color="#2B3674"
+                sx={{
+                    fontSize: { xs: '1.25rem', md: 'inherit' },
+                    wordBreak: 'break-word',
+                }}
+            >
                 {block.data.title}
             </Typography>
             <Divider sx={{ mb: 1 }} />

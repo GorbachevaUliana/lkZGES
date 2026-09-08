@@ -110,7 +110,7 @@ function DynamicFormContent({ template, draftData }) {
             <Head title={template.title} />
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Paper sx={{ p: 4, borderRadius: 3, boxShadow: '0px 18px 40px rgba(112, 144, 176, 0.12)' }}>
-                    <Typography variant="h4" gutterBottom fontWeight="bold" color="#1B2559">
+                    <Typography gutterBottom fontWeight="bold" color="#1B2559" sx={{ fontSize: { xs: '1.5rem', md: '2.125rem' }, wordBreak: 'break-word' }}>
                         {template.title}
                     </Typography>
                     <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
@@ -140,12 +140,12 @@ function DynamicFormContent({ template, draftData }) {
                             />
                         )}
 
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, gap: 1 }}>
                             <Button
                                 disabled={activeStep === 0}
                                 onClick={() => setActiveStep(p => p - 1)}
                                 startIcon={<BackIcon />}
-                                sx={{ color: '#4318FF' }}
+                                sx={{ color: '#4318FF', fontSize: { xs: '0.8rem', md: '0.875rem' }, px: { xs: 1.5, md: 2 } }}
                             >
                                 Назад
                             </Button>
@@ -155,7 +155,7 @@ function DynamicFormContent({ template, draftData }) {
                                     onClick={() => setActiveStep(1)}
                                     disabled={!isStepValid(0)}
                                     endIcon={<ArrowIcon />}
-                                    sx={{ bgcolor: '#4318FF', '&:hover': { bgcolor: '#3614B8' }, borderRadius: '12px', px: 3 }}
+                                    sx={{ bgcolor: '#4318FF', '&:hover': { bgcolor: '#3614B8' }, borderRadius: '12px', px: { xs: 2, md: 3 }, fontSize: { xs: '0.8rem', md: '0.875rem' } }}
                                 >
                                     Проверить
                                 </Button>
@@ -165,7 +165,7 @@ function DynamicFormContent({ template, draftData }) {
                                     variant="contained"
                                     disabled={processing}
                                     endIcon={<SendIcon />}
-                                    sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, borderRadius: '12px', px: 3 }}
+                                    sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, borderRadius: '12px', px: { xs: 2, md: 3 }, fontSize: { xs: '0.8rem', md: '0.875rem' } }}
                                 >
                                     Отправить
                                 </Button>

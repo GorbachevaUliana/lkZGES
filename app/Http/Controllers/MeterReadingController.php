@@ -29,9 +29,6 @@ class MeterReadingController extends Controller
                 return redirect()->route('admin.dashboard')
                     ->with('error', 'У сотрудников нет личного кабинета потребителя.');
             }
-            // Нет записи client = заявка вообще не подавалась. Раньше был
-            // редирект на welcome.step (Ю-2). Теперь показываем страницу
-            // показаний в пустом состоянии с плашкой «подайте заявку».
             return Inertia::render('Client/Readings/Readings', [
                 'emptyState' => 'no_application',
             ]);
@@ -54,11 +51,6 @@ class MeterReadingController extends Controller
         }
 
         if (!$property) {
-            // client есть, но активного объекта с лицевым счётом нет =
-            // заявка подана, но ещё не одобрена. Раньше был редирект на
-            // дашборд (Ю-2). Теперь плашка «показания появятся после
-            // одобрения заявки» — не путаем человека предложением подать
-            // заявку, которую он уже подал.
             return Inertia::render('Client/Readings/Readings', [
                 'emptyState' => 'no_active_property',
             ]);
@@ -71,27 +63,20 @@ class MeterReadingController extends Controller
             ->with('tariff')
             ->get();
 
-        // ИСПРАВЛЕНО: Тариф берётся из объекта (property), а не из клиента!
         $currentTariff = $property->tariff;
 
-        // Если у объекта нет тарифа - пытаемся найти по названию (для обратной совместимости)
         if (!$currentTariff && $property->tariff_id) {
             $currentTariff = Tariff::find($property->tariff_id);
         }
 
         $lastReadingValue = MeterReading::getLastValue($property->id);
 
-        // ИСПРАВЛЕНО: История показаний только для конкретного объекта!
         $history = MeterReading::where('property_id', $property->id)
             ->with('tariff')
             ->orderBy('reading_date', 'desc')
             ->take(12)
             ->get();
 
-        // Флаг «можно ли сейчас передавать показания» считаем на бэкенде
-        // по времени Заринска (Asia/Barnaul) — тем же способом, что и
-        // защита в storeReading. Фронт НЕ считает период сам (взял бы
-        // часовой пояс устройства клиента), а просто использует этот флаг.
         $dayInvoice = (int) now('Asia/Barnaul')->format('d');
         $canSubmitReadings = $dayInvoice >= 20 && $dayInvoice <= 25;
 
@@ -113,14 +98,8 @@ class MeterReadingController extends Controller
      */
     public function storeReading(StoreMeterReadingRequest $request)
     {
-        // Показания принимаются только с 20 по 25 число включительно, по
-        // времени Заринска (Asia/Barnaul, UTC+7). Считаем период ЯВНО в
-        // этом поясе, не полагаясь на часовой пояс сервера (сейчас UTC, а
-        // на сервере организации может быть любой) — так проверка не
-        // съедет при переносе проекта. Это защита на бэкенде: кнопку на
-        // фронте можно обойти, а этот запрет — нет.
-        $dayInZarinsk = (int) now('Asia/Barnaul')->format('d');
-        if ($dayInZarinsk < 20 || $dayInZarinsk > 25) {
+        $dayInvoice = (int) now('Asia/Barnaul')->format('d');
+        if ($dayInvoice < 20 || $dayInvoice > 25) {
             return back()->withErrors([
                 'current_value' => 'Показания принимаются с 20 по 25 число. Сейчас передача недоступна.',
             ]);
