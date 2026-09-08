@@ -102,10 +102,10 @@ export default function Index({ auth, readings, data, id}) {
             <Box sx={{ bgcolor: '#f4f7fe', minHeight: '90vh', py: 4 }}>
                 <Container maxWidth="xl">
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                        <Typography variant="h4" fontWeight="800" color="#1B2559">Реестр показаний</Typography>
+                        <Typography variant="h4" fontWeight="800" color="#1B2559" sx={{ fontSize: { xs: '1.6rem', md: '2.125rem' } }}>Реестр показаний</Typography>
                     </Box>
 
-                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 20px 50px rgba(112, 144, 176, 0.15)' }}>
+                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 20px 50px rgba(112, 144, 176, 0.15)' }}>
                         <DataGrid 
                             rows={readingsRows} 
                             columns={columns} 
