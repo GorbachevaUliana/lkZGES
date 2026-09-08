@@ -66,9 +66,6 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
         });
     }, [searchQuery, tickets]);
 
-    // Проблема №35: tickets — обычный пагинированный ответ Laravel (не
-    // через Resource, поэтому current_page/last_page/total лежат прямо в
-    // корне, а не в meta). Раньше эти поля просто не читались.
     const ticketsCurrentPage = tickets?.current_page || 1;
     const ticketsTotal = tickets?.total ?? filteredTickets.length;
 
@@ -156,11 +153,6 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
                 router.delete(route('admin.documents.destroy', docId), {
                     onSuccess: () => {
                         setConfirmMeta(prev => ({ ...prev, open: false }));
-                        // TicketsIndex не получает проп clients — искать
-                        // обновлённого клиента через page.props.clients.find(...)
-                        // здесь всегда падало. Известен сам docId, поэтому
-                        // проще и надёжнее убрать документ из уже открытых
-                        // данных локально, без обращения к чужому пропу.
                         setData('documents', (data.documents || []).filter(doc => doc.id !== docId));
                         showToast('Документ успешно удален');
                     }

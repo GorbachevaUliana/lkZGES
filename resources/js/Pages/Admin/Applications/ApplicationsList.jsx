@@ -4,7 +4,7 @@ import {
     Container, Typography, Paper, Box, Button, Chip,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     IconButton, InputBase, Tabs, Tab, Dialog, DialogContent, DialogActions,
-    TextField, Snackbar, Alert, Tooltip
+    TextField, Snackbar, Alert, Tooltip, useMediaQuery, useTheme
 } from '@mui/material';
 import {
     Search as SearchIcon,
@@ -21,6 +21,8 @@ import { fixKeyboardLayout } from '@/utils/keyboard';
 import { APPLICATION_STATUS_COLORS } from '@/constants/statuses';
 
 export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs, stats }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedApplication, setSelectedApplication] = useState(null);
@@ -207,11 +209,20 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
             <Head title="Заявки на заключение договора" />
             <Box sx={{ bgcolor: '#f4f7fe', minHeight: '90vh', py: 4 }}>
                 <Container maxWidth="xl">
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                        <Typography variant="h4" fontWeight="800" color="#1B2559">
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', md: 'row' },
+                            justifyContent: 'space-between',
+                            alignItems: { xs: 'stretch', md: 'center' },
+                            gap: 2,
+                            mb: 3,
+                        }}
+                    >
+                        <Typography variant="h4" fontWeight="800" color="#1B2559" sx={{ fontSize: { xs: '1.5rem', md: '2.125rem' } }}>
                             Заявки на заключение договора
                         </Typography>
-                        <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: 350, boxShadow: 'none', border: '1px solid #E0E5F2' }}>
+                        <Paper sx={{ px: 2, display: 'flex', alignItems: 'center', borderRadius: '30px', width: { xs: '100%', md: 350 }, boxShadow: 'none', border: '1px solid #E0E5F2', flexShrink: 0 }}>
                             <SearchIcon sx={{ color: '#A3AED0' }} />
                             <InputBase
                                 placeholder="Поиск по имени или email..."
@@ -222,7 +233,16 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                         </Paper>
                     </Box>
 
-                    <Box display="flex" gap={2} mb={3}>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            gap: 2,
+                            mb: 3,
+                            flexWrap: 'nowrap',
+                            overflowX: { xs: 'auto', md: 'visible' },
+                            pb: { xs: 1, md: 0 },
+                        }}
+                    >
                         {[
                             { label: 'Все', value: stats.all, status: 'all' },
                             { label: 'Ожидают', value: stats.pending, status: 'pending', color: '#F57C00' },
@@ -232,15 +252,16 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                             <Paper
                                 key={item.status}
                                 sx={{
-                                    px: 3,
-                                    py: 2,
+                                    px: { xs: 2, md: 3 },
+                                    py: { xs: 1.5, md: 2 },
                                     borderRadius: '15px',
                                     cursor: 'pointer',
                                     border: statusFilter === item.status ? '2px solid #4318FF' : '1px solid #E0E5F2',
                                     bgcolor: statusFilter === item.status ? '#F4F7FE' : '#fff',
-                                    minWidth: '120px',
-                                    width: '140px',
-                                    height: '80px',
+                                    minWidth: { xs: '80px', md: '120px' },
+                                    width: { md: '140px' },
+                                    height: { xs: '64px', md: '80px' },
+                                    flexShrink: 0,
                                     display: 'flex',
                                     flexDirection: 'column',
                                     justifyContent: 'center',
@@ -251,10 +272,10 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                                     }
                                 }}
                                 onClick={() => setStatusFilter(item.status)}>
-                                <Typography variant="h4" fontWeight="bold" color={item.color || '#1B2559'}>
+                                <Typography fontWeight="bold" color={item.color || '#1B2559'} sx={{ fontSize: { xs: '1.25rem', md: '2.125rem' } }}>
                                     {item.value}
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                <Typography color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.7rem', md: '0.875rem' }, whiteSpace: 'nowrap' }}>
                                     {item.label}
                                 </Typography>
                             </Paper>
@@ -262,7 +283,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                     </Box>
 
                     {/* Таблица */}
-                    <Paper sx={{ borderRadius: '20px', overflowX: 'auto', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
+                    <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid
                             rows={filteredApplications}
                             columns={columns}
