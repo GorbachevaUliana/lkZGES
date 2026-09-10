@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Application extends Model
 {
@@ -39,11 +40,6 @@ class Application extends Model
         'account_number',
         'status_name',
         'generated_pdf_url',
-        // Раньше отсутствовали здесь — у всех троих есть рабочий
-        // get...Attribute() ниже по файлу, но без записи в $appends
-        // Eloquent не включает их в JSON вообще. contract_pdf_url —
-        // ровно то, из-за чего в карточке всегда было «Договор ещё не
-        // загружен», даже когда договор был реально загружен.
         'contract_pdf_url',
         'client_type_name',
         'processor_name',
@@ -98,6 +94,11 @@ class Application extends Model
         return $this->belongsTo(Tariff::class);
     }
 
+    public function contract(): HasOne
+    {
+        return $this->hasOne(Contract::class);
+    }
+
     // ==================== ACCESSORS ====================
 
     public function getStatusNameAttribute(): string
@@ -117,11 +118,6 @@ class Application extends Model
         }
 
         $data = $this->data ?? [];
-
-        // Юрлицо: фамилии/имени у него нет, имя заявителя — это название
-        // организации. Раньше эта ветка (когда client ещё не создан)
-        // собирала строку только из ФИО, поэтому у заявок юрлиц выходило
-        // пусто / «Не указано Не указано» (Ю-6).
         if (($this->client_type ?? null) === ClientType::Legal->value) {
             return $data['company_name'] ?? 'Название не указано';
         }
@@ -147,11 +143,6 @@ class Application extends Model
             ? $this->documents
             : $this->documents()->get();
 
-        // Ищем по значению enum (PdfDocumentType::Application = 'application'),
-        // с которым документ и сохраняется в ApplicationSubmitService. Раньше
-        // здесь был хардкод 'application_pdf' — тип, которого не существует,
-        // поэтому сгенерированная заявка не находилась и показывалось
-        // «Файл не найден», хотя документ был (Ю-7).
         $doc = $docs->firstWhere('type', \App\Enums\PdfDocumentType::Application->value);
         return $doc ? route('documents.serve', $doc->id) : null;
     }
