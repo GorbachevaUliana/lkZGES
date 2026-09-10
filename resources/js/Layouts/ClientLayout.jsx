@@ -70,7 +70,7 @@ export default function ClientLayout({ user, children, title, application, prope
                             {applicationData?.admin_comment && (
                                 <><br /><strong>Причина:</strong> {applicationData.admin_comment}</>
                             )}
-                        </> 
+                        </>
                     ) : (
                         <>
                             Ваша заявка на заключение договора рассматривается.
@@ -156,18 +156,9 @@ export default function ClientLayout({ user, children, title, application, prope
                     width: isMobile ? '100%' : 0,
                     p: { xs: 2, md: 4 },
                     boxSizing: 'border-box',
-                    // Когда висит плашка черновика (fixed, прижата к низу),
-                    // резервируем снизу место под неё, иначе она перекрывает
-                    // контент. На мобильном плашка выше (текст + кнопка в
-                    // столбик), поэтому отступ там больше. Раньше было
-                    // фиксированное 16 — не хватало.
                     pb: draftData ? { xs: 28, sm: 20 } : { xs: 2, md: 4 },
                 }}
             >
-                {/* Пустой Toolbar-распорка: резервирует ровно высоту
-                    фиксированной шапки, чтобы контент не подлезал под неё.
-                    Раньше был ручной pt:10, который не всегда совпадал с
-                    реальной высотой AppBar. */}
                 {isMobile && <Toolbar />}
                 {!isMobile && (
                     <Typography variant="h4" fontWeight="bold" sx={{ mb: 4, color: '#1B2559' }}>

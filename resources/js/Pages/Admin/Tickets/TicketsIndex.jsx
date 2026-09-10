@@ -2,7 +2,7 @@ import React, {useState, useMemo} from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paper, Table, TableBody, TableCell, TableHead,
     TableRow, Chip, InputBase, Box, Typography, TableContainer } from '@mui/material';
-    import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import SearchIcon from '@mui/icons-material/Search';
 import TicketCard from '@/Components/Admin/TicketCard';
 import { useForm } from '@inertiajs/react';

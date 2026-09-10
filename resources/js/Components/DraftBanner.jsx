@@ -60,7 +60,6 @@ export default function DraftBanner({ draft }) {
                             Вы начали оформление заявки, но не завершили её.
                         </Typography>
                     </Box>
-                    {/* Крестик прижат к тексту в обоих режимах */}
                     <IconButton onClick={handleDelete} size="small" aria-label="Удалить черновик">
                         <CloseIcon fontSize="small" />
                     </IconButton>
