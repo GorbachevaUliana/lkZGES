@@ -100,9 +100,9 @@ class Client extends Model
         return $this->hasMany(Property::class);
     }
 
-    public function contracts(): HasOne
+    public function contracts(): HasMany
     {
-        return $this->hasOne(Contract::class);
+        return $this->hasMany(Contract::class);
     }
 
     // ==================== ACCESSORS ====================
