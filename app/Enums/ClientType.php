@@ -15,6 +15,23 @@ enum ClientType: string
         };
     }
 
+/**
+ * Каким способом клиент этого типа подписывает договор.
+ *
+ * ВНИМАНИЕ: здесь намеренно нет default.
+ * Когда появится ИП, PHP бросит UnhandledMatchError, и это правильно —
+ * лучше падение, чем молча выданная физлицу подпись вместо УКЭП.
+ * Не добавлять default. Добавлять кейсы.
+ */
+
+    public function signatureMethod(): SignatureMethod
+    {
+        return match($this){
+            self::Individual => signatureMethod::Pep,
+            self::Legal      => signatureMethod ::Ukep,
+        };
+    }
+
     public static function labels(): array
     {
         return array_column(
