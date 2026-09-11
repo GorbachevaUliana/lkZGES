@@ -5,6 +5,7 @@ namespace App\Enums;
 enum ContractStatus: string
 {
     case Draft          = 'draft';           // загружен, ещё не отправлен клиенту
+    case Sent           = 'sent';            //направлен потребителю, подпись не требуется
     case AwaitingClient = 'awaiting_client'; // ждём подпись клиента
     case Signed         = 'signed';          // подписан с двух сторон
     case Active         = 'active';          // действует
@@ -15,6 +16,7 @@ enum ContractStatus: string
         return match ($this) {
             self::Draft          => 'Черновик',
             self::AwaitingClient => 'Ожидает подписи клиента',
+            self::Sent           => 'Направлен потребителю',
             self::Signed         => 'Подписан',
             self::Active         => 'Действует',
             self::Terminated     => 'Расторгнут',
