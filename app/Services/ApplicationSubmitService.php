@@ -54,11 +54,12 @@ class ApplicationSubmitService
             // (draft → pending), дозаполняя его. Если черновика нет — метод
             // сам создаст заявку с нуля (запасной путь, поведение как раньше).
             $application = $this->draftService->finalizeForUser($user, [
-                'client_id'   => $client->id,
-                'property_id' => $property->id,
-                'template_id' => $template->id,
-                'client_type' => $clientType,
-                'data'        => $normalizedData,
+                'client_id'    => $client->id,
+                'property_id'  => $property->id,
+                'template_id'  => $template->id,
+                'client_type'  => $clientType,
+                'data'         => $normalizedData,
+                'max_power_kw' => $this->extractMaxPower($normalizedData),
             ]);
             
             $pdfPath = $this->generateApplicationPdf($normalizedData, $client, $clientType, $application, $property);
@@ -79,6 +80,31 @@ class ApplicationSubmitService
             return redirect()->route('client.dashboard')
                 ->with('success', 'Заявка успешно отправлена!');
         });
+    }
+
+    /**
+     * Максимальная мощность из данных заявки — в отдельную типизированную колонку.
+     *
+     * Из формы значение приходит строкой и может содержать запятую вместо точки
+     * и пробелы-разделители разрядов («1 500,5»). От этого числа зависит,
+     * обязательно ли подписание договора, поэтому храним его нормализованным
+     * числом, а не «как пришло» в JSON.
+     *
+     * null означает «мощность не указана» — это честнее нуля, который
+     * читался бы как «указали ноль».
+     */
+    private function extractMaxPower(array $data): ?float
+    {
+        $raw = $data['max_power'] ?? null;
+
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        // Обычный пробел, неразрывный пробел, запятая
+        $normalized = str_replace([' ', "\u{00A0}", ','], ['', '', '.'], (string) $raw);
+
+        return is_numeric($normalized) ? (float) $normalized : null;
     }
 
     /**

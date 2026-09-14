@@ -26,12 +26,16 @@ class Application extends Model
         'processed_at',
         'processed_by',
         'tariff_id',
-        'property_id'
+        'property_id',
+        'max_power_kw',
+        'signing_requested',
     ];
 
     protected $casts = [
-        'data' => 'array',
-        'processed_at' => 'datetime',
+        'data'              => 'array',
+        'processed_at'      => 'datetime',
+        'max_power_kw'      => 'float',
+        'signing_requested' => 'boolean',
     ];
 
     protected $appends = [
