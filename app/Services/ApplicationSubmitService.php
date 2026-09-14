@@ -88,7 +88,7 @@ class ApplicationSubmitService
      * Из формы значение приходит строкой и может содержать запятую вместо точки
      * и пробелы-разделители разрядов («1 500,5»). От этого числа зависит,
      * обязательно ли подписание договора, поэтому храним его нормализованным
-     * числом, а не «как пришло» в JSON.
+     * числом, а не как пришло в JSON.
      *
      * null означает «мощность не указана» — это честнее нуля, который
      * читался бы как «указали ноль».
@@ -121,6 +121,7 @@ class ApplicationSubmitService
      * Нормализация данных формы.
      * Чекбоксы, селекты и динамические списки приводятся к строкам.
      * Файлы пропускаются — они обрабатываются отдельно в FileUploadService.
+     * 
      */
     private function normalizeData(Request $request): array
     {
@@ -189,16 +190,15 @@ class ApplicationSubmitService
             ['user_id' => $user->id],
             [
                 'client_type'  => $resolvedType,
-                'last_name'    => $data['last_name']   ?? $data['Фамилия']               ?? 'Не указано',
-                'first_name'   => $data['first_name']  ?? $data['Имя']                   ?? 'Не указано',
-                'middle_name'  => $data['middle_name'] ?? $data['Отчество']              ?? '',
-                'phone'        => $data['phone']        ?? $data['Телефон']
-                                ?? $data['Контактный телефон']                           ?? null,
+                'last_name'    => $data['last_name']?? $data['Фамилия']?? 'Не указано',
+                'first_name'   => $data['first_name']?? $data['Имя']?? 'Не указано',
+                'middle_name'  => $data['middle_name']?? $data['Отчество']?? '',
+                'phone'        => $data['phone']?? $data['Телефон']?? $data['Контактный телефон']                           ?? null,
                 'email'        => $user->email,
-                'company_name' => $data['company_name'] ?? $data['Наименование организации'] ?? null,
-                'inn'          => $data['inn']           ?? $data['ИНН']                  ?? null,
-                'kpp'          => $data['kpp']           ?? null,
-                'ogrn'         => $data['ogrn']          ?? null,
+                'company_name' => $data['company_name']?? $data['Наименование организации']?? null,
+                'inn'          => $data['inn']?? $data['ИНН']?? null,
+                'kpp'          => $data['kpp']?? null,
+                'ogrn'         => $data['ogrn']?? null,
             ]
         );
     }
