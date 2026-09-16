@@ -7,9 +7,12 @@ use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Models\Tariff;
 use App\Services\ApplicationService;
+use App\Services\ContractService;
 use Illuminate\Http\Request;
 use App\Http\Requests\Admin\UploadApplicationDocumentRequest;
 use App\Http\Requests\Admin\UploadContractRequest;
+use App\Http\Requests\Admin\PublishContractRequest;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ApplicationController extends Controller
@@ -31,7 +34,7 @@ class ApplicationController extends Controller
         // подали. Исключаем из списка и из счётчика «Все». Остальные
         // счётчики считают по конкретным статусам, draft в них и так не
         // попадает.
-        $applications = Application::with(['user', 'client', 'property', 'documents'])
+        $applications = Application::with(['user', 'client', 'property', 'documents', 'contract'])
             ->where('status', '!=', ApplicationStatus::Draft->value)
             ->orderBy('created_at', 'desc')
             ->paginate(50);
@@ -55,7 +58,7 @@ class ApplicationController extends Controller
      */
     public function pending()
     {
-        $applications = Application::with(['user', 'client', 'property'])
+        $applications = Application::with(['user', 'client', 'property', 'contract'])
             ->whereIn('status', ['new', 'processing'])
             ->orderBy('created_at', 'asc')
             ->get();
@@ -132,29 +135,54 @@ class ApplicationController extends Controller
     /**
      * Загрузка договора админом
      */
-    public function uploadContract(UploadContractRequest $request, Application $application)
-    {
+    public function uploadContract(
+        UploadContractRequest $request,
+        Application $application,
+        ContractService $contractService
+    ) {
+        // Только PDF: по файлу считается хеш, и он же подписывается
+        // электронной подписью. Скан в jpg для этой роли не годится.
         $request->validate([
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'file' => 'required|file|mimes:pdf|max:10240',
         ]);
 
-        $file = $request->file('file');
-        $path = $file->store('contracts', 'local');
+        $contract = $contractService->createFromUpload($application, $request->file('file'));
 
         $application->update([
-            'contract_pdf_path' => $path,
+            'contract_pdf_path' => $contract->file_path,
         ]);
 
-        \App\Models\Document::create([
-            'client_id' => $application->client_id,
-            'application_id' => $application->id,
-            'name' => 'Договор №' . $application->id,
-            'file_path' => $path,
-            'type' => 'contract',
-            'description' => 'Договор энергоснабжения',
-        ]);
+        return back()->with('success', 'Договор загружен. Он ещё не направлен потребителю.');
+    }
 
-        return back()->with('success', 'Договор загружен');
+    /**
+     * Скачивание файла договора оператором.
+     *
+     * Нужен отдельно от documents.serve: пока договор в черновике,
+     * записи Document не существует — она появляется только при публикации.
+     */
+    public function downloadContract(Application $application)
+    {
+        $contract = $application->contract;
+
+        if (! $contract || ! Storage::disk('local')->exists($contract->file_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->download($contract->file_path, $contract->original_name);
+    }
+
+    public function publishContract(PublishContractRequest $request, Application $application, ContractService $contractService)
+    {
+        $contract = $application->contract;
+
+        if (! $contract) {
+            return back()->withErrors(['contract' => 'Договор не загружен.']);
+        }
+
+        $contractService->publish($contract);
+
+        return back()->with('success', 'Договор направлен потребителю.');
     }
 
     /**

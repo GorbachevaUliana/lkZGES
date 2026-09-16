@@ -20,10 +20,16 @@ class Contract extends Model
         'file_hash',
         'status',
         'signed_at',
+        'signing_required',
+        'signing_reason',
+        'signature_method',
+        'max_power_kw',
     ];
 
     protected $casts = [
         'signed_at' => 'datetime',
+        'signing_required' => 'boolean',
+        'max_power_kw' => 'float',
     ];
 
     // ==================== RELATIONSHIPS ====================
