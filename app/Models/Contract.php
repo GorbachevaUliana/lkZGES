@@ -6,6 +6,9 @@ use App\Enums\ContractStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use app\Enums\SignerType;
 
 class Contract extends Model
 {
@@ -80,5 +83,22 @@ class Contract extends Model
     public function statusLabel(): string
     {
         return ContractStatus::labels()[$this->status] ?? $this->status;
+    }
+
+    public function signatures(): HasMany
+    {
+        return $this->hasMany(ContractSignature::class);
+    }
+
+    public function organizationSignature(): HasOne
+    {
+        return $this->hasOne(ContractSignature::class)
+            ->where('signer', SignerType::Organization->value);
+    }
+
+    public function clientSignature(): HasOne
+    {
+        return $this->hasOne(ContractSignature::class)
+            ->where('signer', SignerType::Client->value);
     }
 }

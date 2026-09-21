@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::table('applications', function (Blueprint $table) {
             $table->decimal('max_power_kw', 10, 2)->nullable()->after('client_type');
             //null - вопрос не задавался (старые заявки)
-            // false - потребитель осознанно отказался
+            //false - потребитель осознанно отказался
+            //true - договор должен быть подписан двумя сторонами
             $table->boolean('signing_requested')->nullable()->after('max_power_kw');
         });
     }
