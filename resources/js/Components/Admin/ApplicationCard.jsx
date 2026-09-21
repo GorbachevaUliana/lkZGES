@@ -43,7 +43,7 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
     // открытии уже одобренной заявки. Сбрасывается при закрытии карточки.
     const [justApproved, setJustApproved] = useState(false);
 
-
+    const contract = application?.contract_info;
     const appIdForEffects = application?.id || application?.data?.id;
 
     // Синхронизация полей формы с данными заявки — должна происходить
@@ -129,6 +129,19 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                 onRefresh?.();
             },
             onError: () => showToast('Ошибка загрузки', 'error')
+        });
+    };
+
+    const handlePublishContract = () => {
+        router.post(`/admin/applications/${appId}/contract/publish`, {}, {
+            onSuccess: () => {
+                showToast('Договор направлен потребителю');
+                onRefresh?.();
+            },
+            onError: (errors) => {
+                showToast(Object.values(errors)[0] || 'Ошибка отправки', 'error');
+            },
+            preserveScroll:true,
         });
     };
 
@@ -340,50 +353,74 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                             <Typography variant="h6" fontWeight="bold">
                                 Договор
                             </Typography>
-                            <Button variant="outlined" startIcon={<UploadIcon />} component="label" size="small">
-                                Загрузить договор
-                                <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" onChange={handleUploadContract} />
-                            </Button>
+                            {(!contract || contract.is_draft) && (
+                                <Button variant="outlined" startIcon={<UploadIcon />} component="label" size="small">
+                                    {contract ? 'Заменить файл' : 'Загрузить договор'}
+                                    <input type="file" hidden accept=".pdf" onChange={handleUploadContract} />
+                                </Button>
+                            )}
                         </Box>
-                        {application.contract_pdf_url ? (
-                            <Box 
-                                display="flex" 
-                                alignItems="center" 
-                                gap={2}
+
+                        {!contract ? (
+                            <Typography color="text.secondary">Договор ещё не загружен</Typography>
+                        ) : (
+                            <Box
                                 sx={{
                                     p: 2,
-                                    bgcolor: '#E8F5E9',
                                     borderRadius: '12px',
-                                    border: '1px solid #C8E6C9'
+                                    bgcolor: contract.is_draft ? '#FFF8E1' : '#E8F5E9',
+                                    border: `1px solid ${contract.is_draft ? '#FFE082' : '#C8E6C9'}`,
                                 }}
                             >
-                                <DescriptionIcon sx={{ color: '#2E7D32', fontSize: 28 }} />
-                                <Box flex={1}>
-                                    <Typography fontWeight="500" color="#2E7D32">
-                                        Договор загружен
-                                    </Typography>
+                                <Box display="flex" alignItems="center" gap={2}>
+                                    <DescriptionIcon
+                                        sx={{ color: contract.is_draft ? '#F57F17' : '#2E7D32', fontSize: 28 }}
+                                    />
+                                    <Box flex={1}>
+                                        <Typography fontWeight="500" color={contract.is_draft ? '#F57F17' : '#2E7D32'}>
+                                            {contract.is_draft ? 'Загружен, не направлен потребителю' : contract.status_label}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {contract.original_name}
+                                        </Typography>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<DownloadIcon />}
+                                        href={contract.url}
+                                        target="_blank"
+                                        sx={{ borderRadius: '8px' }}
+                                    >
+                                        Скачать
+                                    </Button>
                                 </Box>
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={<DownloadIcon />}
-                                    href={application.contract_pdf_url}
-                                    target="_blank"
-                                    sx={{ 
-                                        borderRadius: '8px',
-                                        borderColor: '#2E7D32',
-                                        color: '#2E7D32',
-                                        '&:hover': { 
-                                            borderColor: '#1B5E20',
-                                            bgcolor: '#C8E6C9'
-                                        }
-                                    }}
-                                >
-                                    Скачать
-                                </Button>
+
+                                {contract.is_draft && contract.signing_required && (
+                                    <Typography variant="body2" color="text.secondary" mt={2}>
+                                        Подписание обязательно. Перед отправкой подпишите договор ЭЦП организации.
+                                    </Typography>
+                                )}
+
+                                {contract.is_draft && (
+                                    <>
+                                        <Button
+                                            variant="contained"
+                                            fullWidth
+                                            disabled={application.status !== 'approved'}
+                                            onClick={handlePublishContract}
+                                            sx={{ mt: 2, borderRadius: '8px' }}
+                                        >
+                                            Направить потребителю
+                                        </Button>
+                                        {application.status !== 'approved' && (
+                                            <Typography variant="body2" color="text.secondary" mt={1}>
+                                                Сначала одобрите заявку на вкладке «Обработка».
+                                            </Typography>
+                                        )}
+                                    </>
+                                )}
                             </Box>
-                        ) : (
-                            <Typography color="text.secondary">Договор ещё не загружен</Typography>
                         )}
                     </Box>
 
@@ -583,7 +620,7 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                                 disabled={processing}
                                 sx={{ bgcolor: selectedStatus === 'approved' ? '#2E7D32' : '#4318FF', borderRadius: '12px', px: 4 }}
                             >
-                                {selectedStatus === 'approved' ? 'Одобрить и создать договор' : 'Сохранить'}
+                                {selectedStatus === 'approved' ? 'Одобрить заявку' : 'Сохранить'}
                             </Button>
                         </Box>
                     )}

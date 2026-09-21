@@ -80,6 +80,7 @@ class ApplicationController extends Controller
             'property',
             'documents',
             'client.documents',
+            'contract',
         ]);
 
         return response()->json([
@@ -140,12 +141,6 @@ class ApplicationController extends Controller
         Application $application,
         ContractService $contractService
     ) {
-        // Только PDF: по файлу считается хеш, и он же подписывается
-        // электронной подписью. Скан в jpg для этой роли не годится.
-        $request->validate([
-            'file' => 'required|file|mimes:pdf|max:10240',
-        ]);
-
         $contract = $contractService->createFromUpload($application, $request->file('file'));
 
         $application->update([

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ContractStatus;
+use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Models\Contract;
 use App\Models\Document;
@@ -78,6 +79,12 @@ class ContractService
      */
     public function publish(Contract $contract): Contract
     {
+        if ($contract->application->status !== ApplicationStatus::Approved->value) {
+            throw ValidationException::withMessages([
+                'contract' => 'Заявка не одобрена. Сначала одобрите заявку, затем направляйте договор.',
+            ]);
+        }
+        
         if ($contract->status !== ContractStatus::Draft->value) {
             throw ValidationException::withMessages([
                 'contract' => 'Договор уже направлен потребителю.',

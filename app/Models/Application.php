@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ApplicationStatus;
 use App\Enums\ClientType;
+use App\Enums\ContractStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,6 +48,7 @@ class Application extends Model
         'contract_pdf_url',
         'client_type_name',
         'processor_name',
+        'contract_info',
     ];
 
     // ==================== CONSTANTS ====================
@@ -178,6 +180,34 @@ class Application extends Model
         return trim(($this->processor->last_name ?? '').' '.
                     ($this->processor->first_name ?? '').' '.
                     ($this->processor->middle_name ?? ''));
+    }
+
+    /**
+     * Сводка по договору для админки.
+     *
+     * Смотрит на Contract, а не на Document: пока договор в черновике,
+     * Document ещё не создан, но оператор договор уже видит и может заменить.
+     */
+    public function getContractInfoAttribute(): ?array
+    {
+        $contract = $this->relationLoaded('contract')
+            ? $this->contract
+            : $this->contract()->first();
+
+        if (! $contract) {
+            return null;
+        }
+
+        return [
+            'status'           => $contract->status,
+            'status_label'     => $contract->statusLabel(),
+            'original_name'    => $contract->original_name,
+            'url'              => route('admin.applications.contract.download', $this->id),
+            'is_draft'         => $contract->status === ContractStatus::Draft->value,
+            'signing_required' => $contract->signing_required,
+            'signature_method' => $contract->signature_method,
+            'signed_at'        => $contract->signed_at?->format('d.m.Y H:i'),
+        ];
     }
 
     // ==================== SCOPES ====================

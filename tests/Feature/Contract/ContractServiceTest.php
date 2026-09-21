@@ -39,7 +39,8 @@ class ContractServiceTest extends TestCase
     private function makeApplication(
         ?float $power = null,
         ?bool $requested = null,
-        string $clientType = 'individual'
+        string $clientType = 'individual',
+        string $status = ApplicationStatus::Approved->value
     ): Application {
         $user = User::factory()->create(['role' => UserRole::Applicant]);
 
@@ -59,7 +60,7 @@ class ContractServiceTest extends TestCase
             'template_id'       => ApplicationTemplate::where('slug', $slug)->firstOrFail()->id,
             'client_type'       => $clientType,
             'data'              => [],
-            'status'            => ApplicationStatus::Pending->value,
+            'status'            => $status,
             'max_power_kw'      => $power,
             'signing_requested' => $requested,
         ]);
@@ -185,4 +186,16 @@ class ContractServiceTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->service->publish($contract->fresh());
     }
+
+    public function test_contract_cannot_be_published_before_approval(): void
+    {
+        $application = $this->makeApplication(
+            status: ApplicationStatus::Pending->value
+        );
+        $contract = $this->service->createFromUpload($application, $this->pdf());
+
+        $this->expectException(ValidationException::class);
+        $this->service->publish($contract);
+    }
 }
+
