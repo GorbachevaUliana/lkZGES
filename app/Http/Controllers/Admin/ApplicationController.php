@@ -10,6 +10,7 @@ use App\Services\ApplicationService;
 use App\Services\ContractService;
 use Illuminate\Http\Request;
 use App\Http\Requests\Admin\UploadApplicationDocumentRequest;
+use App\Http\Requests\Admin\UploadOrganizationSignatureRequest;
 use App\Http\Requests\Admin\UploadContractRequest;
 use App\Http\Requests\Admin\PublishContractRequest;
 use Illuminate\Support\Facades\Storage;
@@ -34,7 +35,7 @@ class ApplicationController extends Controller
         // подали. Исключаем из списка и из счётчика «Все». Остальные
         // счётчики считают по конкретным статусам, draft в них и так не
         // попадает.
-        $applications = Application::with(['user', 'client', 'property', 'documents', 'contract'])
+        $applications = Application::with(['user', 'client', 'property', 'documents', 'contract.organizationSignature'])
             ->where('status', '!=', ApplicationStatus::Draft->value)
             ->orderBy('created_at', 'desc')
             ->paginate(50);
@@ -58,7 +59,7 @@ class ApplicationController extends Controller
      */
     public function pending()
     {
-        $applications = Application::with(['user', 'client', 'property', 'contract'])
+        $applications = Application::with(['user', 'client', 'property', 'contract.organizationSignature'])
             ->whereIn('status', ['new', 'processing'])
             ->orderBy('created_at', 'asc')
             ->get();
@@ -80,7 +81,7 @@ class ApplicationController extends Controller
             'property',
             'documents',
             'client.documents',
-            'contract',
+            'contract.organizationSignature',
         ]);
 
         return response()->json([
@@ -203,5 +204,27 @@ class ApplicationController extends Controller
         ]);
 
         return back()->with('success', 'Документ загружен');
+    }
+
+    public function uploadOrganizationSignature(
+        UploadOrganizationSignatureRequest $request,
+        Application $application,
+        ContractService $contractService
+    ) {
+        $contract = $application->contract;
+
+        if (! $contract) {
+            return back()->withErrors(['signature' => 'Сначала загрузите договор.']);
+        }
+
+        $contractService->attachOrganizationSignature(
+            $contract,
+            $request->file('file'),
+            $request->user(),
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return back()->with('success', 'Подпись организации загружена.');
     }
 }

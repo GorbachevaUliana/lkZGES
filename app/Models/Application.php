@@ -198,6 +198,10 @@ class Application extends Model
             return null;
         }
 
+        $orgSignature = $contract->relationLoaded('organizationSignature')
+            ? $contract->organizationSignature
+            : $contract->organizationSignature()->first();
+
         return [
             'status'           => $contract->status,
             'status_label'     => $contract->statusLabel(),
@@ -206,7 +210,13 @@ class Application extends Model
             'is_draft'         => $contract->status === ContractStatus::Draft->value,
             'signing_required' => $contract->signing_required,
             'signature_method' => $contract->signature_method,
-            'signed_at'        => $contract->signed_at?->format('d.m.Y H:i'),
+            'signed_at' => $contract->signed_at
+                ?->timezone('Asia/Barnaul')
+                ->format('d.m.Y H:i'),
+            'has_organization_signature' => (bool) $orgSignature,
+            'organization_signed_at' => $orgSignature?->signed_at
+                ?->timezone('Asia/Barnaul')
+                ->format('d.m.Y H:i'),
         ];
     }
 

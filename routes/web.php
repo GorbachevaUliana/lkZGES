@@ -124,6 +124,7 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
             Route::post('/{application}/contract/publish', [AdminApplicationController::class, 'publishContract'])->name('contract.publish');
             Route::post('/{application}/document', [AdminApplicationController::class, 'uploadDocument'])->name('document');
             Route::get('/{application}/contract/download', [AdminApplicationController::class, 'downloadContract'])->name('contract.download');
+            Route::post('/{application}/contract/signature', [AdminApplicationController::class, 'uploadOrganizationSignature'])->name('contract.signature');
         });
     });
 

@@ -76,6 +76,18 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
     const colors = APPLICATION_STATUS_COLORS[application.status] || { bg: '#F5F5F5', color: '#666', label: application.status };
     const isLegal = application.client_type === 'legal';
 
+    const getPublishBlockReason = () => {
+        if (application.status !== 'approved') {
+            return 'Сначала одобрите заявку на вкладке «Обработка».';
+        }
+        if (contract?.signing_required && !contract?.has_organization_signature) {
+            return 'Сначала загрузите подпись организации.';
+        }
+        return null;
+    };
+
+    const publishBlockReason = getPublishBlockReason();
+
     const handleUpdateStatus = () => {
         if (selectedStatus === 'approved' && !accountNumber) {
             showToast('Введите лицевой счёт', 'error');
@@ -129,6 +141,22 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                 onRefresh?.();
             },
             onError: () => showToast('Ошибка загрузки', 'error')
+        });
+    };
+
+    const handleUploadSignature = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        router.post(`/admin/applications/${appId}/contract/signature`, formData, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast('Подпись организации загружена');
+                onRefresh?.();
+            },
+            onError: (errors) => showToast(Object.values(errors)[0] || 'Ошибка загрузки', 'error'),
         });
     };
 
@@ -397,9 +425,32 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                                 </Box>
 
                                 {contract.is_draft && contract.signing_required && (
-                                    <Typography variant="body2" color="text.secondary" mt={2}>
-                                        Подписание обязательно. Перед отправкой подпишите договор ЭЦП организации.
-                                    </Typography>
+                                    <Box
+                                        mt={2}
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="space-between"
+                                        gap={2}
+                                    >
+                                        <Typography
+                                            variant="body2"
+                                            color={contract.has_organization_signature ? '#2E7D32' : 'text.secondary'}
+                                        >
+                                            {contract.has_organization_signature
+                                                ? `Подписан ЭЦП организации · ${contract.organization_signed_at}`
+                                                : 'Подписание обязательно. Подпишите договор ЭЦП организации и загрузите файл подписи.'}
+                                        </Typography>
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            component="label"
+                                            startIcon={<UploadIcon />}
+                                            sx={{ flexShrink: 0, borderRadius: '8px' }}
+                                        >
+                                            {contract.has_organization_signature ? 'Заменить подпись' : 'Загрузить подпись'}
+                                            <input type="file" hidden accept=".sig,.p7s" onChange={handleUploadSignature} />
+                                        </Button>
+                                    </Box>
                                 )}
 
                                 {contract.is_draft && (
@@ -407,15 +458,15 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                                         <Button
                                             variant="contained"
                                             fullWidth
-                                            disabled={application.status !== 'approved'}
+                                            disabled={!!publishBlockReason}
                                             onClick={handlePublishContract}
                                             sx={{ mt: 2, borderRadius: '8px' }}
                                         >
                                             Направить потребителю
                                         </Button>
-                                        {application.status !== 'approved' && (
+                                        {publishBlockReason && (
                                             <Typography variant="body2" color="text.secondary" mt={1}>
-                                                Сначала одобрите заявку на вкладке «Обработка».
+                                                {publishBlockReason}
                                             </Typography>
                                         )}
                                     </>

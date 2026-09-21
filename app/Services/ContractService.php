@@ -4,9 +4,13 @@ namespace App\Services;
 
 use App\Enums\ContractStatus;
 use App\Enums\ApplicationStatus;
+use App\Enums\SignatureMethod;
+use App\Enums\SignerType;
 use App\Models\Application;
 use App\Models\Contract;
 use App\Models\Document;
+use App\Models\ContractSignature;
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -58,6 +62,7 @@ class ContractService
             );
 
             if ($existing) {
+                $this->deleteDraftOrganizationSignature($existing);
                 $oldPath = $existing->file_path;
                 $existing->update($attributes);
                 Storage::disk('local')->delete($oldPath);
@@ -91,6 +96,23 @@ class ContractService
             ]);
         }
 
+        if ($contract->signing_required) {
+            $orgSignature = $contract->organizationSignature()->first();
+
+            if (! $orgSignature) {
+                throw ValidationException::withMessages([
+                    'contract' => 'Договор не подписан со стороны организации. Загрузите файл подписи.',
+                ]);
+            }
+
+            // Подпись должна относиться именно к текущему файлу
+            if (! hash_equals($orgSignature->document_hash, $contract->file_hash)) {
+                throw ValidationException::withMessages([
+                    'contract' => 'Подпись организации относится к другой версии файла. Подпишите договор заново.',
+                ]);
+            }
+        }
+
         // Файл мог измениться на диске после загрузки. Направлять потребителю
         // документ, не совпадающий с тем, по которому посчитан хеш, нельзя:
         // на этот хеш потом ляжет подпись.
@@ -118,5 +140,83 @@ class ContractService
 
             return $contract->fresh();
         });
+    }
+
+    /**
+     * Прикрепить подпись организации к договору.
+     *
+     * Оператор подписывает PDF токеном у себя на компьютере (КриптоАРМ),
+     * получает файл открепленной подписи .sig и загружает его сюда.
+     * Криптографически подпись здесь не проверяется — это отдельная задача
+     * на будущее. Мы фиксируем, какой файл был подписан (по хешу), кем
+     * загружена подпись и когда.
+     */
+    public function attachOrganizationSignature(
+        Contract $contract,
+        UploadedFile $signatureFile,
+        User $operator,
+        ?string $ip = null,
+        ?string $userAgent = null,
+    ): ContractSignature {
+        if ($contract->status !== ContractStatus::Draft->value) {
+            throw ValidationException::withMessages([
+                'signature' => 'Договор уже направлен потребителю, подпись изменить нельзя.',
+            ]);
+        }
+
+        if (! $contract->signing_required) {
+            throw ValidationException::withMessages([
+                'signature' => 'Для этого договора подписание не требуется.',
+            ]);
+        }
+
+        if (! $contract->fileIsIntact()) {
+            throw ValidationException::withMessages([
+                'signature' => 'Файл договора не совпадает с загруженным. Загрузите договор заново.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($contract, $signatureFile, $operator, $ip, $userAgent) {
+            $this->deleteDraftOrganizationSignature($contract);
+
+            $path = $signatureFile->store('contract_signatures', 'local');
+
+            return ContractSignature::create([
+                'contract_id'         => $contract->id,
+                'signer'              => SignerType::Organization->value,
+                // Организация всегда подписывает УКЭП. Не путать с
+                // contracts.signature_method — там способ подписи КЛИЕНТА.
+                'method'              => SignatureMethod::Ukep->value,
+                'signed_at'           => now(),
+                'document_hash'       => $contract->file_hash,
+                'signed_by_user_id'   => $operator->id,
+                'signature_file_path' => $path,
+                'ip'                  => $ip,
+                'user_agent'          => $userAgent,
+            ]);
+        });
+    }
+
+    /**
+     * Удалить подпись организации с черновика — вместе с файлом.
+     *
+     * Допустимо только для черновика: такой документ ещё не покидал
+     * организацию, и подпись на нём не имеет внешнего значения.
+     * После публикации подписи не удаляются никогда.
+     */
+    private function deleteDraftOrganizationSignature(Contract $contract): void
+    {
+        $existing = $contract->organizationSignature()->first();
+
+        if (! $existing) {
+            return;
+        }
+
+        $oldPath = $existing->signature_file_path;
+        $existing->delete();
+
+        if ($oldPath) {
+            Storage::disk('local')->delete($oldPath);
+        }
     }
 }

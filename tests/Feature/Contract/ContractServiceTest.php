@@ -7,6 +7,8 @@ use App\Enums\ContractStatus;
 use App\Enums\SignatureMethod;
 use App\Enums\SigningReason;
 use App\Enums\UserRole;
+use App\Enums\SignerType;
+use App\Models\ContractSignature;
 use App\Models\Application;
 use App\Models\ApplicationTemplate;
 use App\Models\Client;
@@ -69,6 +71,16 @@ class ContractServiceTest extends TestCase
     private function pdf(string $name = 'dogovor.pdf'): UploadedFile
     {
         return UploadedFile::fake()->create($name, 50, 'application/pdf');
+    }
+
+    private function sig(string $name = 'dogovor.pdf.sig'): UploadedFile
+    {
+        return UploadedFile::fake()->create($name, 2);
+    }
+
+    private function operator(): User
+    {
+        return User::factory()->create(['role' => UserRole::Staff]);
     }
 
     // ==================== СОЗДАНИЕ ====================
@@ -149,7 +161,13 @@ class ContractServiceTest extends TestCase
     {
         $contract = $this->service->createFromUpload($this->makeApplication(700.0), $this->pdf());
 
-        $published = $this->service->publish($contract);
+        $this->service->attachOrganizationSignature(
+            $contract,
+            UploadedFile::fake()->create('dogovor.pdf.sig', 2),
+            User::factory()->create(['role' => UserRole::Staff]),
+        );
+
+        $published = $this->service->publish($contract->fresh());
 
         $this->assertSame(ContractStatus::AwaitingClient->value, $published->status);
     }
@@ -197,5 +215,70 @@ class ContractServiceTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->service->publish($contract);
     }
-}
 
+    // ==================== ПОДПИСЬ ОРГАНИЗАЦИИ ====================
+
+    public function test_organization_signature_is_attached(): void
+    {
+        $contract = $this->service->createFromUpload($this->makeApplication(700.0), $this->pdf());
+        $operator = $this->operator();
+
+        $signature = $this->service->attachOrganizationSignature($contract, $this->sig(), $operator);
+
+        $this->assertSame(SignerType::Organization->value, $signature->signer);
+        $this->assertSame(SignatureMethod::Ukep->value, $signature->method);
+        $this->assertSame($contract->file_hash, $signature->document_hash);
+        $this->assertSame($operator->id, $signature->signed_by_user_id);
+        $this->assertTrue(Storage::disk('local')->exists($signature->signature_file_path));
+    }
+
+    public function test_signature_is_rejected_when_signing_not_required(): void
+    {
+        $contract = $this->service->createFromUpload($this->makeApplication(15.0), $this->pdf());
+
+        $this->expectException(ValidationException::class);
+        $this->service->attachOrganizationSignature($contract, $this->sig(), $this->operator());
+    }
+
+    public function test_signature_cannot_be_attached_to_published_contract(): void
+    {
+        $contract = $this->service->createFromUpload($this->makeApplication(700.0), $this->pdf());
+        $this->service->attachOrganizationSignature($contract, $this->sig(), $this->operator());
+        $this->service->publish($contract->fresh());
+
+        $this->expectException(ValidationException::class);
+        $this->service->attachOrganizationSignature($contract->fresh(), $this->sig('other.sig'), $this->operator());
+    }
+
+    public function test_replacing_signature_keeps_only_one(): void
+    {
+        $contract = $this->service->createFromUpload($this->makeApplication(700.0), $this->pdf());
+
+        $first  = $this->service->attachOrganizationSignature($contract, $this->sig('first.sig'), $this->operator());
+        $second = $this->service->attachOrganizationSignature($contract, $this->sig('second.sig'), $this->operator());
+
+        $this->assertSame(1, ContractSignature::where('contract_id', $contract->id)->count());
+        $this->assertFalse(Storage::disk('local')->exists($first->signature_file_path));
+        $this->assertTrue(Storage::disk('local')->exists($second->signature_file_path));
+    }
+
+    public function test_replacing_contract_file_removes_organization_signature(): void
+    {
+        $application = $this->makeApplication(700.0);
+        $contract    = $this->service->createFromUpload($application, $this->pdf('first.pdf'));
+        $signature   = $this->service->attachOrganizationSignature($contract, $this->sig(), $this->operator());
+
+        $this->service->createFromUpload($application->fresh(), $this->pdf('second.pdf'));
+
+        $this->assertSame(0, ContractSignature::where('contract_id', $contract->id)->count());
+        $this->assertFalse(Storage::disk('local')->exists($signature->signature_file_path));
+    }
+
+    public function test_publish_requires_organization_signature(): void
+    {
+        $contract = $this->service->createFromUpload($this->makeApplication(700.0), $this->pdf());
+
+        $this->expectException(ValidationException::class);
+        $this->service->publish($contract);
+    }
+}
