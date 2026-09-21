@@ -121,7 +121,9 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
             Route::post('/{application}/status', [AdminApplicationController::class, 'updateStatus'])->name('status');
             Route::post('/{application}/take-to-work', [AdminApplicationController::class, 'takeToWork'])->name('take-to-work');
             Route::post('/{application}/contract', [AdminApplicationController::class, 'uploadContract'])->name('contract');
+            Route::post('/{application}/contract/publish', [AdminApplicationController::class, 'publishContract'])->name('contract.publish');
             Route::post('/{application}/document', [AdminApplicationController::class, 'uploadDocument'])->name('document');
+            Route::get('/{application}/contract/download', [AdminApplicationController::class, 'downloadContract'])->name('contract.download');
         });
     });
 
