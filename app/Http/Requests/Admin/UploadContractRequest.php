@@ -15,7 +15,9 @@ class UploadContractRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            // Только PDF: по файлу считается хеш, и он же подписывается
+            // электронной подписью. Скан в jpg для этой роли не подойдет
+            'file' => 'required|file|mimes:pdf|max:10240',
         ];
     }
 
@@ -23,7 +25,7 @@ class UploadContractRequest extends FormRequest
     {
         return [
             'file.required' => 'Выберите файл договора.',
-            'file.mimes'    => 'Допустимые форматы: PDF, JPG, PNG.',
+            'file.mimes'    => 'Договор должен быть в формате PDF.',
             'file.max'      => 'Файл не должен превышать 10 МБ.',
         ];
     }
