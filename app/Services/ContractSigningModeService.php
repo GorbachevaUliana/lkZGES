@@ -26,12 +26,10 @@ class ContractSigningModeService
     public function resolve(Application $application): array
     {
         $power     = $application->max_power_kw;
-        $threshold = (float) config('contracts.signing_power_threshold_kw');
-
         // Порядок важен: мощность проверяется ДО желания клиента.
         // При мощности не ниже порога отказаться от подписания нельзя,
         // что бы ни было выбрано в заявке.
-        if ($power !== null && $power >= $threshold) {
+        if ($this->isSigningMandatoryByPower($power)) {
             $required = true;
             $reason   = SigningReason::PowerThreshold;
         } elseif ($application->signing_requested === true) {
@@ -60,5 +58,15 @@ class ContractSigningModeService
         return ClientType::from($application->client_type)
             ->signatureMethod()
             ->value;
+    }
+
+    /**
+     * Обязательно ли подписание по одной только мощности.
+     * Единственное место в проекте, где сравнивается с порогом.
+     */
+    public function isSigningMandatoryByPower(?float $power): bool
+    {
+        return $power !== null
+            && $power >= (float) config('contracts.signing_power_threshold_kw');
     }
 }

@@ -110,4 +110,15 @@ class ContractSigningModeServiceTest extends TestCase
 
         $this->assertSame(SignatureMethod::Ukep->value, $result['signature_method']);
     }
+
+    public function test_power_rule_is_false_without_power(): void
+    {
+        $this->assertFalse($this->service->isSigningMandatoryByPower(null));
+    }
+
+    public function test_power_rule_boundary(): void
+    {
+        $this->assertFalse($this->service->isSigningMandatoryByPower(669.99));
+        $this->assertTrue($this->service->isSigningMandatoryByPower(670.0));
+    }
 }
