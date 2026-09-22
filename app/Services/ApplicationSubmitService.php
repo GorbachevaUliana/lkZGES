@@ -13,6 +13,7 @@ use App\Models\PdfTemplate;
 use App\Models\Property;
 use App\Models\User;
 use App\Services\DraftApplicationService;
+use App\Services\ContractSigningModeService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,10 +22,13 @@ use Illuminate\Support\Facades\Storage;
 
 class ApplicationSubmitService
 {
+    private const SYSTEM_FIELDS = ['signing_requested'];
+
     public function __construct(
         private FileUploadService $fileUploadService,
         private PdfDataPreparator $pdfDataPreparator,
         private DraftApplicationService $draftService,
+        private ContractSigningModeService $signingMode,
     ) {}
 
     /**
@@ -35,10 +39,13 @@ class ApplicationSubmitService
         // Валидация файлов ДО транзакции — если упала, ничего не создаётся
         $this->fileUploadService->validateFileUploads($request, $template);
 
-        $clientType     = $this->resolveClientType($template);
-        $normalizedData = $this->normalizeData($request);
+        $clientType       = $this->resolveClientType($template);
+        $normalizedData   = $this->normalizeData($request);
+        $maxPower         = $this->extractMaxPower($normalizedData);
+        $signingRequested = $this->resolveSigningRequested($request, $maxPower);
 
-        return DB::transaction(function () use ($request, $template, $user, $clientType, $normalizedData) {
+        return DB::transaction(function () use (
+            $request, $template, $user, $clientType, $normalizedData, $maxPower, $signingRequested) {
             $client      = $this->resolveClient($normalizedData, $user, $clientType);
             $fullAddress = $this->buildFullAddress($normalizedData);
 
@@ -54,12 +61,13 @@ class ApplicationSubmitService
             // (draft → pending), дозаполняя его. Если черновика нет — метод
             // сам создаст заявку с нуля (запасной путь, поведение как раньше).
             $application = $this->draftService->finalizeForUser($user, [
-                'client_id'    => $client->id,
-                'property_id'  => $property->id,
-                'template_id'  => $template->id,
-                'client_type'  => $clientType,
-                'data'         => $normalizedData,
-                'max_power_kw' => $this->extractMaxPower($normalizedData),
+                'client_id'         => $client->id,
+                'property_id'       => $property->id,
+                'template_id'       => $template->id,
+                'client_type'       => $clientType,
+                'data'              => $normalizedData,
+                'max_power_kw'      => $maxPower,
+                'signing_requested' => $signingRequested,
             ]);
             
             $pdfPath = $this->generateApplicationPdf($normalizedData, $client, $clientType, $application, $property);
@@ -80,6 +88,29 @@ class ApplicationSubmitService
             return redirect()->route('client.dashboard')
                 ->with('success', 'Заявка успешно отправлена!');
         });
+    }
+
+    /**
+     * Выбор потребителя: нужен ли ему подписанный договор.
+     *
+     * При мощности не ниже порога подписание обязательно, вопрос клиенту
+     * не задаётся — сохраняем null, «выбора не было». Основание подписи
+     * зафиксирует сам договор (power_threshold).
+     *
+     * Ниже порога выбор обязателен: без него заявка не отправляется.
+     */
+    private function resolveSigningRequested(Request $request, ?float $maxPower): ?bool
+    {
+        if ($this->signingMode->isSigningMandatoryByPower($maxPower)) {
+            return null;
+        }
+
+        $request->validate(
+            ['signing_requested' => ['required', 'boolean']],
+            ['signing_requested.required' => 'Выберите, нужен ли вам подписанный договор.']
+        );
+
+        return $request->boolean('signing_requested');
     }
 
     /**
@@ -127,7 +158,7 @@ class ApplicationSubmitService
     {
         $normalized = [];
 
-        foreach ($request->all() as $key => $value) {
+        foreach ($request->except(self::SYSTEM_FIELDS) as $key => $value) {
             if ($request->hasFile($key)) {
                 continue;
             }
