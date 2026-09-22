@@ -41,8 +41,9 @@ class ApplicationSubmitController extends Controller
         $draft = $this->draftService->getOrCreateForUser($user, $template);
 
         return Inertia::render('Applications/DynamicForm', [
-            'template'  => $template->only(['id', 'title', 'slug', 'content', 'client_type']),
-            'draftData' => $draft->data ?? [],
+            'template'           => $template->only(['id', 'title', 'slug', 'content', 'client_type']),
+            'draftData'          => $draft->data ?? [],
+            'signingThresholdKw' => (float) config('contracts.signing_power_threshold_kw'),
         ]);
     }
 

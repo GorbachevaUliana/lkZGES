@@ -6,23 +6,28 @@ import ClientLayout from '@/Layouts/ClientLayout';
 import { ToastProvider } from '@/contexts/ToastContext';
 import FormStep   from '@/Components/Form/steps/FormStep';
 import FormReview from '@/Components/Form/steps/FormReview';
+import SigningChoice, { isSigningMandatory } from '@/Components/Form/SigningChoice';
 
 const STEPS = ['Заполнение данных', 'Проверка'];
 
-export default function DynamicForm({ template, draftData }) {
+export default function DynamicForm({ template, draftData, signingThresholdKw }) {
     return (
         <ToastProvider>
-            <DynamicFormContent template={template} draftData={draftData}/>
+            <DynamicFormContent
+                template={template}
+                draftData={draftData}
+                signingThresholdKw={signingThresholdKw}
+            />
         </ToastProvider>
     );
 }
 
-function DynamicFormContent({ template, draftData }) {
+function DynamicFormContent({ template, draftData, signingThresholdKw }) {
     const [activeStep, setActiveStep] = useState(0);
     const clientType      = template.client_type;
     const clientTypeLabel = clientType === 'individual' ? 'Физическое лицо' : 'Юридическое лицо';
 
-        const initialData = useMemo(() => {
+    const initialData = useMemo(() => {
         const fields = {};
         const fileKeys = new Set();
         template.content?.forEach(block => {
@@ -33,6 +38,10 @@ function DynamicFormContent({ template, draftData }) {
             else if (block.type === 'dynamic_input')  fields[key] = { selected: '', inputValue: '' };
             else if (block.type === 'input_field')    fields[key] = block.data.default_value || '';
         });
+
+        // Выбор подписания — не поле шаблона, добавляем отдельно.
+        // Ниже он восстановится из черновика вместе с остальными полями.
+        fields.signing_requested = null;
 
         if (draftData && typeof draftData === 'object') {
             Object.keys(fields).forEach(key => {
@@ -105,6 +114,11 @@ function DynamicFormContent({ template, draftData }) {
         });
     };
 
+    // Без выбора отправлять нельзя — кроме случая, когда подпись обязательна
+    const signingChoiceMissing =
+        !isSigningMandatory(data.max_power, signingThresholdKw)
+        && (data.signing_requested === null || data.signing_requested === undefined);
+
     return (
         <ClientLayout>
             <Head title={template.title} />
@@ -140,6 +154,17 @@ function DynamicFormContent({ template, draftData }) {
                             />
                         )}
 
+                        {activeStep === 1 && (
+                            <SigningChoice
+                                clientType={clientType}
+                                maxPower={data.max_power}
+                                thresholdKw={signingThresholdKw}
+                                value={data.signing_requested}
+                                onChange={(v) => setData('signing_requested', v)}
+                                error={errors.signing_requested}
+                            />
+                        )}
+
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, gap: 1 }}>
                             <Button
                                 disabled={activeStep === 0}
@@ -151,6 +176,8 @@ function DynamicFormContent({ template, draftData }) {
                             </Button>
                             {activeStep === 0 ? (
                                 <Button
+                                    key="next"
+                                    type="button"
                                     variant="contained"
                                     onClick={() => setActiveStep(1)}
                                     disabled={!isStepValid(0)}
@@ -161,9 +188,10 @@ function DynamicFormContent({ template, draftData }) {
                                 </Button>
                             ) : (
                                 <Button
+                                    key="submit"
                                     type="submit"
                                     variant="contained"
-                                    disabled={processing}
+                                    disabled={processing || signingChoiceMissing}
                                     endIcon={<SendIcon />}
                                     sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, borderRadius: '12px', px: { xs: 2, md: 3 }, fontSize: { xs: '0.8rem', md: '0.875rem' } }}
                                 >
