@@ -46,7 +46,7 @@ const statusConfig = {
     }
 };
 
-export default function Dashboard({ auth, client, properties = [], pendingProperties = [], activeApplications = [], hasActiveProperties = false, primaryAccountNumber = null }) {
+export default function Dashboard({ auth, client, properties = [], pendingProperties = [], activeApplications = [], hasActiveProperties = false, primaryAccountNumber = null, contract = null }) {
     const user = auth?.user;
 
     const applicationsArray = Array.isArray(activeApplications)
@@ -58,6 +58,9 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
 
     const isApproved = applicationStatus === 'approved';
     const hasActiveContract = hasActiveProperties || isApproved;
+    const contractStatusText = contract
+    ? contract.status_label
+    : (hasActiveContract ? 'Подключение оформлено' : 'Ожидается оформление');
     const storageKey = `dismissed_success_alert_${application?.id}`;
 
     const [showSuccessBlock, setShowSuccessBlock] = useState(() => {
@@ -105,9 +108,9 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
 
                 <Grid item xs={12} md={4}>
                     <Paper sx={{ p: 3, borderRadius: '20px', bgcolor: '#4318FF', color: '#fff', height: '100%' }}>
-                        <Typography variant="subtitle1" fontWeight="bold">Статус договора</Typography>
+                        <Typography variant="subtitle1" fontWeight="bold">Подключение</Typography>
                         <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            {hasActiveContract ? 'Договор активен' : 'Ожидается оформление'}
+                            {contractStatusText}
                         </Typography>
                         {primaryAccountNumber && (
                             <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 0.5 }}>
