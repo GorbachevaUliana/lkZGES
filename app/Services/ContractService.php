@@ -219,4 +219,25 @@ class ContractService
             Storage::disk('local')->delete($oldPath);
         }
     }
+
+    /**
+     * Ввести договор в действие.
+     *
+     * Сейчас правило простое: подписан обеими сторонами — значит действует,
+     * поэтому метод вызывается сразу после подписи клиента. Появится отсрочка
+     * вступления в силу или отдельное подтверждение оператора — изменится этот
+     * метод и момент его вызова, остальной код трогать не придётся.
+     */
+    public function activate(Contract $contract): Contract
+    {
+        if ($contract->status !== ContractStatus::Signed->value) {
+            throw ValidationException::withMessages([
+                'contract' => 'Договор можно ввести в действие только после подписания.',
+            ]);
+        }
+
+        $contract->update(['status' => ContractStatus::Active->value]);
+
+        return $contract->fresh();
+    }
 }

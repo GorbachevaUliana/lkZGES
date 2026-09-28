@@ -7,8 +7,11 @@ use App\Models\Property;
 use App\Models\Application;
 use App\Models\Document;
 use App\Models\MeterReading;
+use App\Models\Contract;
+use App\Models\Client;
 use App\Services\DraftApplicationService;
 use App\Enums\ApplicationStatus;
+use App\Enums\ContractStatus;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -21,6 +24,8 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
+
+        $client = $user->client;
 
         $properties = Property::whereHas('client', function ($query) use ($user) {
             $query->where('user_id', $user->id);
@@ -64,17 +69,19 @@ class DashboardController extends Controller
             'properties' => $properties,
             'activeApplications' => $activeApplications,
             'stats' => $stats,
+            'contract' => $this->contractSummary($client),
         ]);
     }
 
     /**
      * Страница документов клиента
      */
-        public function documents(DraftApplicationService $draftService)
+    public function documents(DraftApplicationService $draftService)
     {
         $user   = auth()->user();
         $client = $user->client;
         $draft  = $draftService->currentForUser($user);
+        $contractSummary = $this->contractSummary($client);
 
         // Больше НЕ редиректим при отсутствии клиента: пользователь с одним
         // лишь черновиком должен видеть раздел; плашку отрисует фронт по draft.
@@ -108,10 +115,18 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
+        if ($contractSummary && $contractSummary['needs_signing']) {
+            $documents = $documents
+                ->reject(fn ($doc) => $doc['type'] === 'contract'
+                    && ($doc['application']['id'] ?? null) === $contractSummary['number'])
+                ->values();
+        }
+
         return Inertia::render('Client/Documents', [
             'documents'   => $documents,
             'application' => $application,
             'draft'       => $draft,
+            'contract'    => $contractSummary,
         ]);
     }
 
@@ -139,6 +154,7 @@ class DashboardController extends Controller
 
     /**
      * Страница профиля
+     * 
      */
     public function profile()
     {
@@ -204,6 +220,45 @@ class DashboardController extends Controller
             'totalDebt' => $totalDebt,
             'lastReading' => $lastReading,
             'tariff' => $tariff,
+        ];
+    }
+
+    /**
+     * Сводка по договору для личного кабинета.
+     *
+     * Нужна и на главной, и в документах, поэтому живёт отдельно.
+     * Черновики и направленные без подписания сюда не попадают:
+     * первые клиент не видит, вторые подписывать не нужно.
+     */
+    private function contractSummary(?Client $client): ?array
+    {
+        if (! $client) {
+            return null;
+        }
+
+        $contract = Contract::where('client_id', $client->id)
+            ->whereIn('status', [
+                ContractStatus::AwaitingClient->value,
+                ContractStatus::Signed->value,
+                ContractStatus::Active->value,
+            ])
+            ->latest('id')
+            ->first();
+
+        if (! $contract) {
+            return null;
+        }
+
+        return [
+            'id'            => $contract->id,
+            'number'        => $contract->application_id,
+            'status'        => $contract->status,
+            'status_label'  => $contract->statusLabel(),
+            'needs_signing' => $contract->status === ContractStatus::AwaitingClient->value,
+            'method'        => $contract->signature_method,
+            'signed_at'     => $contract->signed_at?->timezone('Asia/Barnaul')->format('d.m.Y H:i'),
+            'url'           => route('client.contracts.download', $contract->id),
+            'file_name'     => $contract->original_name,
         ];
     }
 }
