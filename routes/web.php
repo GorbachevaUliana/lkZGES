@@ -14,6 +14,7 @@ use App\Http\Controllers\Client\DashboardController as ClientDashboardController
 use App\Http\Controllers\Client\TicketController as ClientTicketController;
 use App\Http\Controllers\MeterReadingController;
 use App\Http\Controllers\Client\DraftController;
+use App\Http\Controllers\Client\ContractSigningController;
 use App\Models\Client;
 use Illuminate\Support\Facades\Route;
 
@@ -147,6 +148,16 @@ Route::middleware(['auth', 'verified'])
         Route::post('/readings', [MeterReadingController::class, 'storeReading'])->name('readings.store');
         Route::post('/readings/{id}/pay', [MeterReadingController::class, 'pay'])->name('readings.pay');
         Route::get('/invoice/{month}/{account}', [MeterReadingController::class, 'downloadInvoice'])->name('invoice.download');
+
+        Route::post('/contracts/{contract}/signing-code', [ContractSigningController::class, 'sendCode'])
+            ->middleware('throttle:10,1')
+            ->name('contracts.signing-code');
+        Route::post('/contracts/{contract}/sign', [ContractSigningController::class, 'sign'])
+            ->middleware('throttle:10,1')
+            ->name('contracts.sign');
+        Route::get('/contracts/{contract}/download', [ContractSigningController::class, 'download'])
+            ->name('contracts.download');
+        
 
         // Обращения доступны ЛЮБОМУ зарегистрированному клиенту — и
         // просмотр, и создание — без всякого порога. Вопросы могут
