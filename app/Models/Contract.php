@@ -101,4 +101,9 @@ class Contract extends Model
         return $this->hasOne(ContractSignature::class)
             ->where('signer', SignerType::Client->value);
     }
+
+    public function pepCodes(): HasMany
+    {
+        return $this->hasMany(ContractPepCode::class);
+    }
 }
