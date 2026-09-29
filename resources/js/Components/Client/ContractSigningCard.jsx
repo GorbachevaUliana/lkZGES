@@ -9,11 +9,12 @@ import {
 } from '@mui/icons-material';
 
 export default function ContractSigningCard({ contract }) {
-    const [codeSent, setCodeSent]   = useState(false);
-    const [code, setCode]           = useState('');
-    const [busy, setBusy]           = useState(false);
-    const [error, setError]         = useState(null);
-    const [notice, setNotice]       = useState(null);
+    const [codeSent, setCodeSent] = useState(false);
+    const [code, setCode]         = useState('');
+    const [busy, setBusy]         = useState(false);
+    const [error, setError]       = useState(null);
+    const [notice, setNotice]     = useState(null);
+    const [sigFile, setSigFile]   = useState(null);
 
     const storageKey = `dismissed_contract_card_${contract?.id}`;
 
@@ -30,6 +31,7 @@ export default function ContractSigningCard({ contract }) {
     if (!contract) return null;
 
     const signed = !contract.needs_signing;
+    const isUkep = contract.method === 'ukep';
 
     if (signed && dismissed) return null;
 
@@ -51,6 +53,22 @@ export default function ContractSigningCard({ contract }) {
         setBusy(true);
         setError(null);
         router.post(`/client/contracts/${contract.id}/sign`, { code }, {
+            preserveScroll: true,
+            onError: (errors) => setError(Object.values(errors)[0] ?? 'Не удалось подписать'),
+            onFinish: () => setBusy(false),
+        });
+    };
+    
+    const signWithUkep = () => {
+        if (!sigFile) return;
+
+        const formData = new FormData();
+        formData.append('file', sigFile);
+
+        setBusy(true);
+        setError(null);
+        router.post(`/client/contracts/${contract.id}/sign-ukep`, formData, {
+            forceFormData: true,
             preserveScroll: true,
             onError: (errors) => setError(Object.values(errors)[0] ?? 'Не удалось подписать'),
             onFinish: () => setBusy(false),
@@ -84,13 +102,13 @@ export default function ContractSigningCard({ contract }) {
                     </IconButton>
                 )}
             </Box>
-
             {!signed && (
                 <>
                     <Typography variant="body2" color="text.secondary" mb={2}>
                         Договор подписан со стороны ООО «Заринская горэлектросеть».
-                        Ознакомьтесь с ним и подпишите кодом подтверждения.
-                        Вводя код, вы подписываете договор простой электронной подписью.
+                        {isUkep
+                            ? ' Ознакомьтесь с ним, подпишите своей электронной подписью и загрузите файл подписи.'
+                            : ' Ознакомьтесь с ним и подпишите кодом подтверждения. Вводя код, вы подписываете договор простой электронной подписью.'}
                     </Typography>
 
                     <Paper
@@ -116,40 +134,77 @@ export default function ContractSigningCard({ contract }) {
                         </Button>
                     </Paper>
 
-                    {notice && <Alert severity="info" sx={{ mb: 2, borderRadius: '12px' }}>{notice}</Alert>}
-                    {error  && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
+                        {notice && <Alert severity="info" sx={{ mb: 2, borderRadius: '12px' }}>{notice}</Alert>}
+                        {error  && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 
-                    {!codeSent ? (
-                        <Button
-                            variant="contained"
-                            onClick={sendCode}
-                            disabled={busy}
-                            startIcon={busy ? <CircularProgress size={18} color="inherit" /> : null}
-                            sx={{ borderRadius: '12px' }}
-                        >
-                            Получить код для подписания
-                        </Button>
-                    ) : (
-                        <Box display="flex" gap={2} alignItems="flex-start" flexWrap="wrap">
-                            <TextField
-                                label="Код из письма"
-                                value={code}
-                                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                inputProps={{ inputMode: 'numeric', maxLength: 6 }}
-                                sx={{ width: 180, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                            />
+
+                    {isUkep ? (
+                        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                            <Button
+                                variant="outlined"
+                                component="label"
+                                sx={{ borderRadius: '12px' }}
+                            >
+                                {sigFile ? 'Выбрать другой файл' : 'Выбрать файл подписи'}
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept=".sig,.p7s"
+                                    onChange={(e) => setSigFile(e.target.files[0] ?? null)}
+                                />
+                            </Button>
+
+                            {sigFile && (
+                                <Typography variant="body2" color="text.secondary">
+                                    {sigFile.name}
+                                </Typography>
+                            )}
+
                             <Button
                                 variant="contained"
-                                onClick={sign}
-                                disabled={busy || code.length !== 6}
-                                sx={{ borderRadius: '12px', mt: 1 }}
+                                onClick={signWithUkep}
+                                disabled={busy || !sigFile}
+                                startIcon={busy ? <CircularProgress size={18} color="inherit" /> : null}
+                                sx={{ borderRadius: '12px' }}
                             >
                                 Подписать
                             </Button>
-                            <Button onClick={sendCode} disabled={busy} sx={{ mt: 1 }}>
-                                Отправить код заново
-                            </Button>
                         </Box>
+                    ) : (
+                        <>
+                            {!codeSent ? (
+                                <Button
+                                    variant="contained"
+                                    onClick={sendCode}
+                                    disabled={busy}
+                                    startIcon={busy ? <CircularProgress size={18} color="inherit" /> : null}
+                                    sx={{ borderRadius: '12px' }}
+                                >
+                                    Получить код для подписания
+                                </Button>
+                            ) : (
+                                <Box display="flex" gap={2} alignItems="flex-start" flexWrap="wrap">
+                                    <TextField
+                                        label="Код из письма"
+                                        value={code}
+                                        onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        inputProps={{ inputMode: 'numeric', maxLength: 6 }}
+                                        sx={{ width: 180, '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        onClick={sign}
+                                        disabled={busy || code.length !== 6}
+                                        sx={{ borderRadius: '12px', mt: 1 }}
+                                    >
+                                        Подписать
+                                    </Button>
+                                    <Button onClick={sendCode} disabled={busy} sx={{ mt: 1 }}>
+                                        Отправить код заново
+                                    </Button>
+                                </Box>
+                            )}
+                        </>
                     )}
                 </>
             )}

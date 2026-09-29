@@ -157,6 +157,9 @@ Route::middleware(['auth', 'verified'])
             ->name('contracts.sign');
         Route::get('/contracts/{contract}/download', [ContractSigningController::class, 'download'])
             ->name('contracts.download');
+        Route::post('/contracts/{contract}/sign-ukep', [ContractSigningController::class, 'signWithUkep'])
+            ->middleware('throttle:10,1')
+            ->name('contracts.sign-ukep');
         
 
         // Обращения доступны ЛЮБОМУ зарегистрированному клиенту — и

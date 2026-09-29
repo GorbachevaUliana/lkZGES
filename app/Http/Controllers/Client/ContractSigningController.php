@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Services\ContractPepSigningService;
+use App\Services\ContractUkepSigningService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -77,5 +78,37 @@ class ContractSigningController extends Controller
         }
 
         return Storage::disk('local')->download($contract->file_path, $contract->original_name);
+    }
+
+    /**
+     * Подписание договора электронной подписью (юрлица и ИП).
+     *
+     * Отдельного FormRequest тут нет: кроме авторизации (которую даёт
+     * группа маршрутов) проверять нечего — принадлежность договора
+     * и его состояние проверяет сервис.
+     */
+    public function signWithUkep(
+        Request $request,
+        Contract $contract,
+        ContractUkepSigningService $ukepSigning
+    ): RedirectResponse {
+        $request->validate(
+            ['file' => ['required', 'file', 'extensions:sig,p7s', 'max:1024']],
+            [
+                'file.required'   => 'Выберите файл подписи.',
+                'file.extensions' => 'Файл подписи должен иметь расширение .sig или .p7s.',
+                'file.max'        => 'Файл подписи не должен превышать 1 МБ.',
+            ]
+        );
+
+        $ukepSigning->sign(
+            $contract,
+            $request->user(),
+            $request->file('file'),
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return back()->with('success', 'Договор подписан.');
     }
 }
