@@ -24,6 +24,7 @@ class ContractSignature extends Model
         'pep_sent_to',
         'ip',
         'user_agent',
+        'signature_file_hash',
     ];
 
     protected $casts = [
