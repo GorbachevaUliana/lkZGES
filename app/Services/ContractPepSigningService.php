@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class ContractPepSigningService
@@ -23,6 +24,7 @@ class ContractPepSigningService
 
     public function __construct(
         private ContractService $contracts,
+        private ContractProtocolService $protocols,
     ) {}
 
     /**
@@ -117,7 +119,7 @@ class ContractPepSigningService
             ]);
         }
 
-        return DB::transaction(function () use ($contract, $row, $ip, $userAgent) {
+        $signature = DB::transaction(function () use ($contract, $row, $ip, $userAgent) {
             $row->update(['confirmed_at' => now()]);
 
             $signature = ContractSignature::create([
@@ -141,6 +143,18 @@ class ContractPepSigningService
 
             return $signature;
         });
+
+        try {
+            $this->protocols->generate($contract->fresh());
+        } catch (\Throwable $e) {
+            // Протокол — производный документ, его можно создать заново.
+            // Подпись уже сохранена, ронять операцию из-за PDF нельзя.
+            Log::error('Не удалось сформировать протокол подписания: ' . $e->getMessage(), [
+                'contract_id' => $contract->id,
+            ]);
+        }
+
+        return $signature;
     }
 
     /**
