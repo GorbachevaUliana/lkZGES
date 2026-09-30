@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ContractService
@@ -179,7 +180,13 @@ class ContractService
         return DB::transaction(function () use ($contract, $signatureFile, $operator, $ip, $userAgent) {
             $this->deleteDraftOrganizationSignature($contract);
 
-            $path = $signatureFile->store('contract_signatures', 'local');
+            $path = $signatureFile->storeAs(
+                'contract_signatures',
+                Str::random(40) . '.' . $signatureFile->getClientOriginalExtension(),
+                'local'
+            );
+
+            $signatureHash = hash('sha256', Storage::disk('local')->get($path));
 
             return ContractSignature::create([
                 'contract_id'         => $contract->id,
@@ -191,6 +198,7 @@ class ContractService
                 'document_hash'       => $contract->file_hash,
                 'signed_by_user_id'   => $operator->id,
                 'signature_file_path' => $path,
+                'signature_file_hash' => $signatureHash,
                 'ip'                  => $ip,
                 'user_agent'          => $userAgent,
             ]);
