@@ -31,7 +31,9 @@ class AuthenticatedSessionController extends Controller
         
         // Админы и сотрудники идут в админ-панель
         if ($user->role === UserRole::Admin || $user->role === UserRole::Staff) {
-            return redirect()->intended(route('admin.clients.index', absolute: false));
+            $request->session()->forget('url.intended');
+
+            return redirect()->route('admin.clients.index');
         }
 
         // Проверяем наличие привязанного клиента через связь
