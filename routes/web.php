@@ -134,7 +134,7 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
 | ЛИЧНЫЙ КАБИНЕТ (applicant и client)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', 'client_only'])
     ->prefix('client')
     ->name('client.')
     ->group(function () {
