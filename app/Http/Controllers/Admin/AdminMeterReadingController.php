@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MeterReading;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class AdminMeterReadingController extends Controller
@@ -11,13 +12,22 @@ class AdminMeterReadingController extends Controller
     /**
      * Реестр показаний
      */
-    public function index()
+    public function index(Request $request)
     {
-        $allReadings = MeterReading::with(['property.client.user', 'tariff'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(50);
+        $search = trim((string) $request->input('search'));
+        $like   = MeterReading::query()->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
 
-        // map() нельзя вызвать напрямую на paginator — делаем через getCollection()
+        $allReadings = MeterReading::with(['property.client.user', 'tariff'])
+            ->when($search !== '', fn ($q) => $q->whereHas('property', fn ($p) => $p
+                ->where('account_number', $like, "%{$search}%")
+                ->orWhere('address', $like, "%{$search}%")
+                ->orWhereHas('client', fn ($c) => $c->where('last_name', $like, "%{$search}%")
+                    ->orWhere('first_name', $like, "%{$search}%")
+                    ->orWhere('company_name', $like, "%{$search}%"))))
+            ->orderBy('created_at', 'desc')
+            ->paginate(50)
+            ->withQueryString();
+
         $allReadings->getCollection()->transform(function ($reading) {
             return [
                 'id'             => $reading->id,
@@ -45,6 +55,7 @@ class AdminMeterReadingController extends Controller
 
         return Inertia::render('Admin/Readings/Readings', [
             'readings' => $allReadings,
+            'search'   => $search,
         ]);
     }
 
