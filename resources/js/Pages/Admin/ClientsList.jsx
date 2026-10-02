@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import {
     Container, Typography, Paper, Button, Box,
@@ -29,12 +29,12 @@ const emptyProperty = () => ({
     apartment: ''
 });
 
-export default function ClientsList({ auth, clients, tariffs }) {
+export default function ClientsList({ auth, clients, tariffs, search = '' }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [editOpen, setEditOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(search);
     const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
     const [confirmMeta, setConfirmMeta] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
 
@@ -158,24 +158,40 @@ export default function ClientsList({ auth, clients, tariffs }) {
     // читал вообще — записи за пределами первых 50 были недостижимы.
     const clientsMeta = clients?.meta || {};
     const currentPage = clientsMeta.current_page || 1;
+    const perPage = clientsMeta.per_page || 50;
     const totalClients = clientsMeta.total ?? clientsData.length;
 
     const goToPage = (zeroBasedPage) => {
-        router.get(route('admin.clients.index'), { page: zeroBasedPage + 1 }, {
+        router.get(route('admin.clients.index'), {
+            page: zeroBasedPage + 1,
+            search: searchQuery,
+        }, {
             preserveState: true,
             preserveScroll: true,
-            only: ['clients'],
         });
     };
 
-    const filteredClients = useMemo(() => {
-        const query = searchQuery.toLowerCase();
-        const altQuery = fixKeyboardLayout(query);
-        return clientsData.filter(c => {
-            const s = `${c.last_name} ${c.first_name} ${c.middle_name} ${c.company_name} ${c.account_number} ${c.address} ${c.phone}`.toLowerCase();
-            return s.includes(query) || s.includes(altQuery);
-        });
-    }, [searchQuery, clients]);
+    // Поиск уходит на сервер: фильтровать загруженную страницу нельзя,
+    // иначе найдётся только то, что попало в текущие 50 записей.
+    // Задержка в 400 мс — чтобы не слать запрос на каждую букву.
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(route('admin.clients.index'), { search: searchQuery, page: 1 }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const columns = [
         {
@@ -297,7 +313,7 @@ export default function ClientsList({ auth, clients, tariffs }) {
 
                     <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid
-                            rows={filteredClients}
+                            rows={clientsData}
                             columns={columns}
                             autoHeight
                             onRowDoubleClick={handleRowClick}
@@ -305,9 +321,9 @@ export default function ClientsList({ auth, clients, tariffs }) {
                             getRowId={(row) => row.id}
                             paginationMode="server"
                             rowCount={totalClients}
-                            paginationModel={{ page: currentPage - 1, pageSize: 50 }}
+                            paginationModel={{ page: currentPage - 1, pageSize: perPage }}
                             onPaginationModelChange={(model) => goToPage(model.page)}
-                            pageSizeOptions={[50]}
+                            pageSizeOptions={[perPage]}
                         />
                     </Paper>
 

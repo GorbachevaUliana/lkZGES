@@ -19,17 +19,32 @@ use Inertia\Inertia;
 
 class ClientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->input('search'));
+        $like = Client::query()->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
         $clients = Client::with(['documents', 'properties.tariff'])
-            ->whereHas('properties', fn($q) => $q->where('status', PropertyStatus::Active->value)
+            ->whereHas('properties', fn ($q) => $q->where('status', PropertyStatus::Active->value)
                 ->whereNotNull('account_number')
                 ->where('account_number', '!=', ''))
-            ->paginate(50);
+            ->when($search !== '', fn ($query) => $query->where(function ($q) use ($search, $like) {
+                $q->where('last_name', $like, "%{$search}%")
+                    ->orWhere('first_name', $like, "%{$search}%")
+                    ->orWhere('middle_name', $like, "%{$search}%")
+                    ->orWhere('company_name', $like, "%{$search}%")
+                    ->orWhere('inn', $like, "%{$search}%")
+                    ->orWhere('phone', $like, "%{$search}%")
+                    ->orWhere('email', $like, "%{$search}%")
+                    ->orWhereHas('properties', fn ($p) => $p->where('account_number', $like, "%{$search}%"));
+            }))
+            ->paginate(50)
+            ->withQueryString();
 
         return Inertia::render('Admin/ClientsList', [
             'clients' => ClientResource::collection($clients),
             'tariffs' => Tariff::all(),
+            'search'  => $search,
         ]);
     }
 
@@ -116,7 +131,7 @@ class ClientController extends Controller
                 Storage::disk('local')->delete($document->file_path);
             }
         }
-        $client->documents()->delete();
+        $client->documents()->delete(); 
         $client->delete();
 
         return back(303);
