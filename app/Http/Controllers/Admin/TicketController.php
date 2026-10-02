@@ -13,9 +13,12 @@ use Inertia\Inertia;
 
 class TicketController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
+        $user   = auth()->user();
+        $search = trim((string) $request->input('search'));
+        $like   = Ticket::query()->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
         $query = Ticket::with([
             'user.client.documents',
             'staff',
@@ -27,24 +30,33 @@ class TicketController extends Controller
             $query->where('staff_id', $user->id);
         }
 
-        $tickets = $query->latest()->paginate(50);
+        $query->when($search !== '', fn ($q) => $q->where(function ($inner) use ($search, $like) {
+            $inner->where('subject', $like, "%{$search}%")
+                ->orWhere('message', $like, "%{$search}%")
+                ->orWhereHas('user', fn ($u) => $u->where('name', $like, "%{$search}%")
+                    ->orWhere('email', $like, "%{$search}%"))
+                ->orWhereHas('user.client.properties', fn ($p) => $p->where('account_number', $like, "%{$search}%"));
+        }));
+
+        $tickets = $query->latest()->paginate(50)->withQueryString();
 
         $tickets->getCollection()->transform(function ($ticket) {
-            $ticket->attachments->map(function ($attachment) {
-                $attachment->url = route('attachments.serve', $attachment->id);
-                return $attachment;
+                $ticket->attachments->map(function ($attachment) {
+                    $attachment->url = route('attachments.serve', $attachment->id);
+                    return $attachment;
+                });
+                return $ticket;
             });
-            return $ticket;
-        });
 
         return Inertia::render('Admin/Tickets/TicketsIndex', [
-            'tickets' => $tickets,
+            'tickets'       => $tickets,
+            'search'        => $search,
             'staff_members' => User::whereIn('role', [UserRole::Staff->value, UserRole::Admin->value])
-                ->where(function ($query) {
-                    $query->where('role', UserRole::Admin->value)
-                        ->orWhereJsonContains('permissions', 'tickets');
-                })
-                ->get(['id', 'name']),
+                    ->where(function ($query) {
+                        $query->where('role', UserRole::Admin->value)
+                            ->orWhereJsonContains('permissions', 'tickets');
+                    })
+                    ->get(['id', 'name']),
         ]);
     }
 
