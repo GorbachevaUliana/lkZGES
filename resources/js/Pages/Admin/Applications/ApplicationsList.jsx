@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     Container, Typography, Paper, Box, Button, Chip,
@@ -20,67 +20,60 @@ import ConfirmDialog from '@/Components/Admin/ConfirmDialog';
 import { fixKeyboardLayout } from '@/utils/keyboard';
 import { APPLICATION_STATUS_COLORS } from '@/constants/statuses';
 
-export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs, stats }) {
+export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs, stats, search = '', status = 'all' }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState(search);
+    const [statusFilter, setStatusFilter] = useState(status);
     const [selectedApplication, setSelectedApplication] = useState(null);
     const [allowedNextStatuses, setAllowedNextStatuses] = useState([]);
     const [cardOpen, setCardOpen] = useState(false);
     const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
     const [confirmMeta, setConfirmMeta] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
     const appData = Array.isArray(applications) ? applications : (applications.data || []);
-    // Проблема №35: как и в тикетах — обычный пагинированный ответ,
-    // current_page/last_page/total лежат в корне.
     const appsCurrentPage = applications?.current_page || 1;
     const appsTotal = applications?.total ?? appData.length;
 
-    const goToApplicationsPage = (zeroBasedPage) => {
-        router.get(route('admin.applications.index'), { page: zeroBasedPage + 1 }, {
+    const appsPerPage = applications?.per_page || 50;
+    const applyFilters = (params = {}) => {
+        router.get(route('admin.applications.index'), {
+            search: searchQuery,
+            status: statusFilter,
+            page: 1,
+            ...params,
+        }, {
             preserveState: true,
             preserveScroll: true,
-            only: ['applications'],
+            replace: true,
         });
     };
+
+    const goToApplicationsPage = (zeroBasedPage) => {
+        applyFilters({ page: zeroBasedPage + 1 });
+    };
+
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => applyFilters(), 400);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery, statusFilter]);
 
     const showToast = (message, severity = 'success') => {
         setToast({ open: true, message, severity });
     };
-
-    const filteredApplications = useMemo(() => {
-        const query = searchQuery.toLowerCase();
-        const altQuery = fixKeyboardLayout(query);
-        
-        return appData.filter(app => {
-            const matchesSearch = 
-                app.applicant_name?.toLowerCase().includes(query) ||
-                app.applicant_name?.toLowerCase().includes(altQuery) ||
-                app.user_email?.toLowerCase().includes(query) ||
-                app.user_email?.toLowerCase().includes(altQuery);
-            
-            // const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-            let matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-            if (statusFilter === 'pending') {
-                matchesStatus = app.status === 'new' || app.status === 'pending';
-            }
-            
-            return matchesSearch && matchesStatus;
-        });
-    }, [searchQuery, statusFilter, appData]);
 
     const fetchApplication = async (id) => {
         try {
             const response = await fetch(`/admin/applications/${id}`);
             const data = await response.json();
             setSelectedApplication(data.application);
-            // Раньше не читалось вообще — Select статуса показывал ВСЕ
-            // статусы без ограничений (см. Проблема, найденная 22.08),
-            // позволяя выбрать переход, недопустимый по state machine в
-            // ApplicationService (например, "Ожидает" сразу в "Одобрена",
-            // минуя "В работе"). Бэк это и раньше корректно отклонял по
-            // валидации — но человеку в интерфейсе такой вариант вообще
-            // не должен предлагаться.
             setAllowedNextStatuses(data.allowedNextStatuses || []);
         } catch (error) {
             console.error('Error loading application:', error);
@@ -285,16 +278,16 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
                     {/* Таблица */}
                     <Paper sx={{ borderRadius: '20px', overflow: 'hidden', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                         <DataGrid
-                            rows={filteredApplications}
+                            rows={appData}
                             columns={columns}
                             autoHeight
                             onRowDoubleClick={handleRowDoubleClick}
                             disableRowSelectionOnClick
                             paginationMode="server"
                             rowCount={appsTotal}
-                            paginationModel={{ page: appsCurrentPage - 1, pageSize: 50 }}
+                            paginationModel={{ page: appsCurrentPage - 1, pageSize: appsPerPage }}
                             onPaginationModelChange={(model) => goToApplicationsPage(model.page)}
-                            pageSizeOptions={[50]}
+                            pageSizeOptions={[appsPerPage]}
                             sx={{ border: 'none'}}/>
                     </Paper>
                     {/* Карточка заявки */}
