@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Paper, Table, TableBody, TableCell, TableHead,
     TableRow, Chip, InputBase, Box, Typography, TableContainer } from '@mui/material';
@@ -11,11 +11,11 @@ import { router } from '@inertiajs/react';
 import { fixKeyboardLayout } from '@/utils/keyboard';
 import { TICKET_STATUS_MAP, getTicketCategoryLabel } from '@/constants/statuses';
 
-export default function TicketsIndex({ auth, tickets, staff_members }) {
+export default function TicketsIndex({ auth, tickets, staff_members, search = '' }) {
     const [editOpen, setEditOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
     const [tabValue, setTabValue] = useState(0);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(search);
     const [toast, setToast] = useState({ open: false, message: '', severity: 'success' });
     const [confirmMeta, setConfirmMeta] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
     const [clientModalOpen, setClientModalOpen] = useState(false);
@@ -47,7 +47,8 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
 
     const handleOpenClientCard = (userId) => {
         const ticketsData = Array.isArray(tickets) ? tickets : (tickets?.data || []);
-        const ticket = ticketsData.find(t => t.user_id === userId);        const clientData = ticket?.user?.client;
+        const ticket = ticketsData.find(t => t.user_id === userId);        
+        const clientData = ticket?.user?.client;
 
         if (clientData) {
             setSelectedClient(clientData);
@@ -57,25 +58,42 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
         }
     };
 
-    const filteredTickets = useMemo(() => {
-        const query = searchQuery.toLowerCase();
-        const altQuery = fixKeyboardLayout(query);
-        return (Array.isArray(tickets) ? tickets : (tickets?.data || [])).filter(t => {
-            const s = `${t.subject} ${t.message} ${t.status}`.toLowerCase();
-            return s.includes(query) || s.includes(altQuery);
-        });
-    }, [searchQuery, tickets]);
 
+    const ticketsData = Array.isArray(tickets) ? tickets : (tickets?.data || []);
     const ticketsCurrentPage = tickets?.current_page || 1;
-    const ticketsTotal = tickets?.total ?? filteredTickets.length;
+    const ticketsTotal = tickets?.total ?? ticketsData.length;
+    const ticketsPerPage = tickets?.per_page || 2;
 
     const goToTicketsPage = (zeroBasedPage) => {
-        router.get(route('admin.tickets.index'), { page: zeroBasedPage + 1 }, {
+        router.get(route('admin.tickets.index'), {
+            page: zeroBasedPage + 1,
+            search: searchQuery,
+        }, {
             preserveState: true,
             preserveScroll: true,
-            only: ['tickets'],
         });
     };
+
+    // Поиск уходит на сервер: фильтровать загруженную страницу нельзя,
+    // иначе найдётся только то, что попало в текущие 50 записей.
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(route('admin.tickets.index'), { search: searchQuery, page: 1 }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const columns = [
         { 
@@ -182,16 +200,16 @@ export default function TicketsIndex({ auth, tickets, staff_members }) {
 
                 <Paper sx={{ borderRadius: '20px', overflow: 'hidden', border: 'none', boxShadow: '0px 10px 30px rgba(0,0,0,0.02)' }}>
                     <DataGrid 
-                        rows={filteredTickets} 
+                        rows={ticketsData} 
                         columns={columns} 
                         autoHeight 
                         onRowDoubleClick={handleRowClick}
                         disableRowSelectionOnClick
                         paginationMode="server"
                         rowCount={ticketsTotal}
-                        paginationModel={{ page: ticketsCurrentPage - 1, pageSize: 50 }}
+                        paginationModel={{ page: ticketsCurrentPage - 1, pageSize: ticketsPerPage }}
                         onPaginationModelChange={(model) => goToTicketsPage(model.page)}
-                        pageSizeOptions={[50]}
+                        pageSizeOptions={[ticketsPerPage]}
                         sx={{ 
                             border: 'none', 
                             '& .MuiDataGrid-columnHeaders': { bgcolor: '#F4F7FE', borderBottom: 'none' },

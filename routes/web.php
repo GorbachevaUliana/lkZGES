@@ -106,7 +106,6 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckAdmin::class])
             Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('destroy');
         });
 
-        // Показания (дубль роутов убран — раньше тут было два одинаковых GET и PATCH)
         Route::middleware('can_access:readings')->group(function () {
             Route::get('/readings', [AdminMeterReadingController::class, 'index'])->name('readings.index');
             // Метод для подтверждения оплаты админом

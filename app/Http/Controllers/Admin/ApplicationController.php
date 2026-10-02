@@ -28,23 +28,38 @@ class ApplicationController extends Controller
     /**
      * Список всех заявок
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Черновики (draft) — незаконченные заявки, видны ТОЛЬКО клиенту,
-        // который их пишет. В админке их быть не должно: заявку ещё не
-        // подали. Исключаем из списка и из счётчика «Все». Остальные
-        // счётчики считают по конкретным статусам, draft в них и так не
-        // попадает.
+        $search = trim((string) $request->input('search'));
+        $status = (string) $request->input('status', 'all');
+        $like   = Application::query()->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
         $applications = Application::with(['user', 'client', 'property', 'documents', 'contract.organizationSignature'])
             ->where('status', '!=', ApplicationStatus::Draft->value)
+            // «Ожидают» — это два статуса сразу, new и pending.
+            // Так же считается и счётчик над вкладкой.
+            ->when($status === 'pending', fn ($q) => $q->whereIn('status', ['new', 'pending']))
+            ->when(! in_array($status, ['all', 'pending'], true), fn ($q) => $q->where('status', $status))
+            ->when($search !== '', fn ($q) => $q->where(function ($inner) use ($search, $like) {
+                $inner->whereHas('user', fn ($u) => $u->where('email', $like, "%{$search}%"))
+                    ->orWhereHas('client', fn ($c) => $c->where('last_name', $like, "%{$search}%")
+                        ->orWhere('first_name', $like, "%{$search}%")
+                        ->orWhere('middle_name', $like, "%{$search}%")
+                        ->orWhere('company_name', $like, "%{$search}%")
+                        ->orWhere('inn', $like, "%{$search}%"))
+                    ->orWhereHas('property', fn ($p) => $p->where('account_number', $like, "%{$search}%"));
+            }))
             ->orderBy('created_at', 'desc')
-            ->paginate(50);
+            ->paginate(50)
+            ->withQueryString();
 
         return Inertia::render('Admin/Applications/ApplicationsList', [
             'applications' => $applications,
             'statuses'     => Application::getStatuses(),
             'clientTypes'  => Application::getClientTypes(),
             'tariffs'      => Tariff::all(),
+            'search'       => $search,
+            'status'       => $status,
             'stats' => [
                 'all'        => Application::where('status', '!=', ApplicationStatus::Draft->value)->count(),
                 'pending'    => Application::whereIn('status', ['new', 'pending'])->count(),
