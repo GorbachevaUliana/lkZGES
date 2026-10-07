@@ -116,6 +116,10 @@ class Client extends Model
             return !empty($this->company_name) ? $this->company_name : ($this->full_name ?: 'Название не указано');
         }
 
+            if ($this->client_type === ClientType::Entrepreneur->value) {
+            return $this->full_name ? 'ИП ' . $this->full_name : 'ФИО не указано';
+        }
+
         return $this->full_name ?: 'ФИО не указано';
     }
 

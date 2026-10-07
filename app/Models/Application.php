@@ -130,7 +130,13 @@ class Application extends Model
 
         $name = trim(($data['last_name'] ?? '').' '.($data['first_name'] ?? '').' '.($data['middle_name'] ?? ''));
 
-        return $name !== '' ? $name : 'Не указано';
+        if ($name === '') {
+            return 'Не указано';
+        }
+
+        return ($this->client_type ?? null) === ClientType::Entrepreneur->value
+            ? 'ИП ' . $name
+            : $name;
     }
 
     public function getUserEmailAttribute(): string
