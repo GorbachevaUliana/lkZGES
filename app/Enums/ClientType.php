@@ -4,31 +4,48 @@ namespace App\Enums;
 
 enum ClientType: string
 {
-    case Individual = 'individual';
-    case Legal      = 'legal';
+    case Individual   = 'individual';
+    case Legal        = 'legal';
+    case Entrepreneur = 'entrepreneur';
 
     public function label(): string
     {
         return match ($this) {
-            self::Individual => 'Физическое лицо',
-            self::Legal      => 'Юридическое лицо',
+            self::Individual   => 'Физическое лицо',
+            self::Legal        => 'Юридическое лицо',
+            self::Entrepreneur => 'Индивидуальный предприниматель',
         };
     }
 
-/**
- * Каким способом клиент этого типа подписывает договор.
- *
- * ВНИМАНИЕ: здесь намеренно нет default.
- * Когда появится ИП, PHP бросит UnhandledMatchError, и это правильно —
- * лучше падение, чем молча выданная физлицу подпись вместо УКЭП.
- * Не добавлять default. Добавлять кейсы.
- */
+    /**
+     * Короткое наименование — для бейджей в таблицах.
+     */
+    public function shortLabel(): string
+    {
+        return match ($this) {
+            self::Individual   => 'Физлицо',
+            self::Legal        => 'Юрлицо',
+            self::Entrepreneur => 'ИП',
+        };
+    }
 
+    /**
+     * Цвет бейджа в админке.
+     */
+    public function badgeColor(): string
+    {
+        return match ($this) {
+            self::Individual   => 'success',
+            self::Legal        => 'warning',
+            self::Entrepreneur => 'info',
+        };
+    }
+    
     public function signatureMethod(): SignatureMethod
     {
         return match($this){
-            self::Individual => signatureMethod::Pep,
-            self::Legal      => signatureMethod ::Ukep,
+            self::Individual =>SignatureMethod::Pep,
+            self::Legal, self::Entrepreneur   =>SignatureMethod::Ukep,
         };
     }
 
