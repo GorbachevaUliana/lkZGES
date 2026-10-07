@@ -7,6 +7,7 @@ use App\Models\ApplicationTemplate;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use App\Enums\ClientType;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -41,10 +42,7 @@ class ApplicationTemplateResource extends Resource
 
                         Forms\Components\Select::make('client_type')
                             ->label('Тип клиента')
-                            ->options([
-                                'individual' => 'Физическое лицо',
-                                'legal'      => 'Юридическое лицо',
-                            ])
+                            ->options(ClientType::labels())
                             ->required()
                             ->helperText('Определяет, к какому типу заявителей относится этот шаблон'),
 
@@ -63,7 +61,7 @@ class ApplicationTemplateResource extends Resource
                                 Forms\Components\Builder\Block::make('text_block')
                                     ->label('📝 Текст/Инструкция')
                                     ->icon('heroicon-o-document-text')
-                                    ->schema([
+                                    ->schema([  
                                         Forms\Components\RichEditor::make('body')
                                             ->label('Текст')
                                             ->required()
@@ -74,6 +72,7 @@ class ApplicationTemplateResource extends Resource
                                                 'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
                                                 'legal'      => 'Только юрлицам',
+                                                'entrepreneur' => 'Только ИП',
                                             ])->default('all'),
                                     ])->columns(2),
 
@@ -98,6 +97,7 @@ class ApplicationTemplateResource extends Resource
                                                 'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
                                                 'legal'      => 'Только юрлицам',
+                                                'entrepreneur' => 'Только ИП',
                                             ])->default('all'),
                                     ])->columns(3),
 
@@ -152,6 +152,7 @@ class ApplicationTemplateResource extends Resource
                                                 'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
                                                 'legal'      => 'Только юрлицам',
+                                                'entrepreneur' => 'Только ИП',
                                             ])->default('all')
                                     ]),
 
@@ -193,6 +194,9 @@ class ApplicationTemplateResource extends Resource
                                                         'snils'         => 'СНИЛС',
                                                         'range_numbers' => 'Диапазон чисел (0 - 0)',
                                                         'range_date'    => 'Диапазон дат (ДД.ММ.ГГГГ - ДД.ММ.ГГГГ)',
+                                                        'ogrn'      => 'ОГРН (13 знаков)',
+                                                        'inn_legal' => 'ИНН юрлица (10 знаков)',
+                                                        'kpp'       => 'КПП',
                                                     ])->default('none'),
                                                 Forms\Components\Toggle::make('is_required')
                                                     ->label('Обязательное')
@@ -214,6 +218,7 @@ class ApplicationTemplateResource extends Resource
                                                 'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
                                                 'legal'      => 'Только юрлицам',
+                                                'entrepreneur' => 'Только ИП',
                                             ])->default('all'),
                                     ]),
 
@@ -252,6 +257,7 @@ class ApplicationTemplateResource extends Resource
                                                 'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
                                                 'legal'      => 'Только юрлицам',
+                                                'entrepreneur' => 'Только ИП',
                                             ])->default('all'),
                                     ]),
 
@@ -289,6 +295,7 @@ class ApplicationTemplateResource extends Resource
                                                 'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
                                                 'legal'      => 'Только юрлицам',
+                                                'entrepreneur' => 'Только ИП',
                                             ])->default('all'),
                                     ]),
 
@@ -356,6 +363,7 @@ class ApplicationTemplateResource extends Resource
                                                 'all'        => 'Всем',
                                                 'individual' => 'Только физлицам',
                                                 'legal'      => 'Только юрлицам',
+                                                'entrepreneur' => 'Только ИП',
                                             ])->default('all'),
                                     ]),
                             ])
@@ -425,8 +433,8 @@ class ApplicationTemplateResource extends Resource
                 Tables\Columns\TextColumn::make('client_type')
                     ->label('Тип')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state === 'legal' ? 'Юрлицо' : 'Физлицо')
-                    ->color(fn ($state) => $state === 'legal' ? 'warning' : 'success'),
+                    ->formatStateUsing(fn (?string $state) => ClientType::tryFrom((string) $state)?->shortLabel() ?? '—')
+                    ->color(fn (?string $state) => ClientType::tryFrom((string) $state)?->badgeColor() ?? 'gray'),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Активен')
