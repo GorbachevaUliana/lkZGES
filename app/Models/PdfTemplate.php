@@ -228,7 +228,11 @@ class PdfTemplate extends Model
      */
     public static function getDefaultTemplate(string $clientType): ?string
     {
-        $viewName = $clientType === ClientType::Legal->value ? 'pdf.application_legal' : 'pdf.application_individual';
+        $viewName = ClientType::tryFrom($clientType)?->defaultApplicationView();
+
+        if ($viewName === null) {
+            return null;
+        }
 
         try {
             return view($viewName, ['data' => []])->render();
