@@ -314,9 +314,7 @@ class ApplicationSubmitService
         $htmlContent = $pdfTemplate
             ? $pdfTemplate->render($templateData)
             : view(
-                $clientType === ClientType::Legal->value
-                    ? 'pdf.application_legal'
-                    : 'pdf.application_individual',
+                ClientType::from($clientType)->defaultApplicationView(),
                 ['data' => $templateData]
             )->render();
 

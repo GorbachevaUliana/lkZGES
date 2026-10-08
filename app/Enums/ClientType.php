@@ -40,6 +40,19 @@ enum ClientType: string
             self::Entrepreneur => 'info',
         };
     }
+
+    /**
+     * Blade-шаблон заявки по умолчанию. Используется, когда в базе
+     * нет записи PdfTemplate для этого типа лица.
+     */
+    public function defaultApplicationView(): string
+    {
+        return match ($this) {
+            self::Individual   => 'pdf.application_individual',
+            self::Legal        => 'pdf.application_legal',
+            self::Entrepreneur => 'pdf.application_entrepreneur',
+        };
+    }
     
     public function signatureMethod(): SignatureMethod
     {
