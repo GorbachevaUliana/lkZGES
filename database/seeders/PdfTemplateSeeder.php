@@ -375,13 +375,13 @@ HTML;
         <p>Наименование организации: <span class="info-row-value wide">{{ company_name }}</span></p>
         <p>В лице (должность): <span class="info-row-value">{{ director_position }}</span></p>
         <p>Ф.И.О. руководителя: <span class="info-row-value wide">{{ director_name }}</span></p>
-        <p>Просит заключить договор энергоснабжения на период: <span class="info-row-value">{{ contract_period }}</span></p>
+        <p>Просит заключить договор энергоснабжения на период: <span class="info-row-value">{{ supply_period }}</span></p>
     </div>
 
     <!-- 2. Адреса -->
     <div class="section-title">2. Адреса</div>
     <div class="section">
-        <p>Место нахождения юридического лица: <span class="info-row-value wide">{{ legal_address }}</span></p>
+        <p>Место нахождения юридического лица: <span class="info-row-value wide">{{ registration_address }}</span></p>
         <p>Фактический адрес для почтовых отправлений: <span class="info-row-value wide">{{ actual_address }}</span></p>
     </div>
 
@@ -428,7 +428,7 @@ HTML;
     <div class="section">
         <p>Ценовая категория: <span class="info-row-value wide">{{ price_category }}</span></p>
         <p>Плановое количество электроэнергии на год: <span class="info-row-value">{{ planned_consumption }}</span> кВт·ч</p>
-        <p>Уровень напряжения: <span class="info-row-value">{{ voltage_level_legal }}</span></p>
+        <p>Уровень напряжения: <span class="info-row-value">{{ voltage_level }}</span></p>
         <p>Категория надёжности снабжения: <span class="info-row-value">{{ reliability_category }}</span></p>
         <p>Максимальная мощность: <span class="info-row-value">{{ max_power }}</span> кВт</p>
     </div>
