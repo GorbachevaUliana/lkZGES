@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PdfTemplateResource\Pages;
 use App\Models\PdfTemplate;
+use App\Enums\ClientType;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -194,18 +195,10 @@ class PdfTemplateResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('client_type')
-                    ->label('Тип клиента')
+                    ->label('Тип')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'individual' => 'Физ. лицо',
-                        'legal' => 'Юр. лицо',
-                        default => $state,
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'individual' => 'success',
-                        'legal' => 'info',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (?string $state) => ClientType::tryFrom((string) $state)?->shortLabel() ?? '—')
+                    ->color(fn (?string $state) => ClientType::tryFrom((string) $state)?->badgeColor() ?? 'gray'),
 
                 Tables\Columns\TextColumn::make('document_type')
                     ->label('Тип документа')

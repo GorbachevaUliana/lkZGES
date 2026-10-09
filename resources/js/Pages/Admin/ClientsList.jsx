@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import {
     Container, Typography, Paper, Button, Box,
@@ -14,7 +14,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import AdminLayout from '@/Layouts/AdminLayout';
 import ConfirmDialog from '@/Components/Admin/ConfirmDialog';
 import ClientCard from '@/Components/Admin/ClientCard';
-import { fixKeyboardLayout } from '@/utils/keyboard';
+import { CLIENT_TYPE_LABELS, getClientTypeLabel} from '@/constants/ClientTypes';
 
 // Пустой объект недвижимости
 const emptyProperty = () => ({
@@ -204,24 +204,13 @@ export default function ClientsList({ auth, clients, tariffs, search = '' }) {
             field: 'display_name',
             headerName: 'Потребитель',
             flex: 1,
-            valueGetter: (value, row) => {
-                if (row.client_type === 'legal') {
-                    return row.company_name || '—';
-                }
-                return `${row.last_name || ''} ${row.first_name || ''} ${row.middle_name || ''}`.trim() || '—';
-            }
+            valueGetter: (value, row) => row.display_name || '—'
         },
         {
             field: 'client_type',
             headerName: 'Тип потребителя',
             width: 200,
-            valueFormatter: (value) => {
-                const types = {
-                    'legal': 'Юридическое лицо',
-                    'individual': 'Физическое лицо'
-                };
-                return types[value] || value || '—';
-            }
+            valueFormatter: (value) => getClientTypeLabel(value)
         },
         {
             field: 'address',
@@ -346,8 +335,9 @@ export default function ClientsList({ auth, clients, tariffs, search = '' }) {
                                         <FormControl fullWidth variant="standard">
                                             <InputLabel>Тип клиента</InputLabel>
                                             <Select value={data.client_type} onChange={e => setData('client_type', e.target.value)}>
-                                                <MenuItem value="individual">Физическое лицо</MenuItem>
-                                                <MenuItem value="legal">Юридическое лицо</MenuItem>
+                                                {Object.entries(CLIENT_TYPE_LABELS).map(([value, label]) => (
+                                                    <MenuItem key={value} value={value}>{label}</MenuItem>
+                                                ))}
                                             </Select>
                                         </FormControl>
                                     </Grid>

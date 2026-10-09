@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClientResource\Pages;
 use App\Models\Client;
+use App\Enums\ClientType;
 use App\Models\Property;
 use App\Models\Tariff;
 use Filament\Forms;
@@ -33,10 +34,7 @@ class ClientResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('client_type')
                             ->label('Тип клиента')
-                            ->options([
-                                'individual' => 'Физическое лицо',
-                                'legal' => 'Юридическое лицо',
-                            ])
+                            ->options(ClientType::labels())
                             ->default('individual')
                             ->required()
                             ->live()
@@ -45,17 +43,17 @@ class ClientResource extends Resource
 
                         Forms\Components\TextInput::make('last_name')
                             ->label('Фамилия')
-                            ->required(fn (callable $get) => $get('client_type') === 'individual')
-                            ->visible(fn (callable $get) => $get('client_type') === 'individual'),
+                            ->required(fn (callable $get) => in_array($get('client_type'), ['individual', 'entrepreneur'], true))
+                            ->visible(fn (callable $get) => in_array($get('client_type'), ['individual', 'entrepreneur'], true)),
 
                         Forms\Components\TextInput::make('first_name')
                             ->label('Имя')
-                            ->required(fn (callable $get) => $get('client_type') === 'individual')
-                            ->visible(fn (callable $get) => $get('client_type') === 'individual'),
+                            ->required(fn (callable $get) => in_array($get('client_type'), ['individual', 'entrepreneur'], true))
+                            ->visible(fn (callable $get) => in_array($get('client_type'), ['individual', 'entrepreneur'], true)),
 
                         Forms\Components\TextInput::make('middle_name')
                             ->label('Отчество')
-                            ->visible(fn (callable $get) => $get('client_type') === 'individual'),
+                            ->visible(fn (callable $get) => in_array($get('client_type'), ['individual', 'entrepreneur'], true)),
 
                         Forms\Components\TextInput::make('company_name')
                             ->label('Название организации')
@@ -64,7 +62,7 @@ class ClientResource extends Resource
 
                         Forms\Components\TextInput::make('inn')
                             ->label('ИНН')
-                            ->visible(fn (callable $get) => $get('client_type') === 'legal'),
+                            ->visible(fn (callable $get) => in_array($get('client_type'), ['legal', 'entrepreneur'], true)),
 
                         Forms\Components\TextInput::make('phone')
                             ->label('Телефон')
@@ -137,27 +135,13 @@ class ClientResource extends Resource
 
                 Tables\Columns\TextColumn::make('display_name')
                     ->label('Потребитель')
-                    ->getStateUsing(function (Client $record): string {
-                        if ($record->client_type === 'legal') {
-                            return $record->company_name ?? '—';
-                        }
-                        return trim(($record->last_name ?? '') . ' ' . ($record->first_name ?? '') . ' ' . ($record->middle_name ?? ''));
-                    })
                     ->searchable(['last_name', 'first_name', 'middle_name', 'company_name']),
 
                 Tables\Columns\TextColumn::make('client_type')
                     ->label('Тип')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'individual' => 'Физ. лицо',
-                        'legal' => 'Юр. лицо',
-                        default => $state,
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'individual' => 'success',
-                        'legal' => 'info',
-                        default => 'gray',
-                    }),
+                    ->formatStateUsing(fn (?string $state) => ClientType::tryFrom((string) $state)?->shortLabel() ?? '—')
+                    ->color(fn (?string $state) => ClientType::tryFrom((string) $state)?->badgeColor() ?? 'gray'),
 
                 // Адрес из первого активного объекта
                 Tables\Columns\TextColumn::make('address')
@@ -231,10 +215,7 @@ class ClientResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('client_type')
                     ->label('Тип клиента')
-                    ->options([
-                        'individual' => 'Физическое лицо',
-                        'legal' => 'Юридическое лицо',
-                    ]),
+                    ->options(ClientType::labels()),
 
                 Tables\Filters\Filter::make('active')
                     ->label('Активные')

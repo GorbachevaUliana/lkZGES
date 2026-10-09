@@ -75,6 +75,7 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
     const appId = application.id || application.data?.id;
     const colors = APPLICATION_STATUS_COLORS[application.status] || { bg: '#F5F5F5', color: '#666', label: application.status };
     const isLegal = application.client_type === 'legal';
+    const isEntrepreneur = application.client_type === 'entrepreneur';
 
     const getPublishBlockReason = () => {
         if (application.status !== 'approved') {
@@ -286,8 +287,24 @@ export default function ApplicationCard({ open, onClose, application, statuses, 
                                                     <TableCell>{application.data?.kpp || '—'}</TableCell>
                                                 </TableRow>
                                                 <TableRow>
+                                                    <TableCell sx={{ bgcolor: '#F4F7FE'}}>ОГРН</TableCell>
+                                                    <TableCell>{application.data?.ogrn || '—'}</TableCell>
+                                                </TableRow>
+                                                <TableRow>
                                                     <TableCell sx={{ bgcolor: '#F4F7FE' }}>Контактное лицо</TableCell>
                                                     <TableCell>{application.data?.contact_person}</TableCell>
+                                                </TableRow>
+                                            </>
+                                        )}
+                                            {isEntrepreneur && (
+                                            <>
+                                                <TableRow>
+                                                    <TableCell sx={{ bgcolor: '#F4F7FE' }}>ИНН</TableCell>
+                                                    <TableCell>{application.data?.inn || '—'}</TableCell>
+                                                </TableRow>
+                                                <TableRow>
+                                                    <TableCell sx={{ bgcolor: '#F4F7FE' }}>ОГРНИП</TableCell>
+                                                    <TableCell>{application.data?.ogrn || '—'}</TableCell>
                                                 </TableRow>
                                             </>
                                         )}

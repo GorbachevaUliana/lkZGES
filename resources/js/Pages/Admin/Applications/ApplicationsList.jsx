@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
-    Container, Typography, Paper, Box, Button, Chip,
-    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    IconButton, InputBase, Tabs, Tab, Dialog, DialogContent, DialogActions,
-    TextField, Snackbar, Alert, Tooltip, useMediaQuery, useTheme
+    Container, Typography, Paper, Box, Chip,
+    IconButton, InputBase, Snackbar, Alert, Tooltip, useMediaQuery, useTheme
 } from '@mui/material';
 import {
     Search as SearchIcon,
@@ -17,8 +15,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import AdminLayout from '@/Layouts/AdminLayout';
 import ApplicationCard from '@/Components/Admin/ApplicationCard';
 import ConfirmDialog from '@/Components/Admin/ConfirmDialog';
-import { fixKeyboardLayout } from '@/utils/keyboard';
 import { APPLICATION_STATUS_COLORS } from '@/constants/statuses';
+import { getClientTypeLabel} from '@/constants/ClientTypes';
 
 export default function ApplicationsList({ auth, applications, statuses, clientTypes, tariffs, stats, search = '', status = 'all' }) {
     const theme = useTheme();
@@ -118,14 +116,7 @@ export default function ApplicationsList({ auth, applications, statuses, clientT
             field: 'client_type',
             headerName: 'Тип потребителя',
             width: 200,
-            valueFormatter: (value) => {
-                const types = {
-                    'legal' : 'Юридическое лицо',
-                    'individual' : 'Физическое лицо'
-                };
-
-                return types[value] || value;
-            }
+            valueFormatter: (value) => getClientTypeLabel(value)
         },
         { field: 'created_at', headerName: 'Дата подачи', width: 140},
         { 

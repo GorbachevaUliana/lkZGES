@@ -4,11 +4,8 @@ import {
     DialogActions, Tabs, Tab, Table, TableBody, TableCell, 
     TableContainer, TableRow, IconButton, Button, Paper,
     FormControl, InputLabel, Select, MenuItem, Grid,
-    Divider, List, ListItem, ListItemIcon, ListItemText,
     TableHead, Chip
 } from '@mui/material';
-import TimelineIcon from '@mui/icons-material/Timeline';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import { 
     Description as DescriptionIcon, 
     Delete as DeleteIcon, 
@@ -19,6 +16,7 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import { AddressSuggestions } from 'react-dadata';
 import { router } from '@inertiajs/react';
 import ClientAvatar from './ClientAvatar';
+import { CLIENT_TYPE_LABELS, getClientTypeShortLabel } from '@/constants/ClientTypes';
 
 function TabPanel({ children, value, index }) {
     return value === index ? <Box sx={{ py: 3 }}>{children}</Box> : null;
@@ -110,12 +108,13 @@ export default function ClientCard({
         .filter(Boolean)
         .join(' ');
 
-    const displayName = data.client_type === 'legal'
-        ? (data.company_name?.trim() || fullName || 'Название компании не указано')
-        : (fullName || 'ФИО не указано');
+    const displayName = data.display_name
+        || (data.client_type === 'legal'
+            ? (data.company_name?.trim() || fullName || 'Название компании не указано')
+            : (fullName || 'ФИО не указано'));
 
-    const avatarName = data.client_type === 'legal' 
-        ? (data.company_name || data.last_name || 'Ю') 
+    const avatarName = data.client_type === 'legal'
+        ? (data.company_name || data.last_name || 'Ю')
         : (data.last_name || 'Ф');
 
     const inputSx = {
@@ -144,7 +143,7 @@ export default function ClientCard({
                             <Typography variant="body2">Л/С: {data.account_number}</Typography>
                             <Typography variant="body2">•</Typography>
                             <Typography variant="body2">
-                                {data.client_type === 'legal' ? 'Юр. лицо' : 'Физ. лицо'}
+                                {getClientTypeShortLabel(data.client_type)}
                             </Typography>
                         </Box>
                     </Box>
@@ -167,11 +166,12 @@ export default function ClientCard({
                         <Grid item xs={12}>
                             <FormControl fullWidth sx={inputSx}>
                                 <InputLabel>Тип клиента</InputLabel>
-                                <Select 
-                                    value={data.client_type || 'individual'} 
+                                <Select
+                                    value={data.client_type || 'individual'}
                                     onChange={e => setData('client_type', e.target.value)}>
-                                    <MenuItem value="individual">Физическое лицо</MenuItem>
-                                    <MenuItem value="legal">Юридическое лицо</MenuItem>
+                                    {Object.entries(CLIENT_TYPE_LABELS).map(([value, label]) => (
+                                        <MenuItem key={value} value={value}>{label}</MenuItem>
+                                    ))}
                                 </Select>
                             </FormControl>
                         </Grid>
