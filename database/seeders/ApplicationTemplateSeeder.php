@@ -891,7 +891,7 @@ class ApplicationTemplateSeeder extends Seeder
                     [
                         'type' => 'input_field',
                         'data' => [
-                            'key' => 'contract_period',
+                            'key' => 'supply_period',
                             'label' => 'Период времени, на который заключается договор',
                             'type' => 'text',
                             'special_format' => 'none',
@@ -904,10 +904,14 @@ class ApplicationTemplateSeeder extends Seeder
                         'data' => ['title' => '3. Адреса', 'level' => 'h4']
                     ],
                     [
+                        'type' => 'section_header',
+                        'data' => ['title' => '3.1. Место нахождения юридического лица (согласно учредительных документов)', 'level' => 'h4']
+                    ],
+                    [
                         'type' => 'input_field',
                         'data' => [
-                            'key' => 'legal_address',
-                            'label' => 'Место нахождения юридического лица (согласно учредительных документов)',
+                            'key' => 'region',
+                            'label' => 'Регион',
                             'type' => 'text',
                             'special_format' => 'none',
                             'is_required' => true,
@@ -917,11 +921,147 @@ class ApplicationTemplateSeeder extends Seeder
                     [
                         'type' => 'input_field',
                         'data' => [
-                            'key' => 'actual_address',
-                            'label' => 'Фактический адрес для почтовых отправлений',
+                            'key' => 'district',
+                            'label' => 'Район',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'locality',
+                            'label' => 'Населенный пункт',
                             'type' => 'text',
                             'special_format' => 'none',
                             'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'street',
+                            'label' => 'Улица',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'house',
+                            'label' => 'Дом',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'corpus',
+                            'label' => 'Корпус',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'apartment',
+                            'label' => 'Квартира',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '3.2. Фактический адрес для почтовых отправлений', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_region',
+                            'label' => 'Регион',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_district',
+                            'label' => 'Район',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_locality',
+                            'label' => 'Населенный пункт',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_street',
+                            'label' => 'Улица',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_house',
+                            'label' => 'Дом',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_corpus',
+                            'label' => 'Корпус',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_apartment',
+                            'label' => 'Квартира',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
                             'is_readonly' => false
                         ]
                     ],
@@ -1108,7 +1248,7 @@ class ApplicationTemplateSeeder extends Seeder
                         'data' => [
                             'key' => 'planned_consumption',
                             'label' => 'Плановое количество электроэнергии на год, кВт·ч',
-                            'type' => 'number',
+                            'type' => 'text',
                             'special_format' => 'none',
                             'is_required' => true,
                             'is_readonly' => false
@@ -1117,7 +1257,7 @@ class ApplicationTemplateSeeder extends Seeder
                     [
                         'type' => 'input_field',
                         'data' => [
-                            'key' => 'voltage_level_legal',
+                            'key' => 'voltage_level',
                             'label' => 'Уровень напряжения',
                             'type' => 'text',
                             'special_format' => 'none',
@@ -1141,7 +1281,7 @@ class ApplicationTemplateSeeder extends Seeder
                         'data' => [
                             'key' => 'max_power',
                             'label' => 'Максимальная мощность, кВт',
-                            'type' => 'number',
+                            'type' => 'text',
                             'special_format' => 'none',
                             'is_required' => true,
                             'is_readonly' => false
@@ -1167,6 +1307,477 @@ class ApplicationTemplateSeeder extends Seeder
                         'data' => [
                             'key' => 'personal_info',
                             'label' => 'В соответствии с ФЗ от 27.07.2006 №152-ФЗ "О персональных данных" даёте своё согласие на обработку персональных данных руководителя',
+                            'options' => [['value' => 'Да']],
+                            'allow_multiple_custom' => false,
+                            'is_required' => true
+                        ]
+                    ],
+                ],
+            ]
+        );
+
+        ApplicationTemplate::updateOrCreate(
+            ['slug' => 'application-entrepreneur'],
+            [
+                'title' => 'Заявление на заключение договора энергоснабжения (индивидуальный предприниматель)',
+                'client_type' => 'entrepreneur',
+                'is_active' => true,
+                'content' => [
+                    [
+                        'type' => 'text_block',
+                        'data' => [
+                            'body' => '<p>Заполните форму для создания заявления о заключении договора электроснабжения.</p>',
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '1. Данные заявителя', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'last_name',
+                            'label' => 'Фамилия',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'first_name',
+                            'label' => 'Имя',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'middle_name',
+                            'label' => 'Отчество',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '2. Срок действия договора', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'supply_period',
+                            'label' => 'Срок энергоснабжения',
+                            'type' => 'text',
+                            'special_format' => 'range_date',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '3. Адреса', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '3.1.  Адрес регистрации', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'region',
+                            'label' => 'Регион',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'district',
+                            'label' => 'Район',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'locality',
+                            'label' => 'Населенный пункт',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'street',
+                            'label' => 'Улица',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'house',
+                            'label' => 'Дом',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'corpus',
+                            'label' => 'Корпус',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'apartment',
+                            'label' => 'Квартира',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '3.2. Фактический адрес', 'level' => 'h4']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_region',
+                            'label' => 'Регион',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_district',
+                            'label' => 'Район',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_locality',
+                            'label' => 'Населенный пункт',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_street',
+                            'label' => 'Улица',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_house',
+                            'label' => 'Дом',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_corpus',
+                            'label' => 'Корпус',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'actual_apartment',
+                            'label' => 'Квартира',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '4. Контактная информация', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'phone',
+                            'label' => 'Телефон',
+                            'type' => 'tel',
+                            'special_format' => 'phone',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'email',
+                            'label' => 'Электронная почта',
+                            'type' => 'email',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '5. Паспортные данные', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'passport',
+                            'label' => 'Серия и номер паспорта',
+                            'type' => 'text',
+                            'special_format' => 'passport',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'passport_issue_date',
+                            'label' => 'Дата выдачи',
+                            'type' => 'date',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'passport_issue',
+                            'label' => 'Кем выдан',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '6. Реквизиты', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'ogrn',
+                            'label' => 'ОГРНИП',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'inn',
+                            'label' => 'ИНН',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'okved',
+                            'label' => 'ОКВЭД',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '7. Электронный документооборот', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'edo_operator',
+                            'label' => 'Оператор ЭДО',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => false,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '8. Сведения об объекте энергоснабжения', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'object_category',
+                            'label' => 'Категория объекта (промышленное предприятие, учреждение, торговая палатка и т.д.)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'object_address',
+                            'label' => 'Адрес объекта (при нескольких объектах — через ; с порядковым номером)',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'object_schedule',
+                            'label' => 'График работы объекта',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '9. Технические характеристики энергоснабжения', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'price_category',
+                            'label' => 'Избранный вариант ценовой категории (максимальная мощность энергопринимающих устройств менее 670 кВт) ',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'planned_consumption',
+                            'label' => 'Плановое количество электроэнергии на год кВт*ч',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'voltage_level',
+                            'label' => 'Уровень напряжения',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'reliability_category',
+                            'label' => 'Категория надежности снабжения электроэнергией',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'max_power',
+                            'label' => 'Максимальная мощность кВт',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'section_header',
+                        'data' => ['title' => '10. Показания электросчетчика', 'level' => 'h3']
+                    ],
+                    [
+                        'type' => 'input_field',
+                        'data' => [
+                            'key' => 'meter_reading_at_signing',
+                            'label' => 'Показания электросчетчика на момент заключения договора',
+                            'type' => 'text',
+                            'special_format' => 'none',
+                            'is_required' => true,
+                            'is_readonly' => false
+                        ]
+                    ],
+                    [
+                        'type' => 'checkbox_group',
+                        'data' => [
+                            'key' => 'personal_info',
+                            'label' => 'В соответствии с ФЗ от 27.07.2006 №152-ФЗ "О персональных данных" даёте своё согласие на обработку персональных данных',
                             'options' => [['value' => 'Да']],
                             'allow_multiple_custom' => false,
                             'is_required' => true
