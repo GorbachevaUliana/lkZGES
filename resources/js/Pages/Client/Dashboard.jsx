@@ -13,6 +13,7 @@ import {
     Home as HomeIcon,
     ArrowForwardIos as ArrowIcon,
 } from '@mui/icons-material';
+import { getApplicationSlug } from '@/constants/ClientTypes';
 import { Link } from '@inertiajs/react';
 
 const statusConfig = {
@@ -124,7 +125,7 @@ export default function Dashboard({ auth, client, properties = [], pendingProper
                     <Button
                         component={Link}
                         href={route('application.show', {
-                            slug: client?.client_type === 'legal' ? 'application-legal' : 'application-individual'
+                            slug: getApplicationSlug(client?.client_type)
                         })}
                         variant="contained"
                         fullWidth

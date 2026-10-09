@@ -10,6 +10,7 @@ import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
+import { CLIENT_TYPE_FORM_SLUGS } from '@/constants/ClientTypes';
 
 const inputSx = {
     '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#F4F7FE' },
@@ -190,8 +191,13 @@ export default function WelcomePage({ step = 'link', maskedEmail }) {
                             '&:hover': { boxShadow: '0px 20px 50px rgba(112,144,176,0.12)',
                                          transform: 'translateY(-4px)' },
                         }}>
-                            <Box sx={{ p: 4 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                            <Box sx={{ p: { xs: 3, md: 4 } }}>
+                                <Box sx={{
+                                    display: 'flex',
+                                    flexDirection: { xs: 'column', md: 'row' },
+                                    alignItems: { xs: 'flex-start', md: 'center' },
+                                    gap: 2, mb: 3,
+                                }}>
                                     <Avatar sx={{ bgcolor: '#4318FF', width: 56, height: 56, borderRadius: '16px' }}>
                                         <AssignmentIcon sx={{ fontSize: 28 }} />
                                     </Avatar>
@@ -232,8 +238,14 @@ export default function WelcomePage({ step = 'link', maskedEmail }) {
                                 '&:hover': { boxShadow: '0px 20px 50px rgba(112,144,176,0.12)',
                                              transform: 'translateY(-4px)' },
                             }}>
-                                <Box sx={{ p: 4, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                                <Box sx={{ p: { xs: 3, md: 4 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
+
+                                    <Box sx={{
+                                        display: 'flex',
+                                        flexDirection: { xs: 'column', md: 'row' },
+                                        alignItems: { xs: 'flex-start', md: 'center' },
+                                        gap: 2, mb: 3,
+                                    }}>
                                         <Avatar sx={{ bgcolor: '#05CD99', width: 56, height: 56, borderRadius: '16px' }}>
                                             <PersonAddIcon sx={{ fontSize: 28, color: '#fff' }} />
                                         </Avatar>
@@ -271,7 +283,7 @@ export default function WelcomePage({ step = 'link', maskedEmail }) {
                                         <Button
                                             fullWidth variant="contained"
                                             component={Link}
-                                            href={route('application.show', { slug: 'application-individual' })}
+                                            href={route('application.show', { slug: CLIENT_TYPE_FORM_SLUGS.individual })}
                                             sx={{
                                                 py: 1.5, borderRadius: '12px',
                                                 bgcolor: '#05CD99', textTransform: 'none',
@@ -286,7 +298,7 @@ export default function WelcomePage({ step = 'link', maskedEmail }) {
                                         <Button
                                             fullWidth variant="outlined"
                                             component={Link}
-                                            href={route('application.show', { slug: 'application-legal' })}
+                                            href={route('application.show', { slug: CLIENT_TYPE_FORM_SLUGS.legal })}
                                             sx={{
                                                 py: 1.5, borderRadius: '12px',
                                                 borderColor: '#05CD99', color: '#04B386', textTransform: 'none',
@@ -295,6 +307,19 @@ export default function WelcomePage({ step = 'link', maskedEmail }) {
                                             }}
                                         >
                                             Как юридическое лицо
+                                        </Button>
+                                        <Button
+                                            fullWidth variant="outlined"
+                                            component={Link}
+                                            href={route('application.show', { slug: CLIENT_TYPE_FORM_SLUGS.entrepreneur })}
+                                            sx={{
+                                                py: 1.5, borderRadius: '12px',
+                                                borderColor: '#05CD99', color: '#04B386', textTransform: 'none',
+                                                fontSize: '1rem', fontWeight: 600,
+                                                '&:hover': { borderColor: '#04B386', bgcolor: 'rgba(5,205,153,0.05)' },
+                                            }}
+                                        >
+                                            Как индивидуальный предприниматель
                                         </Button>
                                     </Box>
                                 </Box>

@@ -6,6 +6,7 @@ import ClientLayout from '@/Layouts/ClientLayout';
 import { ToastProvider } from '@/contexts/ToastContext';
 import FormStep   from '@/Components/Form/steps/FormStep';
 import FormReview from '@/Components/Form/steps/FormReview';
+import { getClientTypeLabel } from '@/constants/ClientTypes';
 import SigningChoice, { isSigningMandatory } from '@/Components/Form/SigningChoice';
 
 const STEPS = ['Заполнение данных', 'Проверка'];
@@ -25,7 +26,7 @@ export default function DynamicForm({ template, draftData, signingThresholdKw })
 function DynamicFormContent({ template, draftData, signingThresholdKw }) {
     const [activeStep, setActiveStep] = useState(0);
     const clientType      = template.client_type;
-    const clientTypeLabel = clientType === 'individual' ? 'Физическое лицо' : 'Юридическое лицо';
+    const clientTypeLabel = getClientTypeLabel(clientType);
 
     const initialData = useMemo(() => {
         const fields = {};

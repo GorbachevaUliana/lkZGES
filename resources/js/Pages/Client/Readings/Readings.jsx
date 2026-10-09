@@ -13,6 +13,7 @@ import DownloadIcon from '@mui/icons-material/GetApp';
 import HomeIcon from '@mui/icons-material/Home';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import ClientLayout from '@/Layouts/ClientLayout';
+import { CLIENT_TYPE_FORM_SLUGS } from '@/constants/ClientTypes';
 
 import UICard from '@/Components/UI/Card';
 import UIButton from '@/Components/UI/Button';
@@ -194,7 +195,7 @@ export default function Index({
                     <Typography color="text.secondary" sx={{ mb: 3 }}>
                         Чтобы передавать показания, необходимо подать заявку на заключение договора.
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Button
                             component={Link}
                             href={route('application.show', { slug: 'application-individual' })}
@@ -212,6 +213,15 @@ export default function Index({
                             sx={{ borderColor: '#4318FF', color: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
                         >
                             Юридическое лицо
+                        </Button>
+                        <Button
+                            component={Link}
+                            href={route('application.show', { slug: CLIENT_TYPE_FORM_SLUGS.entrepreneur })}
+                            variant="outlined"
+                            size="large"
+                            sx={{ borderColor: '#4318FF', color: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
+                        >
+                            ИП
                         </Button>
                     </Box>
                 </Paper>

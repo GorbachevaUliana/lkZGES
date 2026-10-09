@@ -2,6 +2,7 @@ import React from 'react';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { Paper, Grid, Typography, Box, Button, TextField, Alert } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import { CLIENT_TYPE_FORM_SLUGS } from '@/constants/ClientTypes';
 import { Link } from '@inertiajs/react';
 
 export default function Profile({ auth, client, application }) {
@@ -16,7 +17,7 @@ export default function Profile({ auth, client, application }) {
                     <Typography color="text.secondary" sx={{ mb: 3 }}>
                         Чтобы пользоваться всеми функциями ЛК, необходимо подать заявку на заключение договора.
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Button 
                             component={Link}
                             href={route('application.show', { slug: 'application-individual' })}
@@ -34,6 +35,15 @@ export default function Profile({ auth, client, application }) {
                             sx={{ borderColor: '#4318FF', color: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
                         >
                             Юридическое лицо
+                        </Button>
+                        <Button
+                            component={Link}
+                            href={route('application.show', { slug: CLIENT_TYPE_FORM_SLUGS.entrepreneur })}
+                            variant="outlined"
+                            size="large"
+                            sx={{ borderColor: '#4318FF', color: '#4318FF', borderRadius: '12px', px: 4, textTransform: 'none' }}
+                        >
+                            ИП
                         </Button>
                     </Box>
                 </Paper>
